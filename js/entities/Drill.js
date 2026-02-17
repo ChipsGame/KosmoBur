@@ -4,20 +4,20 @@ class Drill {
         this.x = game.width / 2;
         
         // Оптимизированная начальная позиция: бур должен быть сразу над первым слоем
-        const screenHeight = window.innerHeight;
-        const screenWidth = window.innerWidth;
+        // Используем размер canvas вместо window (надежнее на мобильных)
+        const canvasHeight = game.height;
         
-        // Адаптация под разные экраны
-        if (screenHeight < 500) {
-            // Очень короткие экраны (iPhone SE и подобные)
-            this.y = 120; // Еще выше для коротких экранов
-            this.height = 140; // Уменьшаем высоту
-        } else if (screenHeight < 700) {
+        // Адаптация под разные размеры canvas
+        if (canvasHeight <= 960) {
+            // Мобильные (маленький canvas)
+            this.y = 150;
+            this.height = 100;
+        } else if (canvasHeight < 1500) {
             // Средние экраны
             this.y = 180;
             this.height = 170;
         } else {
-            // Большие экраны
+            // Большие экраны (ПК)
             this.y = 200;
             this.height = 200;
         }
@@ -73,7 +73,8 @@ class Drill {
             y: this.y, 
             width: this.width, 
             height: this.height,
-            screenSize: `${screenWidth}x${screenHeight}`
+            canvasSize: `${canvasHeight}`,
+            isMobile: canvasHeight <= 960
         });
     }
 
@@ -354,13 +355,22 @@ class Drill {
         const screenY = this.y - camera.y;
         
         // Получаем цвета и ID текущего скина
-        const skinId = this.game.skins ? this.game.skins.currentSkin : 'default';
-        const colors = this.game.skins ? this.game.skins.getColors() : {
+        let skinId = 'default';
+        let colors = {
             body: '#718096',
             cabin: '#2d3748',
             drill: '#a0aec0',
             window: '#4299e1'
         };
+        
+        try {
+            if (this.game.skins && this.game.skins.getColors) {
+                skinId = this.game.skins.currentSkin || 'default';
+                colors = this.game.skins.getColors();
+            }
+        } catch (e) {
+            console.warn('Ошибка получения скина:', e);
+        }
         
         // Размеры бура
         const bodyWidth = 70;

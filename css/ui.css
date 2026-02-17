@@ -1669,3 +1669,116 @@ body {
     from { transform: translateY(0); }
     to { transform: translateY(-10px); }
 }
+
+/* ===== БУСТ ТАПА x5 ===== */
+#tap-boost-ui {
+    position: fixed;
+    top: 110px;
+    right: 10px;
+    z-index: 100;
+    pointer-events: none;
+}
+
+.tap-boost-badge {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    padding: 10px 15px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 16px;
+    color: white;
+    box-shadow: 0 4px 15px rgba(240, 147, 251, 0.5);
+    animation: pulse 1s infinite;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tap-boost-timer {
+    font-size: 12px;
+    background: rgba(0,0,0,0.3);
+    padding: 2px 6px;
+    border-radius: 10px;
+}
+
+/* Стили для кнопок рекламы */
+.ad-btn {
+    background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%) !important;
+    color: #000 !important;
+    font-weight: bold;
+}
+
+.ad-btn:disabled {
+    background: #444 !important;
+    color: #888 !important;
+}
+
+/* ===== МЕНЮ НАГРАД ЗА РЕКЛАМУ ===== */
+.ad-rewards-modal {
+    width: 420px;
+    max-width: 95%;
+    text-align: center;
+}
+
+.ad-rewards-modal h2 {
+    margin-bottom: 10px;
+}
+
+.ad-rewards-desc {
+    color: #aaa;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+
+.ad-rewards-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.ad-reward-btn {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+    border: 2px solid rgba(255,255,255,0.2);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+}
+
+.ad-reward-btn:hover:not(:disabled) {
+    border-color: #ffd700;
+    transform: translateX(5px);
+    background: linear-gradient(135deg, rgba(255,215,0,0.1) 0%, rgba(255,215,0,0.05) 100%);
+}
+
+.ad-reward-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.ad-reward-icon {
+    font-size: 32px;
+}
+
+.ad-reward-name {
+    font-weight: bold;
+    font-size: 16px;
+    color: #fff;
+    display: block;
+}
+
+.ad-reward-desc {
+    font-size: 12px;
+    color: #aaa;
+    display: block;
+}
+
+.ad-loading {
+    color: #888;
+    font-size: 12px;
+    margin-top: 10px;
+}

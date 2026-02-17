@@ -9,11 +9,24 @@ class Game {
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
 
-        // Фиксированное разрешение для Canvas
-        this.width = 1080;
-        this.height = 1920;
+        // Адаптивное разрешение для Canvas
+        // На мобильных используем меньшее разрешение для производительности
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        if (isMobile) {
+            // Для мобильных - меньшее разрешение
+            this.width = 540;
+            this.height = 960;
+        } else {
+            // Для ПК - полное разрешение
+            this.width = 1080;
+            this.height = 1920;
+        }
+        
         this.canvas.width = this.width;
         this.canvas.height = this.height;
+        
+        console.log('Canvas размер:', this.width, 'x', this.height, 'Мобильный:', isMobile);
 
         // Инициализация систем
         this.renderer = new Renderer(this);
@@ -338,25 +351,11 @@ class Game {
         // Кнопка престижа убрана - теперь только в настройках
         // и уведомление при достижении 1000м
         
-        // Кнопка рекламы
+        // Кнопка рекламы - открывает меню выбора награды
         const btnAd = document.getElementById('btn-ad');
         if (btnAd) {
-            btnAd.addEventListener('click', async () => {
-                if (!window.yandexSDK || !window.yandexSDK.isReady) {
-                    this.showNotification('Реклама ещё загружается...', '#ff6b6b', 3000);
-                    return;
-                }
-                
-                const rewarded = await window.yandexSDK.showRewardedAd(() => {
-                    // Награда: 50% от текущих монет + 1000
-                    const reward = Math.floor(this.economy.coins * 0.5) + 1000;
-                    this.economy.addCoins(reward);
-                    this.showNotification(`🎁 Награда: +${Utils.formatNumber(reward)} 🪙`, '#ffd700', 4000);
-                });
-                
-                if (!rewarded) {
-                    this.showNotification('Реклама не была досмотрена до конца', '#ff6b6b', 3000);
-                }
+            btnAd.addEventListener('click', () => {
+                this.showAdRewardsMenu();
             });
         }
 
@@ -480,25 +479,29 @@ class Game {
     loop(timestamp) {
         if (!this.isRunning) return;
         
-        // Если на паузе - не обновляем, но продолжаем рендерить
-        if (this.isPaused) {
+        try {
+            // Если на паузе - не обновляем, но продолжаем рендерить
+            if (this.isPaused) {
+                this.render();
+                requestAnimationFrame((t) => this.loop(t));
+                return;
+            }
+
+            const deltaTime = (timestamp - this.lastTime) / 1000;
+            this.lastTime = timestamp;
+            
+            // Оптимизация: пропускаем кадры если deltaTime слишком большая
+            if (deltaTime > 0.1) {
+                console.warn('Пропущен кадр, deltaTime:', deltaTime);
+                requestAnimationFrame((t) => this.loop(t));
+                return;
+            }
+
+            this.update(deltaTime);
             this.render();
-            requestAnimationFrame((t) => this.loop(t));
-            return;
+        } catch (e) {
+            console.error('Ошибка в game loop:', e);
         }
-
-        const deltaTime = (timestamp - this.lastTime) / 1000;
-        this.lastTime = timestamp;
-        
-        // Оптимизация: пропускаем кадры если deltaTime слишком большая
-        if (deltaTime > 0.1) {
-            console.warn('Пропущен кадр, deltaTime:', deltaTime);
-            requestAnimationFrame((t) => this.loop(t));
-            return;
-        }
-
-        this.update(deltaTime);
-        this.render();
 
         requestAnimationFrame((t) => this.loop(t));
     }
@@ -521,6 +524,9 @@ class Game {
         
         // Обновляем баффы босса (всегда)
         this.bossSystem.updateBonuses();
+        
+        // Обновляем буст тапа
+        this.updateTapBoost();
 
         // Обновляем бур (только если нет босса)
         if (!this.bossSystem.active) {
@@ -802,8 +808,18 @@ class Game {
                     <button class="settings-btn" id="btn-daily">📅 Ежедневные награды</button>
                     <button class="settings-btn" id="btn-skins">🎨 Скины</button>
                     <button class="settings-btn" id="btn-prestige-menu">🔄 Престиж</button>
-                    <button class="settings-btn" id="btn-reward-ad" ${!canShowAd ? 'disabled' : ''}>
-                        📺 Реклама за награду ${!canShowAd ? '(загрузка...)' : ''}
+                </div>
+                
+                <div class="settings-section">
+                    <h3>📺 Реклама за награды</h3>
+                    <button class="settings-btn ad-btn" id="btn-ad-skin" ${!canShowAd ? 'disabled' : ''}>
+                        🎁 Случайный скин ${!canShowAd ? '(загрузка...)' : ''}
+                    </button>
+                    <button class="settings-btn ad-btn" id="btn-ad-tap" ${!canShowAd ? 'disabled' : ''}>
+                        👆 x5 тап на 1 минуту ${!canShowAd ? '(загрузка...)' : ''}
+                    </button>
+                    <button class="settings-btn ad-btn" id="btn-ad-money" ${!canShowAd ? 'disabled' : ''}>
+                        💰 5000 монет ${!canShowAd ? '(загрузка...)' : ''}
                     </button>
                 </div>
                 
@@ -851,26 +867,74 @@ class Game {
             this.showPrestigeModal();
         });
         
-        // Обработчик рекламы
-        const btnRewardAd = modal.querySelector('#btn-reward-ad');
-        if (btnRewardAd) {
-            btnRewardAd.addEventListener('click', async () => {
-                // Проверяем готовность SDK
+        // === РЕКЛАМА ЗА СЛУЧАЙНЫЙ СКИН ===
+        const btnAdSkin = modal.querySelector('#btn-ad-skin');
+        if (btnAdSkin) {
+            btnAdSkin.addEventListener('click', async () => {
                 if (!window.yandexSDK || !window.yandexSDK.isReady) {
                     this.showNotification('Реклама ещё загружается...', '#ff6b6b', 3000);
                     return;
                 }
                 
                 const rewarded = await window.yandexSDK.showRewardedAd(() => {
-                    // Награда за просмотр рекламы: 50% от текущих монет + 1000
-                    const reward = Math.floor(this.economy.coins * 0.5) + 1000;
-                    this.economy.addCoins(reward);
-                    this.showNotification(`🎁 Награда: +${Utils.formatNumber(reward)} 🪙`, '#ffd700', 4000);
+                    // Получаем список не купленных скинов
+                    const unownedSkins = this.skins.skins.filter(s => !this.skins.ownedSkins.includes(s.id));
+                    
+                    if (unownedSkins.length === 0) {
+                        // Все скины куплены - даём монеты вместо
+                        this.economy.addCoins(10000);
+                        this.showNotification('🎁 У вас все скины! +10000 🪙', '#ffd700', 4000);
+                    } else {
+                        // Случайный скин
+                        const randomSkin = unownedSkins[Math.floor(Math.random() * unownedSkins.length)];
+                        this.skins.ownedSkins.push(randomSkin.id);
+                        this.skins.select(randomSkin.id);
+                        this.game.saveManager.save();
+                        this.showNotification(`🎁 Получен скин: ${randomSkin.name}!`, '#ffd700', 4000);
+                    }
                 });
                 
-                if (rewarded) {
-                    modal.remove();
-                } else {
+                if (!rewarded) {
+                    this.showNotification('Реклама не была досмотрена до конца', '#ff6b6b', 3000);
+                }
+            });
+        }
+        
+        // === РЕКЛАМА ЗА x5 ТАП ===
+        const btnAdTap = modal.querySelector('#btn-ad-tap');
+        if (btnAdTap) {
+            btnAdTap.addEventListener('click', async () => {
+                if (!window.yandexSDK || !window.yandexSDK.isReady) {
+                    this.showNotification('Реклама ещё загружается...', '#ff6b6b', 3000);
+                    return;
+                }
+                
+                const rewarded = await window.yandexSDK.showRewardedAd(() => {
+                    // x5 тап на 1 минуту
+                    this.activateTapBoost();
+                });
+                
+                if (!rewarded) {
+                    this.showNotification('Реклама не была досмотрена до конца', '#ff6b6b', 3000);
+                }
+            });
+        }
+        
+        // === РЕКЛАМА ЗА 5000 МОНЕТ ===
+        const btnAdMoney = modal.querySelector('#btn-ad-money');
+        if (btnAdMoney) {
+            btnAdMoney.addEventListener('click', async () => {
+                if (!window.yandexSDK || !window.yandexSDK.isReady) {
+                    this.showNotification('Реклама ещё загружается...', '#ff6b6b', 3000);
+                    return;
+                }
+                
+                const rewarded = await window.yandexSDK.showRewardedAd(() => {
+                    this.economy.addCoins(5000);
+                    this.showNotification('🎁 +5000 🪙', '#ffd700', 3000);
+                });
+                
+                if (!rewarded) {
                     this.showNotification('Реклама не была досмотрена до конца', '#ff6b6b', 3000);
                 }
             });
@@ -1043,6 +1107,175 @@ class Game {
     }
     
     /**
+     * Показать меню наград за рекламу
+     */
+    showAdRewardsMenu() {
+        const canShowAd = window.yandexSDK && window.yandexSDK.isReady;
+        
+        const modal = document.createElement('div');
+        modal.id = 'modal-ad-rewards';
+        modal.className = 'modal';
+        
+        modal.innerHTML = `
+            <div class="modal-content ad-rewards-modal">
+                <h2>📺 Реклама за награды</h2>
+                <p class="ad-rewards-desc">Выберите награду за просмотр рекламы:</p>
+                
+                <div class="ad-rewards-grid">
+                    <button class="ad-reward-btn ${!canShowAd ? 'disabled' : ''}" id="ad-reward-skin" ${!canShowAd ? 'disabled' : ''}>
+                        <span class="ad-reward-icon">🎁</span>
+                        <span class="ad-reward-name">Случайный скин</span>
+                        <span class="ad-reward-desc">Получите случайный скин</span>
+                    </button>
+                    
+                    <button class="ad-reward-btn ${!canShowAd ? 'disabled' : ''}" id="ad-reward-tap" ${!canShowAd ? 'disabled' : ''}>
+                        <span class="ad-reward-icon">👆</span>
+                        <span class="ad-reward-name">x5 Тап</span>
+                        <span class="ad-reward-desc">x5 урон на 1 минуту</span>
+                    </button>
+                    
+                    <button class="ad-reward-btn ${!canShowAd ? 'disabled' : ''}" id="ad-reward-money" ${!canShowAd ? 'disabled' : ''}>
+                        <span class="ad-reward-icon">💰</span>
+                        <span class="ad-reward-name">5000 монет</span>
+                        <span class="ad-reward-desc">+5000 🪙 сразу</span>
+                    </button>
+                </div>
+                
+                ${!canShowAd ? '<p class="ad-loading">Реклама загружается...</p>' : ''}
+                
+                <button class="close-modal" id="ad-rewards-close">✕</button>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Обработчики
+        modal.querySelector('#ad-rewards-close').addEventListener('click', () => {
+            modal.remove();
+        });
+        
+        // Случайный скин
+        modal.querySelector('#ad-reward-skin').addEventListener('click', async () => {
+            if (!canShowAd) return;
+            
+            const rewarded = await window.yandexSDK.showRewardedAd(() => {
+                const unownedSkins = this.skins.skins.filter(s => !this.skins.ownedSkins.includes(s.id));
+                
+                if (unownedSkins.length === 0) {
+                    this.economy.addCoins(10000);
+                    this.showNotification('🎁 У вас все скины! +10000 🪙', '#ffd700', 4000);
+                } else {
+                    const randomSkin = unownedSkins[Math.floor(Math.random() * unownedSkins.length)];
+                    this.skins.ownedSkins.push(randomSkin.id);
+                    this.skins.select(randomSkin.id);
+                    this.saveManager.save();
+                    this.showNotification(`🎁 Получен скин: ${randomSkin.name}!`, '#ffd700', 4000);
+                }
+            });
+            
+            if (rewarded) {
+                modal.remove();
+            } else {
+                this.showNotification('Реклама не была досмотрена', '#ff6b6b', 3000);
+            }
+        });
+        
+        // x5 Тап
+        modal.querySelector('#ad-reward-tap').addEventListener('click', async () => {
+            if (!canShowAd) return;
+            
+            const rewarded = await window.yandexSDK.showRewardedAd(() => {
+                this.activateTapBoost();
+            });
+            
+            if (rewarded) {
+                modal.remove();
+            } else {
+                this.showNotification('Реклама не была досмотрена', '#ff6b6b', 3000);
+            }
+        });
+        
+        // 5000 монет
+        modal.querySelector('#ad-reward-money').addEventListener('click', async () => {
+            if (!canShowAd) return;
+            
+            const rewarded = await window.yandexSDK.showRewardedAd(() => {
+                this.economy.addCoins(5000);
+                this.showNotification('🎁 +5000 🪙', '#ffd700', 3000);
+            });
+            
+            if (rewarded) {
+                modal.remove();
+            } else {
+                this.showNotification('Реклама не была досмотрена', '#ff6b6b', 3000);
+            }
+        });
+    }
+    
+    /**
+     * Активировать буст x5 тап
+     */
+    activateTapBoost() {
+        const now = Date.now();
+        const duration = 60 * 1000; // 1 минута
+        
+        this.tapBoostActive = true;
+        this.tapBoostEndTime = now + duration;
+        
+        // Увеличиваем силу клика
+        this.drill.power *= 5;
+        
+        this.showNotification('👆 x5 ТАП АКТИВЕН на 1 минуту!', '#f093fb', 3000);
+        
+        // Показываем таймер буста
+        this.showTapBoostUI();
+    }
+    
+    /**
+     * Обновить буст тапа
+     */
+    updateTapBoost() {
+        if (!this.tapBoostActive) return;
+        
+        const now = Date.now();
+        if (now >= this.tapBoostEndTime) {
+            // Буст закончился
+            this.tapBoostActive = false;
+            this.drill.power /= 5;
+            
+            // Убираем UI
+            const ui = document.getElementById('tap-boost-ui');
+            if (ui) ui.remove();
+            
+            this.showNotification('👆 x5 ТАП закончился', '#aaa', 2000);
+        } else {
+            // Обновляем таймер
+            const timeLeft = Math.ceil((this.tapBoostEndTime - now) / 1000);
+            const timerText = document.getElementById('tap-boost-timer');
+            if (timerText) timerText.textContent = timeLeft + 'с';
+        }
+    }
+    
+    /**
+     * Показать UI буста тапа
+     */
+    showTapBoostUI() {
+        // Убираем старый если есть
+        const oldUi = document.getElementById('tap-boost-ui');
+        if (oldUi) oldUi.remove();
+        
+        const ui = document.createElement('div');
+        ui.id = 'tap-boost-ui';
+        ui.innerHTML = `
+            <div class="tap-boost-badge">
+                👆 x5
+                <span class="tap-boost-timer" id="tap-boost-timer">60с</span>
+            </div>
+        `;
+        document.body.appendChild(ui);
+    }
+    
+    /**
      * Показать игровое уведомление (не браузерное!)
      * Создаёт DOM-элемент вместо alert
      */
@@ -1067,8 +1300,11 @@ class Game {
 window.addEventListener('load', async () => {
     console.log('Загрузка игры Космический Бур...');
     
-    // Инициализация Яндекс SDK
-    await initYandexSDK();
+    // Инициализация Яндекс SDK с таймаутом
+    const sdkPromise = initYandexSDK();
+    const timeoutPromise = new Promise(resolve => setTimeout(resolve, 3000)); // 3 секунды максимум
+    
+    await Promise.race([sdkPromise, timeoutPromise]);
     
     window.game = new Game();
     console.log('Игра загружена!');
