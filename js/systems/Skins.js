@@ -31,7 +31,7 @@ class Skins {
                 id: 'golden',
                 name: 'Золотой',
                 description: 'Роскошный золотой бур для богачей',
-                price: 50000,
+                price: 500,
                 icon: '👑',
                 colors: {
                     body: '#d69e2e',
@@ -44,7 +44,7 @@ class Skins {
                 id: 'lava',
                 name: 'Лавовый',
                 description: 'Раскалённый бур из вулканической породы',
-                price: 25000,
+                price: 2500,
                 icon: '🔥',
                 colors: {
                     body: '#9b2c2c',
@@ -57,7 +57,7 @@ class Skins {
                 id: 'ice',
                 name: 'Ледяной',
                 description: 'Бур из вечной мерзлоты',
-                price: 25000,
+                price: 2500,
                 icon: '❄️',
                 colors: {
                     body: '#90cdf4',
@@ -70,7 +70,7 @@ class Skins {
                 id: 'toxic',
                 name: 'Токсичный',
                 description: 'Радиоактивный бур с ядовитым свечением',
-                price: 30000,
+                price: 3000,
                 icon: '☢️',
                 colors: {
                     body: '#48bb78',
@@ -83,7 +83,7 @@ class Skins {
                 id: 'cyber',
                 name: 'Киберпанк',
                 description: 'Футуристический бур из 2077 года',
-                price: 40000,
+                price: 4000,
                 icon: '🤖',
                 colors: {
                     body: '#1a202c',
@@ -96,7 +96,7 @@ class Skins {
                 id: 'rusty',
                 name: 'Ржавый',
                 description: 'Старый добрый ржавый бур',
-                price: 5000,
+                price: 500,
                 icon: '🦀',
                 colors: {
                     body: '#c05621',
@@ -109,7 +109,7 @@ class Skins {
                 id: 'diamond',
                 name: 'Алмазный',
                 description: 'Бур из чистых алмазов',
-                price: 100000,
+                price: 10000,
                 icon: '💎',
                 colors: {
                     body: '#b2f5ea',
@@ -122,7 +122,7 @@ class Skins {
                 id: 'shadow',
                 name: 'Теневой',
                 description: 'Бур из теневого измерения',
-                price: 35000,
+                price: 3500,
                 icon: '🌑',
                 colors: {
                     body: '#2d3748',
@@ -135,7 +135,7 @@ class Skins {
                 id: 'rainbow',
                 name: 'Радужный',
                 description: 'Бур со всеми цветами радуги',
-                price: 45000,
+                price: 4500,
                 icon: '🌈',
                 colors: {
                     body: '#ed64a6',
@@ -148,7 +148,7 @@ class Skins {
                 id: 'military',
                 name: 'Военный',
                 description: 'Бронированный военный бур',
-                price: 20000,
+                price: 2000,
                 icon: '🎖️',
                 colors: {
                     body: '#556b2f',
@@ -161,7 +161,7 @@ class Skins {
                 id: 'candy',
                 name: 'Конфетный',
                 description: 'Сладкий бур для сладкоежек',
-                price: 15000,
+                price: 1500,
                 icon: '🍬',
                 colors: {
                     body: '#f687b3',
@@ -174,7 +174,7 @@ class Skins {
                 id: 'steampunk',
                 name: 'Стимпанк',
                 description: 'Бур в викторианском стиле',
-                price: 30000,
+                price: 3000,
                 icon: '⚙️',
                 colors: {
                     body: '#975a16',
@@ -200,7 +200,7 @@ class Skins {
                 id: 'pirate',
                 name: 'Пиратский',
                 description: 'Бур для подводных сокровищ',
-                price: 20000,
+                price: 2000,
                 icon: '🏴‍☠️',
                 colors: {
                     body: '#2c5282',

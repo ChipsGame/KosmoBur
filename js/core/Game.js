@@ -28,6 +28,7 @@ class Game {
         this.offlineProgress = new OfflineProgress(this);
         this.dailyRewards = new DailyRewards(this);
         this.skins = new Skins(this);
+        this.bossSystem = new BossSystem(this);
 
         this.saveManager = new SaveManager(this);
 
@@ -35,6 +36,9 @@ class Game {
         this.drill = new Drill(this);
         this.layers = [];
         this.particles = [];
+        
+        // Флаг видимости плит (скрываем во время боя с боссом)
+        this.layersVisible = true;
 
         // Состояние игры
         this.isRunning = false;
@@ -511,9 +515,17 @@ class Game {
         
         // Обновляем дрифт
         this.driftSystem.update(dt);
+        
+        // Обновляем босса
+        this.bossSystem.update(dt);
+        
+        // Обновляем баффы босса (всегда)
+        this.bossSystem.updateBonuses();
 
-        // Обновляем бур
-        this.drill.update(dt);
+        // Обновляем бур (только если нет босса)
+        if (!this.bossSystem.active) {
+            this.drill.update(dt);
+        }
         
         // Обновляем автобур
         this.autoDrill.update(dt);
@@ -682,9 +694,12 @@ class Game {
         // Если visibleLayers пустой на первом кадре, используем все слои
         const layersToRender = this.visibleLayers.length > 0 ? this.visibleLayers : this.layers;
         
-        for (let layer of layersToRender) {
-            if (!layer.isDestroyed) {
-                layer.render(this.ctx, this.camera);
+        // Рисуем плитки только если нет босса
+        if (this.layersVisible) {
+            for (let layer of layersToRender) {
+                if (!layer.isDestroyed) {
+                    layer.render(this.ctx, this.camera);
+                }
             }
         }
 
@@ -696,6 +711,9 @@ class Game {
 
         // Эффекты дрифта
         this.driftSystem.renderEffects(this.ctx);
+        
+        // Босс
+        this.bossSystem.render(this.ctx, this.camera);
         
         // Эффекты кликов
         this.input.renderClickEffects(this.ctx);

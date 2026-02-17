@@ -25,7 +25,7 @@ class Layer {
         this.hardness = 1 + depthProgress;
         this.maxHealth = 10 * this.hardness;
         this.health = this.maxHealth;
-        this.reward = Math.floor(5 * this.hardness);
+        this.reward = Math.floor(50 * this.hardness);
 
         // Визуал
         this.color = this.generateColor();

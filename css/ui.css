@@ -1381,3 +1381,291 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
+/* ===== СИСТЕМА БОССОВ ===== */
+
+/* Модал босса */
+.boss-modal {
+    width: 400px;
+    text-align: center;
+}
+
+.boss-modal h2 {
+    color: #ff6b6b;
+    font-size: 28px;
+    margin-bottom: 15px;
+    text-shadow: 0 0 20px rgba(255, 107, 107, 0.5);
+}
+
+.boss-info {
+    background: rgba(255, 107, 107, 0.1);
+    border: 1px solid rgba(255, 107, 107, 0.3);
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.boss-info p {
+    margin: 5px 0;
+    color: #fff;
+}
+
+.boss-stats {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 20px;
+}
+
+.boss-stat {
+    text-align: center;
+}
+
+.boss-label {
+    display: block;
+    font-size: 12px;
+    color: #aaa;
+    margin-bottom: 5px;
+}
+
+.boss-value {
+    display: block;
+    font-size: 24px;
+    font-weight: bold;
+    color: #ffd700;
+}
+
+.boss-start-btn {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #ff6b6b 0%, #c53030 100%);
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    animation: pulse 1s infinite;
+}
+
+.boss-start-btn:hover {
+    transform: scale(1.05);
+}
+
+/* UI боя с боссом - внизу экрана */
+#boss-ui {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 300px; /* Как плиты */
+    max-width: 85vw;
+    z-index: 100;
+    pointer-events: none;
+}
+
+.boss-bars-container {
+    background: rgba(0, 0, 0, 0.8);
+    border-radius: 16px;
+    padding: 15px;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    margin-bottom: 10px;
+}
+
+.boss-bar-wrapper {
+    margin-bottom: 12px;
+}
+
+.boss-bar-wrapper:last-child {
+    margin-bottom: 0;
+}
+
+.boss-bar-label {
+    font-size: 11px;
+    font-weight: bold;
+    color: #fff;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.boss-bar {
+    width: 100%;
+    height: 24px;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    position: relative;
+}
+
+.boss-bar-fill {
+    height: 100%;
+    transition: width 0.1s linear;
+    border-radius: 10px;
+}
+
+.boss-hp-fill {
+    background: linear-gradient(90deg, #ff6b6b, #c53030);
+}
+
+.boss-time-fill {
+    background: linear-gradient(90deg, #4299e1, #3182ce);
+}
+
+.boss-bar-text {
+    text-align: center;
+    font-size: 14px;
+    font-weight: bold;
+    color: #fff;
+    margin-top: 4px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+}
+
+.boss-time-text {
+    color: #ffd700;
+    font-size: 16px;
+}
+
+/* Баффы */
+#boss-buffs-container {
+    position: fixed;
+    bottom: 100px; /* Внизу, над барами босса */
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 50;
+    pointer-events: none;
+}
+
+.boss-buffs {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.boss-buff {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 8px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    color: #fff;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    animation: pulse 2s infinite;
+}
+
+/* Победа */
+.boss-victory-modal {
+    width: 380px;
+    text-align: center;
+}
+
+.boss-victory-modal .boss-icon {
+    font-size: 64px;
+    margin-bottom: 15px;
+    animation: bounce 0.5s infinite alternate;
+}
+
+.boss-victory-modal h2 {
+    color: #6bcf7f;
+    margin-bottom: 20px;
+}
+
+.boss-rewards {
+    background: rgba(107, 207, 127, 0.1);
+    border: 1px solid rgba(107, 207, 127, 0.3);
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 20px;
+}
+
+.boss-rewards ul {
+    list-style: none;
+    padding: 0;
+}
+
+.boss-rewards li {
+    padding: 8px 0;
+    font-size: 16px;
+    color: #fff;
+}
+
+.boss-continue-btn {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #6bcf7f 0%, #48bb78 100%);
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* Поражение */
+.boss-defeat-modal {
+    width: 380px;
+    text-align: center;
+}
+
+.boss-defeat-modal .boss-icon {
+    font-size: 64px;
+    margin-bottom: 15px;
+}
+
+.boss-defeat-modal h2 {
+    color: #a0aec0;
+    margin-bottom: 10px;
+}
+
+.boss-ad-offer {
+    background: rgba(255, 215, 0, 0.1);
+    border: 2px solid rgba(255, 215, 0, 0.3);
+    border-radius: 12px;
+    padding: 15px;
+    margin: 20px 0;
+}
+
+.boss-ad-offer p {
+    margin-bottom: 10px;
+    color: #ffd700;
+}
+
+.boss-ad-btn {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
+    color: #000;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.boss-ad-btn:hover {
+    transform: scale(1.02);
+}
+
+.boss-skip-btn {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+/* Анимации */
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+@keyframes bounce {
+    from { transform: translateY(0); }
+    to { transform: translateY(-10px); }
+}
