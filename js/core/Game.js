@@ -693,6 +693,13 @@ class Game {
     render() {
         // Оптимизация: очищаем только видимую область
         this.ctx.clearRect(0, 0, this.width, this.height);
+        
+        // Масштабирование для мобильных
+        // Все координаты рассчитаны на 1080x1920, масштабируем если canvas меньше
+        const scaleX = this.width / 1080;
+        const scaleY = this.height / 1920;
+        this.ctx.save();
+        this.ctx.scale(scaleX, scaleY);
 
         // Фон (космос) - рисуется в CSS, тут можно добавить эффекты если нужно
 
@@ -723,6 +730,9 @@ class Game {
         
         // Эффекты кликов
         this.input.renderClickEffects(this.ctx);
+        
+        // Восстанавливаем масштаб
+        this.ctx.restore();
         
         // Дебаг информация (только для разработки)
         if (this.firstFrame) {
