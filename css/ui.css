@@ -1246,3 +1246,138 @@ body {
     color: #6bcf7f;
     font-weight: bold;
 }
+/* ===== МАГАЗИН СКИНОВ ===== */
+.skins-modal {
+    width: 500px;
+    max-width: 95%;
+    max-height: 85vh;
+}
+
+.skins-balance {
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+    color: #ffd700;
+    margin-bottom: 15px;
+    padding: 10px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 10px;
+}
+
+.skins-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    max-height: 60vh;
+    overflow-y: auto;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+    padding-right: 5px;
+}
+
+.skin-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+    border-radius: 12px;
+    padding: 12px;
+    border: 2px solid rgba(255,255,255,0.1);
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.skin-card:hover {
+    border-color: #ffd700;
+    transform: translateY(-2px);
+}
+
+.skin-card.skin-selected {
+    border-color: #6bcf7f;
+    background: rgba(107,207,127,0.1);
+    box-shadow: 0 0 15px rgba(107,207,127,0.3);
+}
+
+.skin-card.skin-locked {
+    opacity: 0.7;
+}
+
+.skin-preview {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    border: 3px solid rgba(255,255,255,0.3);
+}
+
+.skin-icon {
+    font-size: 28px;
+}
+
+.skin-info {
+    margin-bottom: 8px;
+}
+
+.skin-name {
+    font-weight: bold;
+    font-size: 13px;
+    margin-bottom: 3px;
+}
+
+.skin-desc {
+    font-size: 10px;
+    color: #aaa;
+    line-height: 1.2;
+}
+
+.skin-btn {
+    width: 100%;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.skin-btn-selected {
+    background: #6bcf7f;
+    color: white;
+}
+
+.skin-btn-own {
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.skin-btn-own:hover {
+    transform: scale(1.05);
+}
+
+.skin-btn-buy {
+    background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+}
+
+.skin-btn-buy:hover:not(:disabled) {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(240, 147, 251, 0.4);
+}
+
+.skin-btn-disabled {
+    background: #444 !important;
+    color: #888 !important;
+    cursor: not-allowed;
+}
+
+/* Адаптивность для скинов */
+@media (max-width: 400px) {
+    .skins-grid {
+        grid-template-columns: 1fr;
+    }
+}

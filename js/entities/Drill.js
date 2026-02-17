@@ -352,312 +352,152 @@ class Drill {
 
     render(ctx, camera) {
         const screenY = this.y - camera.y;
-        const drillWidth = 60;
-        // Адаптивная высота для рендеринга (пропорциональна реальной высоте бура)
-        const drillHeight = this.height === 160 ? 130 : 160; // Уменьшаем отрисовку для маленького бура
-
+        
+        // Получаем цвета текущего скина
+        const colors = this.game.skins ? this.game.skins.getColors() : {
+            body: '#718096',
+            cabin: '#2d3748',
+            drill: '#a0aec0',
+            window: '#4299e1'
+        };
+        
+        // Размеры бура
+        const bodyWidth = 70;
+        const bodyHeight = 120;
+        const drillLength = 50;
+        
         ctx.save();
+        
         // Применяем эффект дрожания при бурении
         const shakeX = this.shakeOffsetX;
         const shakeY = this.shakeOffsetY;
         ctx.translate(this.x + shakeX, screenY + shakeY);
-        // ctx.rotate(this.rotation); // Убрали вращение всего бура
-
-        // === ОСНОВНОЙ КОРПУС БУРА (Металлический цилиндр) ===
-        // Градиент для металлического эффекта
-        const bodyGradient = ctx.createLinearGradient(-drillWidth/2, -drillHeight/2, drillWidth/2, drillHeight/2);
-        bodyGradient.addColorStop(0, '#707070');
-        bodyGradient.addColorStop(0.2, '#909090');
-        bodyGradient.addColorStop(0.4, '#b0b0b0');
-        bodyGradient.addColorStop(0.6, '#d0d0d0');
-        bodyGradient.addColorStop(0.8, '#b0b0b0');
-        bodyGradient.addColorStop(1, '#808080');
-
-        // Тело бура с закругленными краями
-        ctx.fillStyle = bodyGradient;
-        this.drawRoundedRect(ctx, -drillWidth/2, -drillHeight/2, drillWidth, drillHeight, 10);
-        ctx.fill();
         
-        // Текстура металла (штриховка)
-        ctx.strokeStyle = 'rgba(80, 80, 80, 0.3)';
-        ctx.lineWidth = 1;
+        // === УПРОЩЁННЫЙ БУР СО СКИНАМИ ===
         
-        // Горизонтальные линии
-        for (let y = -drillHeight/2 + 10; y < drillHeight/2; y += 8) {
-            ctx.beginPath();
-            ctx.moveTo(-drillWidth/2 + 5, y);
-            ctx.lineTo(drillWidth/2 - 5, y);
-            ctx.stroke();
-        }
+        // 1. СВЕРЛО (внизу, статичное - без вращения)
+        const drillGrad = ctx.createLinearGradient(0, bodyHeight/2, 0, bodyHeight/2 + drillLength);
+        drillGrad.addColorStop(0, colors.drill);
+        drillGrad.addColorStop(1, this.darkenColor(colors.drill, 30));
         
-        // Вертикальные линии
-        for (let x = -drillWidth/2 + 10; x < drillWidth/2; x += 8) {
-            ctx.beginPath();
-            ctx.moveTo(x, -drillHeight/2 + 5);
-            ctx.lineTo(x, drillHeight/2 - 5);
-            ctx.stroke();
-        }
-        
-        // Углубления под болты
-        ctx.fillStyle = 'rgba(60, 60, 60, 0.5)';
-        const boltHoles = [
-            {x: -drillWidth/2 + 8, y: -drillHeight/2 + 8},
-            {x: drillWidth/2 - 8, y: -drillHeight/2 + 8},
-            {x: -drillWidth/2 + 8, y: drillHeight/2 - 8},
-            {x: drillWidth/2 - 8, y: drillHeight/2 - 8}
-        ];
-        
-        for (const hole of boltHoles) {
-            ctx.beginPath();
-            ctx.arc(hole.x, hole.y, 4, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // Внутреннее отверстие
-            ctx.fillStyle = 'rgba(40, 40, 40, 0.8)';
-            ctx.beginPath();
-            ctx.arc(hole.x, hole.y, 2, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.fillStyle = 'rgba(60, 60, 60, 0.5)';
-        }
-
-        // === СПИРАЛЬНЫЕ КАНАВКИ (вращающийся эффект) ===
-        ctx.strokeStyle = '#606060';
-        ctx.lineWidth = 4;
-        const spiralCount = 8;
-        const spiralOffset = this.rotation * 2; // Смещение при вращении
-        
-        for (let i = 0; i < spiralCount; i++) {
-            const yPos = -drillHeight/2 + (i * drillHeight / spiralCount) + (spiralOffset % (drillHeight / spiralCount));
-            
-            ctx.beginPath();
-            ctx.moveTo(-drillWidth/2 + 5, yPos);
-            ctx.lineTo(drillWidth/2 - 5, yPos);
-            ctx.stroke();
-        }
-
-        // === РЕЛЬЕФНЫЕ ПАНЕЛИ НА КОРПУСЕ ===
-        ctx.save();
-        ctx.strokeStyle = '#505050';
-        ctx.lineWidth = 2;
-        ctx.fillStyle = 'rgba(100, 100, 100, 0.3)';
-        
-        // Вертикальные панели
-        const panelWidth = 15;
-        const panelHeight = 40;
-        const panelSpacing = 30;
-        
-        for (let i = -1; i <= 1; i++) {
-            const panelX = i * panelSpacing;
-            const panelY = -20;
-            
-            // Тень панели
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-            ctx.fillRect(panelX - panelWidth/2 + 1, panelY - panelHeight/2 + 1, panelWidth, panelHeight);
-            
-            // Основная панель
-            const panelGrad = ctx.createLinearGradient(panelX - panelWidth/2, panelY - panelHeight/2, panelX + panelWidth/2, panelY + panelHeight/2);
-            panelGrad.addColorStop(0, '#707070');
-            panelGrad.addColorStop(0.5, '#808080');
-            panelGrad.addColorStop(1, '#606060');
-            
-            ctx.fillStyle = panelGrad;
-            ctx.fillRect(panelX - panelWidth/2, panelY - panelHeight/2, panelWidth, panelHeight);
-            
-            // Контур панели
-            ctx.strokeRect(panelX - panelWidth/2, panelY - panelHeight/2, panelWidth, panelHeight);
-            
-            // Болты на панелях
-            ctx.fillStyle = '#404040';
-            const boltPositions = [
-                {x: panelX - 4, y: panelY - 15},
-                {x: panelX + 4, y: panelY - 15},
-                {x: panelX - 4, y: panelY + 15},
-                {x: panelX + 4, y: panelY + 15}
-            ];
-            
-            for (const bolt of boltPositions) {
-                ctx.beginPath();
-                ctx.arc(bolt.x, bolt.y, 2, 0, Math.PI * 2);
-                ctx.fill();
-                
-                // Крестообразный шлиц
-                ctx.strokeStyle = '#202020';
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.moveTo(bolt.x - 1, bolt.y);
-                ctx.lineTo(bolt.x + 1, bolt.y);
-                ctx.moveTo(bolt.x, bolt.y - 1);
-                ctx.lineTo(bolt.x, bolt.y + 1);
-                ctx.stroke();
-            }
-        }
-        
-        ctx.restore();
-
-        // === КОЛЬЦА УСИЛЕНИЯ ===
-        ctx.fillStyle = '#808080';
-        // Адаптивные позиции колец в зависимости от размера бура
-        const ringSpacing = drillHeight / 4;
-        const ringPositions = [
-            -drillHeight/2 + ringSpacing * 0.5,
-            -drillHeight/2 + ringSpacing * 1.5,
-            -drillHeight/2 + ringSpacing * 2.5,
-            -drillHeight/2 + ringSpacing * 3.5
-        ];
-        for (const yPos of ringPositions) {
-            ctx.beginPath();
-            ctx.ellipse(0, yPos, drillWidth/2 + 5, 8, 0, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // Болты на кольцах
-            const boltCount = 6;
-            for (let i = 0; i < boltCount; i++) {
-                const angle = (i * Math.PI * 2) / boltCount;
-                const boltX = Math.cos(angle) * (drillWidth/2 + 3);
-                const boltY = yPos + Math.sin(angle) * 5;
-                
-                ctx.fillStyle = '#505050';
-                ctx.beginPath();
-                ctx.arc(boltX, boltY, 3, 0, Math.PI * 2);
-                ctx.fill();
-                
-                // Крестообразный шлиц
-                ctx.strokeStyle = '#303030';
-                ctx.lineWidth = 1;
-                ctx.beginPath();
-                ctx.moveTo(boltX - 2, boltY);
-                ctx.lineTo(boltX + 2, boltY);
-                ctx.moveTo(boltX, boltY - 2);
-                ctx.lineTo(boltX, boltY + 2);
-                ctx.stroke();
-            }
-        }
-
-
-
-        // === ВНУТРЕННИЙ МЕХАНИЗМ (вращающаяся часть) ===
-        ctx.save();
-        const innerRotation = this.rotation * 3; // Вращается быстрее основного бура
-        ctx.rotate(innerRotation);
-        
-        // Шестерни
-        ctx.fillStyle = '#404040';
-        // Адаптивные позиции шестерен
-        const gearSpacing = drillHeight / 4;
-        for (let i = 0; i < 3; i++) {
-            const gearY = -drillHeight/2 + gearSpacing * (i + 1);
-            ctx.beginPath();
-            ctx.ellipse(0, gearY, 15, 15, 0, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // Зубья шестерни
-            ctx.strokeStyle = '#202020';
-            ctx.lineWidth = 2;
-            const toothCount = 8;
-            for (let j = 0; j < toothCount; j++) {
-                const angle = (j * Math.PI * 2) / toothCount;
-                const startX = Math.cos(angle) * 15;
-                const startY = gearY + Math.sin(angle) * 15;
-                const endX = Math.cos(angle) * 22;
-                const endY = gearY + Math.sin(angle) * 22;
-                
-                ctx.beginPath();
-                ctx.moveTo(startX, startY);
-                ctx.lineTo(endX, endY);
-                ctx.stroke();
-            }
-        }
-        ctx.restore();
-
-        // === НАКОНЕЧНИК БУРА (с температурным свечением) ===
-        const tipHeat = this.temperature / this.maxTemperature;
-        // Позиция наконечника - начинается от нижней границы корпуса и выходит ВНИЗ
-        const tipTop = drillHeight/2;  // Начинаем от нижнего края корпуса
-        const tipBottom = drillHeight/2 + 50;  // Длина наконечника 50px вниз
-        const tipGradient = ctx.createLinearGradient(0, tipTop, 0, tipBottom);
-        
-        if (tipHeat > 0.7) {
-            // Горячий наконечник - красное свечение
-            tipGradient.addColorStop(0, '#ff3300');
-            tipGradient.addColorStop(0.5, '#ff6600');
-            tipGradient.addColorStop(1, '#ffaa00');
-        } else {
-            // Холодный наконечник - металлический
-            tipGradient.addColorStop(0, '#ff6b6b');
-            tipGradient.addColorStop(0.3, '#ff8e8e');
-            tipGradient.addColorStop(0.7, '#d95454');
-            tipGradient.addColorStop(1, '#b34040');
-        }
-        
-        // Основная часть наконечника (треугольник вниз)
-        ctx.fillStyle = tipGradient;
+        ctx.fillStyle = drillGrad;
         ctx.beginPath();
-        ctx.moveTo(-25, tipTop);      // Левый верхний угол (у корпуса)
-        ctx.lineTo(0, tipBottom);     // Нижняя точка (остриё)
-        ctx.lineTo(25, tipTop);       // Правый верхний угол (у корпуса)
+        ctx.moveTo(-20, bodyHeight/2);
+        ctx.lineTo(0, bodyHeight/2 + drillLength + 15);
+        ctx.lineTo(20, bodyHeight/2);
         ctx.closePath();
         ctx.fill();
         
-        // Фаска на наконечнике
-        ctx.strokeStyle = tipHeat > 0.7 ? '#ffffff' : '#d0d0d0';
+        // Обводка сверла
+        ctx.strokeStyle = this.darkenColor(colors.drill, 50);
         ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(-20, tipTop + 8);
-        ctx.lineTo(0, tipBottom - 8);
-        ctx.lineTo(20, tipTop + 8);
         ctx.stroke();
-
-        // === СВЕТОВЫЕ БЛИКИ И ТЕНИ ДЛЯ ОБЪЕМА ===
-        // Верхний блик
-        const highlightGradient = ctx.createLinearGradient(-drillWidth/2, -drillHeight/2, drillWidth/2, -drillHeight/2);
-        highlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0.3)');
-        highlightGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
         
-        ctx.fillStyle = highlightGradient;
+        // 2. КОРПУС БУРА
+        const bodyGrad = ctx.createLinearGradient(-bodyWidth/2, 0, bodyWidth/2, 0);
+        bodyGrad.addColorStop(0, this.darkenColor(colors.body, 20));
+        bodyGrad.addColorStop(0.3, colors.body);
+        bodyGrad.addColorStop(0.7, colors.body);
+        bodyGrad.addColorStop(1, this.darkenColor(colors.body, 20));
+        
+        ctx.fillStyle = bodyGrad;
         ctx.beginPath();
-        ctx.moveTo(-drillWidth/2, -drillHeight/2);
-        ctx.lineTo(drillWidth/2, -drillHeight/2);
-        ctx.lineTo(drillWidth/2 - 10, -drillHeight/2 + 20);
-        ctx.lineTo(-drillWidth/2 + 10, -drillHeight/2 + 20);
-        ctx.closePath();
+        ctx.roundRect(-bodyWidth/2, -bodyHeight/2, bodyWidth, bodyHeight, 12);
         ctx.fill();
         
-        // Боковая тень
-        const shadowGradient = ctx.createLinearGradient(drillWidth/2, -drillHeight/2, drillWidth/2, drillHeight/2);
-        shadowGradient.addColorStop(0, 'rgba(0, 0, 0, 0.2)');
-        shadowGradient.addColorStop(1, 'rgba(0, 0, 0, 0.4)');
+        ctx.strokeStyle = this.darkenColor(colors.body, 40);
+        ctx.lineWidth = 2;
+        ctx.stroke();
         
-        ctx.fillStyle = shadowGradient;
+        // 3. КАБИНА (верхняя часть)
+        const cabinGrad = ctx.createLinearGradient(-bodyWidth/2, -bodyHeight/2, bodyWidth/2, -bodyHeight/2 + 50);
+        cabinGrad.addColorStop(0, this.darkenColor(colors.cabin, 20));
+        cabinGrad.addColorStop(0.5, colors.cabin);
+        cabinGrad.addColorStop(1, this.darkenColor(colors.cabin, 20));
+        
+        ctx.fillStyle = cabinGrad;
         ctx.beginPath();
-        ctx.moveTo(drillWidth/2, -drillHeight/2);
-        ctx.lineTo(drillWidth/2, drillHeight/2);
-        ctx.lineTo(drillWidth/2 - 15, drillHeight/2 - 20);
-        ctx.lineTo(drillWidth/2 - 15, -drillHeight/2 + 20);
-        ctx.closePath();
+        ctx.roundRect(-bodyWidth/2, -bodyHeight/2, bodyWidth, 50, [12, 12, 0, 0]);
         ctx.fill();
-
-        // === ИНДИКАТОР ПЕРЕГРЕВА (оставляем только свечение) ===
-        if (this.temperature > 80) {
-            const warningAlpha = 0.3 + 0.3 * Math.sin(Date.now() / 200); // Пульсация
-            
-            // Тепловое свечение (оставляем только это)
-            const heatGlowCenterY = drillHeight/2 - 20;
-            const heatGlow = ctx.createRadialGradient(0, heatGlowCenterY, 10, 0, heatGlowCenterY, 50);
-            heatGlow.addColorStop(0, `rgba(255, 100, 0, ${warningAlpha * 0.5})`);
-            heatGlow.addColorStop(1, 'rgba(255, 100, 0, 0)');
-            
-            ctx.fillStyle = heatGlow;
+        
+        // 4. ИЛЛЮМИНАТОР
+        const windowGlow = this.isDrilling ? 0.8 + 0.2 * Math.sin(Date.now() / 100) : 0.4;
+        const windowColor = colors.window;
+        
+        ctx.fillStyle = windowColor;
+        ctx.globalAlpha = windowGlow;
+        ctx.beginPath();
+        ctx.arc(0, -bodyHeight/2 + 25, 15, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        
+        // Ободок
+        ctx.strokeStyle = '#1a202c';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // 5. ДЕТАЛИ
+        // Полосы на корпусе
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+        ctx.fillRect(-bodyWidth/2 + 5, -10, bodyWidth - 10, 3);
+        ctx.fillRect(-bodyWidth/2 + 5, 20, bodyWidth - 10, 3);
+        
+        // Болты
+        const boltPositions = [
+            {x: -25, y: -40}, {x: 25, y: -40},
+            {x: -25, y: 40}, {x: 25, y: 40}
+        ];
+        
+        ctx.fillStyle = this.darkenColor(colors.body, 30);
+        for (const bolt of boltPositions) {
             ctx.beginPath();
-            ctx.arc(0, heatGlowCenterY, 50, 0, Math.PI * 2);
+            ctx.arc(bolt.x, bolt.y, 4, 0, Math.PI * 2);
             ctx.fill();
         }
-
+        
+        // 6. ИНДИКАТОР ТЕМПЕРАТУРЫ
+        const tempPercent = this.temperature / this.maxTemperature;
+        const tempColor = tempPercent > 0.7 ? '#e53e3e' : (tempPercent > 0.4 ? '#ecc94b' : '#48bb78');
+        
+        ctx.fillStyle = '#1a202c';
+        ctx.fillRect(bodyWidth/2 + 5, -25, 6, 50);
+        
+        ctx.fillStyle = tempColor;
+        const fillHeight = 46 * tempPercent;
+        ctx.fillRect(bodyWidth/2 + 7, 23 - fillHeight, 2, fillHeight);
+        
+        // 7. ИНДИКАЦИЯ ПЕРЕГРЕВА - красная обводка корпуса
+        if (this.temperature > 70) {
+            const pulseAlpha = 0.5 + 0.5 * Math.sin(Date.now() / 200);
+            ctx.strokeStyle = `rgba(229, 62, 62, ${pulseAlpha})`;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.roundRect(-bodyWidth/2 - 2, -bodyHeight/2 - 2, bodyWidth + 4, bodyHeight + 4, 14);
+            ctx.stroke();
+        }
+        
+        // 8. ТЕНЬ
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.beginPath();
+        ctx.ellipse(0, bodyHeight/2 + 35, 35, 8, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
         ctx.restore();
-
+        
         // Эффект дрифта
         if (this.game.driftSystem.multiplier > 1.5) {
             this.renderDriftEffect(ctx, screenY);
         }
+    }
+    
+    // Вспомогательный метод для затемнения цвета
+    darkenColor(color, percent) {
+        const num = parseInt(color.replace('#', ''), 16);
+        const amt = Math.round(2.55 * percent);
+        const R = Math.max((num >> 16) - amt, 0);
+        const G = Math.max((num >> 8 & 0x00FF) - amt, 0);
+        const B = Math.max((num & 0x0000FF) - amt, 0);
+        return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
     }
 
     // Вспомогательный метод для рисования закругленного прямоугольника

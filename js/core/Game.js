@@ -27,6 +27,7 @@ class Game {
         this.prestige = new Prestige(this);
         this.offlineProgress = new OfflineProgress(this);
         this.dailyRewards = new DailyRewards(this);
+        this.skins = new Skins(this);
 
         this.saveManager = new SaveManager(this);
 
@@ -781,6 +782,7 @@ class Game {
                 <div class="settings-section">
                     <h3>🎮 Игра</h3>
                     <button class="settings-btn" id="btn-daily">📅 Ежедневные награды</button>
+                    <button class="settings-btn" id="btn-skins">🎨 Скины</button>
                     <button class="settings-btn" id="btn-prestige-menu">🔄 Престиж</button>
                     <button class="settings-btn" id="btn-reward-ad" ${!canShowAd ? 'disabled' : ''}>
                         📺 Реклама за награду ${!canShowAd ? '(загрузка...)' : ''}
@@ -819,6 +821,11 @@ class Game {
         modal.querySelector('#btn-daily').addEventListener('click', () => {
             modal.remove();
             this.dailyRewards.showModal();
+        });
+        
+        modal.querySelector('#btn-skins').addEventListener('click', () => {
+            modal.remove();
+            this.skins.showShop();
         });
         
         modal.querySelector('#btn-prestige-menu').addEventListener('click', () => {

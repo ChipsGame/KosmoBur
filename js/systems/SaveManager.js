@@ -56,7 +56,8 @@ class SaveManager {
             },
             autoDrill: this.game.autoDrill.save(),
             prestige: this.game.prestige.save(),
-            dailyRewards: this.game.dailyRewards.save()
+            dailyRewards: this.game.dailyRewards.save(),
+            skins: this.game.skins.save()
         };
 
         const jsonData = JSON.stringify(data);
@@ -143,6 +144,9 @@ class SaveManager {
             }
             if (data.dailyRewards) {
                 this.game.dailyRewards.load(data.dailyRewards);
+            }
+            if (data.skins) {
+                this.game.skins.load(data.skins);
             }
 
             console.log('Игра загружена');
