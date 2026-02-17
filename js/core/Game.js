@@ -7,11 +7,28 @@
 class Game {
     constructor() {
         this.canvas = document.getElementById('gameCanvas');
-        this.ctx = this.canvas.getContext('2d');
+        
+        // ОПТИМИЗАЦИЯ: Отключаем сглаживание для производительности на слабых устройствах
+        this.ctx = this.canvas.getContext('2d', { 
+            alpha: false,
+            antialias: false,
+            powerPreference: 'low-power'
+        });
 
         // Фиксированное разрешение для Canvas
-        this.width = 1080;
-        this.height = 1920;
+        // ОПТИМИЗАЦИЯ: Уменьшаем разрешение для слабых устройств
+        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        const isOldDevice = /iPhone OS 10|iPhone OS 11|iPhone OS 12|iPhone OS 13|iPhone OS 14/i.test(navigator.userAgent);
+        
+        if (isOldDevice) {
+            // Для старых iPhone (7, 8, SE) - понижаем разрешение
+            this.width = 540;
+            this.height = 960;
+        } else {
+            this.width = 1080;
+            this.height = 1920;
+        }
+        
         this.canvas.width = this.width;
         this.canvas.height = this.height;
 
@@ -291,85 +308,21 @@ class Game {
     
     /**
      * Фикс для скролла в модальных окнах на мобильных устройствах
+     * УПРОЩЕНО для оптимизации
      */
     setupModalScrollFix() {
-        // Функция для добавления обработчиков к модальному окну
-        const addScrollHandlers = (modal) => {
-            const modalContent = modal.querySelector('.modal-content');
-            if (!modalContent) return;
-            
-            // Удаляем старые обработчики если есть (чтобы не дублировать)
-            modalContent.removeEventListener('touchstart', this.handleTouchStart);
-            modalContent.removeEventListener('touchmove', this.handleTouchMove);
-            
-            // Разрешаем скролл внутри модального контента
-            modalContent.addEventListener('touchstart', this.handleTouchStart, { passive: true });
-            modalContent.addEventListener('touchmove', this.handleTouchMove, { passive: false });
-        };
-        
-        // Сохраняем ссылки на обработчики
-        this.handleTouchStart = (e) => {
-            const modalContent = e.currentTarget;
-            modalContent.dataset.scrollTop = modalContent.scrollTop;
-            modalContent.dataset.clientY = e.touches[0].clientY;
-        };
-        
-        this.handleTouchMove = (e) => {
-            const modalContent = e.currentTarget;
-            const scrollTop = parseFloat(modalContent.dataset.scrollTop || 0);
-            const clientY = parseFloat(modalContent.dataset.clientY || 0);
-            const currentClientY = e.touches[0].clientY;
-            const deltaY = clientY - currentClientY;
-            
-            const isScrollingUp = deltaY > 0;
-            const isScrollingDown = deltaY < 0;
-            const canScrollUp = scrollTop > 0;
-            const canScrollDown = scrollTop + modalContent.clientHeight < modalContent.scrollHeight;
-            
-            // Если можем скроллить в нужном направлении - разрешаем
-            if ((isScrollingUp && canScrollUp) || (isScrollingDown && canScrollDown)) {
+        // Простой обработчик - разрешаем скролл внутри модальных окон
+        document.addEventListener('touchmove', (e) => {
+            const modalContent = e.target.closest('.modal-content');
+            if (modalContent) {
+                // Разрешаем скролл внутри контента
                 return;
             }
             
-            // Если достигли края - предотвращаем bounce-эффект страницы
-            if ((isScrollingUp && !canScrollUp) || (isScrollingDown && !canScrollDown)) {
-                e.preventDefault();
-            }
-        };
-        
-        // Обрабатываем существующие модальные окна
-        document.querySelectorAll('.modal').forEach(addScrollHandlers);
-        
-        // Наблюдаем за появлением новых модальных окон
-        const observer = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                mutation.addedNodes.forEach((node) => {
-                    if (node.nodeType === 1 && node.classList.contains('modal')) {
-                        addScrollHandlers(node);
-                    }
-                });
-            });
-        });
-        
-        observer.observe(document.body, { childList: true, subtree: true });
-        
-        // Глобальный обработчик для предотвращения скролла страницы при открытом модале
-        document.addEventListener('touchmove', (e) => {
+            // Блокируем скролл страницы если открыто модальное окно
             const openModal = document.querySelector('.modal:not(.hidden)');
             if (openModal) {
-                // Если тач внутри модального контента - проверяем нужно ли блокировать
-                const modalContent = openModal.querySelector('.modal-content');
-                if (modalContent && modalContent.contains(e.target)) {
-                    // Проверяем, можно ли скроллить
-                    const canScroll = modalContent.scrollHeight > modalContent.clientHeight;
-                    if (!canScroll) {
-                        e.preventDefault();
-                    }
-                    // Иначе позволяем всплыть к обработчику выше
-                } else {
-                    // Тач вне контента модала - блокируем
-                    e.preventDefault();
-                }
+                e.preventDefault();
             }
         }, { passive: false });
     }
@@ -514,7 +467,11 @@ class Game {
             layer.update(dt);
         }
 
-        // Обновляем частицы
+        // Обновляем частицы (с ограничением для оптимизации)
+        const MAX_PARTICLES = 50; // Максимум 50 частиц одновременно
+        if (this.particles.length > MAX_PARTICLES) {
+            this.particles = this.particles.slice(0, MAX_PARTICLES);
+        }
         this.particles = this.particles.filter(p => {
             p.update(dt);
             return p.life > 0;
@@ -732,6 +689,8 @@ class Game {
     }
 
     createParticle(x, y, type, color, size = null) {
+        // ОПТИМИЗАЦИЯ: Не создаём частицы если их уже много
+        if (this.particles.length >= 50) return;
         this.particles.push(new Particle(x, y, type, color, size));
     }
     
