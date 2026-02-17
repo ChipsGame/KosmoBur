@@ -10,9 +10,8 @@ class Game {
         this.ctx = this.canvas.getContext('2d');
 
         // Фиксированное разрешение для Canvas
-        // Используем меньший размер для лучшей производительности
-        this.width = 720;
-        this.height = 1280;
+        this.width = 1080;
+        this.height = 1920;
         this.canvas.width = this.width;
         this.canvas.height = this.height;
 
@@ -681,6 +680,16 @@ class Game {
     render() {
         // Оптимизация: очищаем только видимую область
         this.ctx.clearRect(0, 0, this.width, this.height);
+        
+        // Отладка: проверяем что рендер работает
+        if (this.firstFrame) {
+            console.log('Рендер первого кадра:', {
+                width: this.width,
+                height: this.height,
+                layers: this.layers.length,
+                drill: this.drill ? 'есть' : 'нет'
+            });
+        }
 
         // Фон (космос) - рисуется в CSS, тут можно добавить эффекты если нужно
 
