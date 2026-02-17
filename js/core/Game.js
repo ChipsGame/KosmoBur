@@ -55,11 +55,11 @@ class Game {
         this.init();
     }
 
-    init() {
+    async init() {
         this.setupEventListeners();
         this.createStarfield();
         this.generateInitialLayers();
-        this.saveManager.load();
+        await this.saveManager.load();
         // ПОСЛЕ загрузки пересоздаём слои, так как позиция бура могла измениться
         this.regenerateLayersAfterLoad();
         
@@ -251,6 +251,28 @@ class Game {
         
         // Кнопка престижа убрана - теперь только в настройках
         // и уведомление при достижении 1000м
+        
+        // Кнопка рекламы
+        const btnAd = document.getElementById('btn-ad');
+        if (btnAd) {
+            btnAd.addEventListener('click', async () => {
+                if (!window.yandexSDK || !window.yandexSDK.isReady) {
+                    this.showNotification('Реклама ещё загружается...', '#ff6b6b', 3000);
+                    return;
+                }
+                
+                const rewarded = await window.yandexSDK.showRewardedAd(() => {
+                    // Награда: 50% от текущих монет + 1000
+                    const reward = Math.floor(this.economy.coins * 0.5) + 1000;
+                    this.economy.addCoins(reward);
+                    this.showNotification(`🎁 Награда: +${Utils.formatNumber(reward)} 🪙`, '#ffd700', 4000);
+                });
+                
+                if (!rewarded) {
+                    this.showNotification('Реклама не была досмотрена до конца', '#ff6b6b', 3000);
+                }
+            });
+        }
 
         // Закрытие модалок
         document.querySelectorAll('.close-modal').forEach(btn => {
@@ -262,6 +284,94 @@ class Game {
         // Ресайз
         window.addEventListener('resize', () => this.handleResize());
         this.handleResize();
+        
+        // === ФИКС СКРОЛЛА ДЛЯ МОДАЛЬНЫХ ОКОН НА МОБИЛЬНЫХ ===
+        this.setupModalScrollFix();
+    }
+    
+    /**
+     * Фикс для скролла в модальных окнах на мобильных устройствах
+     */
+    setupModalScrollFix() {
+        // Функция для добавления обработчиков к модальному окну
+        const addScrollHandlers = (modal) => {
+            const modalContent = modal.querySelector('.modal-content');
+            if (!modalContent) return;
+            
+            // Удаляем старые обработчики если есть (чтобы не дублировать)
+            modalContent.removeEventListener('touchstart', this.handleTouchStart);
+            modalContent.removeEventListener('touchmove', this.handleTouchMove);
+            
+            // Разрешаем скролл внутри модального контента
+            modalContent.addEventListener('touchstart', this.handleTouchStart, { passive: true });
+            modalContent.addEventListener('touchmove', this.handleTouchMove, { passive: false });
+        };
+        
+        // Сохраняем ссылки на обработчики
+        this.handleTouchStart = (e) => {
+            const modalContent = e.currentTarget;
+            modalContent.dataset.scrollTop = modalContent.scrollTop;
+            modalContent.dataset.clientY = e.touches[0].clientY;
+        };
+        
+        this.handleTouchMove = (e) => {
+            const modalContent = e.currentTarget;
+            const scrollTop = parseFloat(modalContent.dataset.scrollTop || 0);
+            const clientY = parseFloat(modalContent.dataset.clientY || 0);
+            const currentClientY = e.touches[0].clientY;
+            const deltaY = clientY - currentClientY;
+            
+            const isScrollingUp = deltaY > 0;
+            const isScrollingDown = deltaY < 0;
+            const canScrollUp = scrollTop > 0;
+            const canScrollDown = scrollTop + modalContent.clientHeight < modalContent.scrollHeight;
+            
+            // Если можем скроллить в нужном направлении - разрешаем
+            if ((isScrollingUp && canScrollUp) || (isScrollingDown && canScrollDown)) {
+                return;
+            }
+            
+            // Если достигли края - предотвращаем bounce-эффект страницы
+            if ((isScrollingUp && !canScrollUp) || (isScrollingDown && !canScrollDown)) {
+                e.preventDefault();
+            }
+        };
+        
+        // Обрабатываем существующие модальные окна
+        document.querySelectorAll('.modal').forEach(addScrollHandlers);
+        
+        // Наблюдаем за появлением новых модальных окон
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.nodeType === 1 && node.classList.contains('modal')) {
+                        addScrollHandlers(node);
+                    }
+                });
+            });
+        });
+        
+        observer.observe(document.body, { childList: true, subtree: true });
+        
+        // Глобальный обработчик для предотвращения скролла страницы при открытом модале
+        document.addEventListener('touchmove', (e) => {
+            const openModal = document.querySelector('.modal:not(.hidden)');
+            if (openModal) {
+                // Если тач внутри модального контента - проверяем нужно ли блокировать
+                const modalContent = openModal.querySelector('.modal-content');
+                if (modalContent && modalContent.contains(e.target)) {
+                    // Проверяем, можно ли скроллить
+                    const canScroll = modalContent.scrollHeight > modalContent.clientHeight;
+                    if (!canScroll) {
+                        e.preventDefault();
+                    }
+                    // Иначе позволяем всплыть к обработчику выше
+                } else {
+                    // Тач вне контента модала - блокируем
+                    e.preventDefault();
+                }
+            }
+        }, { passive: false });
     }
 
     handleResize() {
@@ -424,6 +534,11 @@ class Game {
         
         // Проверка на доступность престижа
         this.checkPrestigeAvailability();
+        
+        // Обновление рекламы
+        if (window.yandexSDK) {
+            window.yandexSDK.update(dt);
+        }
     }
     
     /**
@@ -595,19 +710,7 @@ class Game {
         document.getElementById('depth-meter').textContent = 
             Math.floor(this.drill.depth) + 'м';
 
-        // Дрифт
-        const driftFill = document.getElementById('drift-fill');
-        const driftMult = document.getElementById('drift-multiplier');
-        driftFill.style.width = (this.driftSystem.charge / this.driftSystem.maxCharge * 100) + '%';
-        driftMult.textContent = '×' + this.driftSystem.multiplier.toFixed(1);
-        
-        // Визуальная обратная связь для высокого дрифта
-        const driftPanel = document.getElementById('drift-panel');
-        if (this.driftSystem.multiplier > 2.0) {
-            driftPanel.classList.add('high-value');
-        } else {
-            driftPanel.classList.remove('high-value');
-        }
+        // Дрифт множитель убран из UI
         
         // Обновляем CPS
         const cpsElement = document.getElementById('cps-display');
@@ -644,6 +747,9 @@ class Game {
         modal.id = 'modal-settings';
         modal.className = 'modal';
         
+        // Проверяем доступность рекламы
+        const canShowAd = window.yandexSDK && window.yandexSDK.isReady;
+        
         modal.innerHTML = `
             <div class="modal-content settings-modal">
                 <h2>⚙️ Настройки</h2>
@@ -652,6 +758,9 @@ class Game {
                     <h3>🎮 Игра</h3>
                     <button class="settings-btn" id="btn-daily">📅 Ежедневные награды</button>
                     <button class="settings-btn" id="btn-prestige-menu">🔄 Престиж</button>
+                    <button class="settings-btn" id="btn-reward-ad" ${!canShowAd ? 'disabled' : ''}>
+                        📺 Реклама за награду ${!canShowAd ? '(загрузка...)' : ''}
+                    </button>
                 </div>
                 
                 <div class="settings-section">
@@ -692,6 +801,31 @@ class Game {
             modal.remove();
             this.showPrestigeModal();
         });
+        
+        // Обработчик рекламы
+        const btnRewardAd = modal.querySelector('#btn-reward-ad');
+        if (btnRewardAd) {
+            btnRewardAd.addEventListener('click', async () => {
+                // Проверяем готовность SDK
+                if (!window.yandexSDK || !window.yandexSDK.isReady) {
+                    this.showNotification('Реклама ещё загружается...', '#ff6b6b', 3000);
+                    return;
+                }
+                
+                const rewarded = await window.yandexSDK.showRewardedAd(() => {
+                    // Награда за просмотр рекламы: 50% от текущих монет + 1000
+                    const reward = Math.floor(this.economy.coins * 0.5) + 1000;
+                    this.economy.addCoins(reward);
+                    this.showNotification(`🎁 Награда: +${Utils.formatNumber(reward)} 🪙`, '#ffd700', 4000);
+                });
+                
+                if (rewarded) {
+                    modal.remove();
+                } else {
+                    this.showNotification('Реклама не была досмотрена до конца', '#ff6b6b', 3000);
+                }
+            });
+        }
         
         modal.querySelector('#settings-close').addEventListener('click', () => {
             modal.remove();
@@ -901,12 +1035,18 @@ async function initYandexSDK() {
         // Проверяем что SDK загружен
         if (typeof YaGames === 'undefined') {
             console.warn('YaGames SDK не загружен');
+            window.gameLanguage = 'ru';
             return;
         }
         
         // Инициализируем SDK
         window.ysdk = await YaGames.init();
         console.log('Yandex SDK инициализирован');
+        
+        // Инициализируем наш обертку
+        if (window.yandexSDK) {
+            await window.yandexSDK.init();
+        }
         
         // Получаем язык пользователя
         const playerLang = window.ysdk.environment.i18n.lang;
@@ -919,6 +1059,11 @@ async function initYandexSDK() {
         if ('mediaSession' in navigator) {
             navigator.mediaSession.metadata = null;
             console.log('MediaSession отключена');
+        }
+        
+        // Входим в полноэкранный режим
+        if (window.yandexSDK) {
+            await window.yandexSDK.enterFullscreen();
         }
         
     } catch (e) {

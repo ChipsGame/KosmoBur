@@ -1,8 +1,30 @@
+/**
+ * СИСТЕМА СОХРАНЕНИЙ
+ * Поддерживает localStorage (для тестов) и Yandex SDK (для продакшена)
+ */
 class SaveManager {
     constructor(game) {
         this.game = game;
         this.saveInterval = 5; // секунд
         this.timer = 0;
+        this.isYandex = false;
+        this.player = null;
+        
+        this.init();
+    }
+    
+    async init() {
+        // Проверяем доступность Yandex SDK
+        if (typeof YaGames !== 'undefined' && window.ysdk) {
+            try {
+                this.player = await window.ysdk.getPlayer();
+                this.isYandex = true;
+                console.log('Yandex Player инициализирован');
+            } catch (e) {
+                console.warn('Не удалось инициализировать Yandex Player:', e);
+                this.isYandex = false;
+            }
+        }
     }
 
     update(dt) {
@@ -13,7 +35,7 @@ class SaveManager {
         }
     }
 
-    save() {
+    async save() {
         const data = {
             economy: {
                 coins: this.game.economy.coins,
@@ -32,18 +54,56 @@ class SaveManager {
                 totalLayersDestroyed: this.game.currentLayer,
                 playTime: Date.now()
             },
-            // Новые системы
             autoDrill: this.game.autoDrill.save(),
             prestige: this.game.prestige.save(),
             dailyRewards: this.game.dailyRewards.save()
         };
 
-        localStorage.setItem('drillGame_save', JSON.stringify(data));
-        console.log('Игра сохранена');
+        const jsonData = JSON.stringify(data);
+
+        // Сохраняем в Yandex SDK если доступно
+        if (this.isYandex && this.player) {
+            try {
+                await this.player.setData({
+                    drillGameSave: jsonData
+                });
+                console.log('Игра сохранена в Yandex');
+            } catch (e) {
+                console.error('Ошибка сохранения в Yandex:', e);
+                // Fallback на localStorage
+                localStorage.setItem('drillGame_save', jsonData);
+            }
+        } else {
+            // Fallback на localStorage
+            localStorage.setItem('drillGame_save', jsonData);
+            console.log('Игра сохранена в localStorage');
+        }
     }
 
-    load() {
-        const saved = localStorage.getItem('drillGame_save');
+    async load() {
+        let saved = null;
+
+        // Пробуем загрузить из Yandex SDK
+        if (this.isYandex && this.player) {
+            try {
+                const data = await this.player.getData();
+                if (data && data.drillGameSave) {
+                    saved = data.drillGameSave;
+                    console.log('Игра загружена из Yandex');
+                }
+            } catch (e) {
+                console.error('Ошибка загрузки из Yandex:', e);
+            }
+        }
+
+        // Fallback на localStorage
+        if (!saved) {
+            saved = localStorage.getItem('drillGame_save');
+            if (saved) {
+                console.log('Игра загружена из localStorage');
+            }
+        }
+
         if (!saved) return;
 
         try {
@@ -57,7 +117,6 @@ class SaveManager {
             // Восстановление прокачки
             if (data.upgrades) {
                 Object.assign(this.game.upgrades.levels, data.upgrades);
-                // Применяем улучшения
                 Object.keys(data.upgrades).forEach(id => {
                     this.game.upgrades.applyUpgrade(id);
                 });

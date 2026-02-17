@@ -3,7 +3,7 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    touch-action: none;
+    touch-action: manipulation;
     user-select: none;
     -webkit-user-select: none;
 }
@@ -255,135 +255,100 @@ body {
 /* Верхняя панель */
 #top-bar {
     position: absolute;
-    top: 10px;
-    left: 10px;
-    right: 10px;
+    top: 8px;
+    left: 8px;
+    right: 8px;
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start;
     align-items: center;
     background: rgba(0,0,0,0.6);
-    padding: 8px 12px;
-    border-radius: 15px;
+    padding: 5px 8px;
+    border-radius: 10px;
     backdrop-filter: blur(5px);
     z-index: 20;
-    min-height: 50px;
+    min-height: 36px;
+    gap: 6px;
+}
+
+/* Левая часть с ресурсами */
+.resources-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .resource {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 2px;
     color: #fff;
     font-weight: bold;
-    font-size: clamp(14px, 4vw, 18px);
-    min-width: 80px;
+    font-size: 13px;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .resource .icon {
-    font-size: clamp(16px, 4vw, 20px);
+    font-size: 14px;
 }
 
 #depth-meter {
     color: #ffd700;
     font-weight: bold;
-    font-size: clamp(16px, 4vw, 20px);
+    font-size: 14px;
     text-shadow: 0 0 10px rgba(255,215,0,0.5);
     text-align: center;
-    flex: 0 0 auto;
-}
-
-/* Дрифт панель */
-#drift-panel {
-    position: absolute;
-    top: 70px;
-    left: 10px;
-    right: 70px;
-    background: rgba(0,0,0,0.6);
-    padding: 6px 8px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    z-index: 20;
-    max-width: calc(100vw - 90px);
-}
-
-#drift-bar {
-    flex: 1;
-    height: 16px;
-    background: #333;
-    border-radius: 8px;
-    overflow: hidden;
-    border: 1px solid #555;
-    min-width: 0;
-}
-
-#drift-fill {
-    width: 0%;
-    height: 100%;
-    background: linear-gradient(90deg, #ff6b6b, #ffd93d, #6bcf7f);
-    transition: width 0.1s linear;
-    box-shadow: 0 0 5px currentColor;
-}
-
-#drift-multiplier {
-    color: #fff;
-    font-weight: bold;
-    font-size: clamp(12px, 3vw, 16px);
-    min-width: 35px;
-    text-align: center;
+    white-space: nowrap;
     flex-shrink: 0;
 }
 
-/* CPS панель */
-#cps-panel {
+/* Панель статуса (CPS, автоклик) - без фона */
+#status-panel {
     position: absolute;
-    top: 95px;
+    top: 120px;
     left: 10px;
-    background: rgba(0,0,0,0.5);
-    padding: 4px 10px;
-    border-radius: 10px;
+    right: auto;
+    background: transparent;
+    padding: 0;
+    border-radius: 0;
+    display: flex;
+    align-items: center;
+    gap: 15px;
     z-index: 20;
 }
 
 #cps-display {
     color: #6bcf7f;
     font-weight: bold;
-    font-size: clamp(11px, 3vw, 14px);
-}
-
-/* Автоклик панель */
-#auto-panel {
-    position: absolute;
-    top: 95px;
-    left: 100px;
-    background: rgba(0,0,0,0.5);
-    padding: 4px 10px;
-    border-radius: 10px;
-    z-index: 20;
+    font-size: clamp(12px, 3vw, 14px);
 }
 
 #auto-display {
     color: #f093fb;
     font-weight: bold;
-    font-size: clamp(11px, 3vw, 14px);
+    font-size: clamp(12px, 3vw, 14px);
 }
+
+/* Дрифт множитель убран - больше не используется */
 
 /* Пауза панель */
 #pause-panel {
     position: absolute;
-    top: 95px;
-    right: 70px;
+    top: 120px;
+    right: 10px;
     z-index: 20;
 }
 
 .pause-btn {
-    width: 35px;
-    height: 35px;
-    border-radius: 8px;
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
     border: none;
     background: rgba(0,0,0,0.6);
-    font-size: 18px;
+    font-size: 20px;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -426,38 +391,26 @@ body {
     color: #aaa;
 }
 
-/* Правое меню */
-#right-menu {
-    position: absolute;
-    top: 75px;
-    right: 10px;
+/* Верхнее меню с кнопками */
+#top-menu {
     display: flex;
-    flex-direction: column;
-    gap: 8px;
-    z-index: 20;
-}
-
-/* На очень широких экранах (ПК) - меню ещё ниже */
-@media (min-aspect-ratio: 16/9) {
-    #right-menu {
-        top: 80px;
-    }
-    
-    #drift-panel {
-        top: 60px;
-    }
+    flex-direction: row;
+    gap: 4px;
+    align-items: center;
+    flex-shrink: 0;
+    margin-left: auto;
 }
 
 .menu-btn {
-    width: 45px;
-    height: 45px;
-    border-radius: 10px;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
     border: none;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
-    font-size: 20px;
+    font-size: 15px;
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
     transition: transform 0.1s, box-shadow 0.1s;
     display: flex;
     align-items: center;
@@ -467,6 +420,16 @@ body {
 
 .menu-btn:active {
     transform: scale(0.95);
+}
+
+.menu-btn.ad-btn {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    animation: pulse-ad 2s infinite;
+}
+
+@keyframes pulse-ad {
+    0%, 100% { box-shadow: 0 0 5px rgba(240, 147, 251, 0.5); }
+    50% { box-shadow: 0 0 15px rgba(240, 147, 251, 0.8); }
 }
 
 /* Панель усилителей */
@@ -559,6 +522,8 @@ body {
     position: relative;
     color: white;
     box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
 }
 
 .modal-content h2 {
@@ -599,6 +564,17 @@ body {
     max-height: 75vh;
     overflow-y: auto;
     padding-top: 15px;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Список достижений */
+#achievements-list {
+    max-height: 60vh;
+    overflow-y: auto;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+    padding-right: 5px;
 }
 
 /* Сетка улучшений - 2 колонки */
@@ -1178,6 +1154,12 @@ body {
     background: rgba(255,255,255,0.2);
 }
 
+.settings-btn:disabled {
+    background: rgba(255,255,255,0.05);
+    color: #888;
+    cursor: not-allowed;
+}
+
 .stats-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -1314,7 +1296,7 @@ html, body, div, span, canvas, button, img {
 /* ===== ПРЕДОТВРАЩЕНИЕ ОТТЯГИВАНИЯ НА МОБИЛЬНЫХ ===== */
 body {
     overscroll-behavior: none;
-    touch-action: none;
+    touch-action: manipulation;
 }
 
 /* Запрет на контекстное меню для canvas */
@@ -1337,28 +1319,23 @@ canvas {
         min-height: 45px;
     }
 
-    #drift-panel {
-        top: 55px;
+    #status-panel {
+        top: 110px;
         left: 8px;
-        right: 60px;
-        padding: 4px 6px;
-    }
-    
-    #cps-panel {
-        top: 78px;
-        left: 8px;
-        padding: 2px 8px;
-    }
-    
-    #auto-panel {
-        top: 78px;
-        left: 90px;
-        padding: 2px 8px;
+        right: auto;
+        padding: 0;
+        gap: 12px;
     }
     
     #pause-panel {
-        top: 78px;
-        right: 60px;
+        top: 110px;
+        right: 8px;
+    }
+    
+    .pause-btn {
+        width: 38px;
+        height: 38px;
+        font-size: 18px;
     }
     
     .pause-btn {
@@ -1367,16 +1344,10 @@ canvas {
         font-size: 14px;
     }
     
-    #right-menu {
-        top: 60px;
-        right: 8px;
-        gap: 6px;
-    }
-    
-    .menu-btn {
-        width: 40px;
-        height: 40px;
-        font-size: 18px;
+    #top-menu .menu-btn {
+        width: 22px;
+        height: 22px;
+        font-size: 10px;
     }
 
     #boosts-panel {
@@ -1406,28 +1377,23 @@ canvas {
         min-height: 40px;
     }
     
-    #drift-panel {
-        top: 50px;
+    #status-panel {
+        top: 100px;
         left: 5px;
-        right: 50px;
-        padding: 2px 4px;
-    }
-    
-    #cps-panel {
-        top: 72px;
-        left: 5px;
-        padding: 2px 6px;
-    }
-    
-    #auto-panel {
-        top: 72px;
-        left: 80px;
-        padding: 2px 6px;
+        right: auto;
+        padding: 0;
+        gap: 10px;
     }
     
     #pause-panel {
-        top: 72px;
-        right: 50px;
+        top: 100px;
+        right: 5px;
+    }
+    
+    .pause-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 16px;
     }
     
     .pause-btn {
@@ -1436,30 +1402,11 @@ canvas {
         font-size: 12px;
     }
     
-    #drift-bar {
-        height: 12px;
-    }
-    
-    #drift-multiplier {
-        font-size: 11px;
-        min-width: 28px;
-    }
-    
-    #right-menu {
-        top: 50px;
-    }
-    
-    #right-menu {
-        top: 50px;
-        right: 5px;
-        gap: 5px;
-    }
-    
-    .menu-btn {
-        width: 35px;
-        height: 35px;
-        font-size: 16px;
-        border-radius: 8px;
+    #top-menu .menu-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 13px;
+        border-radius: 5px;
     }
     
     .resource {
@@ -1474,15 +1421,6 @@ canvas {
     
     #depth-meter {
         font-size: 14px;
-    }
-    
-    #drift-bar {
-        height: 14px;
-    }
-    
-    #drift-multiplier {
-        font-size: 12px;
-        min-width: 30px;
     }
     
     #boosts-panel {
@@ -1517,46 +1455,29 @@ canvas {
         min-height: 35px;
     }
     
-    #drift-panel {
-        top: 40px;
-        right: 45px;
-        padding: 1px 3px;
-    }
-    
-    #cps-panel {
-        top: 58px;
+    #status-panel {
+        top: 90px;
         left: 5px;
-        padding: 1px 5px;
-    }
-    
-    #auto-panel {
-        top: 58px;
-        left: 70px;
-        padding: 1px 5px;
+        right: auto;
+        padding: 0;
+        gap: 8px;
     }
     
     #pause-panel {
-        top: 58px;
-        right: 45px;
+        top: 90px;
+        right: 5px;
     }
     
-    #drift-bar {
-        height: 10px;
+    .pause-btn {
+        width: 34px;
+        height: 34px;
+        font-size: 15px;
     }
     
-    #drift-multiplier {
-        font-size: 10px;
-        min-width: 25px;
-    }
-    
-    #right-menu {
-        top: 40px;
-    }
-    
-    .menu-btn {
-        width: 30px;
-        height: 30px;
-        font-size: 14px;
+    #top-menu .menu-btn {
+        width: 26px;
+        height: 26px;
+        font-size: 12px;
     }
     
     #boosts-panel {
@@ -1596,18 +1517,15 @@ canvas {
         min-width: 50px;
     }
     
-    #drift-panel {
-        right: 45px;
+    #status-panel {
+        top: 38px;
+        right: 5px;
+        padding: 2px 5px;
+        gap: 6px;
     }
     
-    #right-menu {
-        gap: 3px;
-    }
-    
-    .menu-btn {
-        width: 30px;
-        height: 30px;
-        font-size: 13px;
+    #pause-panel {
+        top: 38px;
     }
     
     #boosts-panel {
@@ -1648,14 +1566,14 @@ canvas {
         min-width: 40px;
     }
     
-    #drift-panel {
-        right: 40px;
+    #status-panel {
+        right: 5px;
     }
     
-    .menu-btn {
-        width: 28px;
-        height: 28px;
-        font-size: 12px;
+    #top-menu .menu-btn {
+        width: 24px;
+        height: 24px;
+        font-size: 11px;
     }
     
     .boost-slot {
@@ -1673,8 +1591,8 @@ canvas {
 
 /* Оптимизация для портретной ориентации */
 @media (orientation: portrait) {
-    #drift-panel {
-        max-width: calc(100vw - 80px);
+    #status-panel {
+        max-width: none;
     }
     
     #boosts-panel {
@@ -1690,30 +1608,31 @@ canvas {
         min-height: 40px;
     }
     
-    #drift-panel {
+    #status-panel {
         top: 50px;
         left: 10px;
+        right: 55px;
+        padding: 3px 10px;
+    }
+    
+    #top-menu .menu-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 13px;
+    }
+    
+    #status-panel {
+        top: 105px;
         right: auto;
-        width: calc(100% - 170px);
-        max-width: 400px;
-        padding: 3px 5px;
     }
     
-    #drift-bar {
-        height: 12px;
+    #pause-panel {
+        top: 105px;
     }
     
-    #right-menu {
-        top: 50px;
-        right: 10px;
-        flex-direction: column;
-        gap: 4px;
-    }
-    
-    .menu-btn {
-        width: 34px;
-        height: 34px;
-        font-size: 14px;
+    .pause-btn {
+        width: 36px;
+        height: 36px;
     }
     
     #boosts-panel {
@@ -1725,38 +1644,40 @@ canvas {
 
 /* Специально для Surface Duo и похожих устройств */
 @media (orientation: landscape) and (max-height: 750px) {
-    #drift-panel {
-        top: 48px;
+    #status-panel {
+        top: 100px;
     }
     
-    #right-menu {
-        top: 48px;
+    #pause-panel {
+        top: 100px;
+    }
+    
+    .pause-btn {
+        width: 34px;
+        height: 34px;
     }
 }
 
 @media (orientation: landscape) and (max-height: 650px) {
-    #drift-panel {
-        top: 45px;
-        padding: 2px 4px;
+    #status-panel {
+        top: 42px;
+        padding: 2px 6px;
     }
     
-    #drift-bar {
-        height: 10px;
+    #top-menu .menu-btn {
+        width: 30px;
+        height: 30px;
+        font-size: 14px;
     }
     
-    #right-menu {
-        top: 45px;
-    }
-    
-    .menu-btn {
-        width: 32px;
-        height: 32px;
-        font-size: 13px;
+    #pause-panel {
+        top: 42px;
     }
 }
 
 /* Обеспечиваем визуальную обратную связь */
-#drift-panel.high-value #drift-fill {
+#status-panel .high-value {
+    color: #ff6b6b;
     animation: pulse 1s infinite;
 }
 

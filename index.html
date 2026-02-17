@@ -19,6 +19,14 @@
             -ms-user-select: none;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        
+        /* Разрешаем скролл в модальных окнах */
+        .modal-content {
+            touch-action: pan-y;
+            -webkit-overflow-scrolling: touch;
+            overflow-y: auto;
         }
         html, body {
             overscroll-behavior: none;
@@ -26,6 +34,7 @@
             position: fixed;
             width: 100%;
             height: 100%;
+            touch-action: manipulation;
         }
     </style>
     <title>Космический Бур</title>
@@ -38,47 +47,38 @@
 
         <!-- UI Overlay -->
         <div id="ui-layer">
-            <!-- Верхняя панель -->
+            <!-- Верхняя панель с ресурсами -->
             <div id="top-bar">
-                <div class="resource">
-                    <span class="icon">🪙</span>
-                    <span id="coins">0</span>
+                <div class="resources-left">
+                    <div class="resource">
+                        <span class="icon">🪙</span>
+                        <span id="coins">0</span>
+                    </div>
+                    <div class="resource">
+                        <span class="icon">💎</span>
+                        <span id="ore">0</span>
+                    </div>
+                    <div id="depth-meter">0м</div>
                 </div>
-                <div class="resource">
-                    <span class="icon">💎</span>
-                    <span id="ore">0</span>
+                
+                <!-- Кнопки меню сверху справа -->
+                <div id="top-menu">
+                    <button id="btn-upgrades" class="menu-btn" title="Улучшения">🔧</button>
+                    <button id="btn-achievements" class="menu-btn" title="Достижения">🏆</button>
+                    <button id="btn-settings" class="menu-btn" title="Настройки">⚙️</button>
+                    <button id="btn-ad" class="menu-btn ad-btn" title="Реклама за награду">📺</button>
                 </div>
-                <div id="depth-meter">0м</div>
             </div>
 
-            <!-- Дрифт индикатор -->
-            <div id="drift-panel">
-                <div id="drift-bar">
-                    <div id="drift-fill"></div>
-                </div>
-                <div id="drift-multiplier">×1.0</div>
-            </div>
-            
-            <!-- CPS индикатор -->
-            <div id="cps-panel">
+            <!-- Индикаторы статуса (в одну строку) -->
+            <div id="status-panel">
                 <span id="cps-display">0 клик/с</span>
-            </div>
-            
-            <!-- Автоклик индикатор -->
-            <div id="auto-panel">
                 <span id="auto-display">🤖 0/с</span>
             </div>
             
             <!-- Кнопка паузы -->
             <div id="pause-panel">
                 <button id="btn-pause" class="pause-btn">⏸️</button>
-            </div>
-
-            <!-- Кнопки справа -->
-            <div id="right-menu">
-                <button id="btn-upgrades" class="menu-btn" title="Улучшения">🔧</button>
-                <button id="btn-achievements" class="menu-btn" title="Достижения">🏆</button>
-                <button id="btn-settings" class="menu-btn" title="Настройки">⚙️</button>
             </div>
 
             <!-- Панель усилителей (убрана - не используется) -->
@@ -114,6 +114,7 @@
 
     <!-- Скрипты -->
     <script src="js/utils/Utils.js"></script>
+    <script src="js/systems/YandexSDK.js"></script>
     <script src="js/core/Renderer.js"></script>
     <script src="js/core/Input.js"></script>
     <script src="js/entities/Particle.js"></script>
