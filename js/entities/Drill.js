@@ -353,7 +353,8 @@ class Drill {
     render(ctx, camera) {
         const screenY = this.y - camera.y;
         
-        // Получаем цвета текущего скина
+        // Получаем цвета и ID текущего скина
+        const skinId = this.game.skins ? this.game.skins.currentSkin : 'default';
         const colors = this.game.skins ? this.game.skins.getColors() : {
             body: '#718096',
             cabin: '#2d3748',
@@ -373,87 +374,22 @@ class Drill {
         const shakeY = this.shakeOffsetY;
         ctx.translate(this.x + shakeX, screenY + shakeY);
         
-        // === УПРОЩЁННЫЙ БУР СО СКИНАМИ ===
+        // === УНИКАЛЬНЫЕ ДЕТАЛИ ДЛЯ КАЖДОГО СКИНА ===
         
-        // 1. СВЕРЛО (внизу, статичное - без вращения)
-        const drillGrad = ctx.createLinearGradient(0, bodyHeight/2, 0, bodyHeight/2 + drillLength);
-        drillGrad.addColorStop(0, colors.drill);
-        drillGrad.addColorStop(1, this.darkenColor(colors.drill, 30));
-        
-        ctx.fillStyle = drillGrad;
-        ctx.beginPath();
-        ctx.moveTo(-20, bodyHeight/2);
-        ctx.lineTo(0, bodyHeight/2 + drillLength + 15);
-        ctx.lineTo(20, bodyHeight/2);
-        ctx.closePath();
-        ctx.fill();
-        
-        // Обводка сверла
-        ctx.strokeStyle = this.darkenColor(colors.drill, 50);
-        ctx.lineWidth = 2;
-        ctx.stroke();
+        // 1. СВЕРЛО - разное для разных скинов
+        this.renderDrillBit(ctx, skinId, colors, bodyHeight, drillLength);
         
         // 2. КОРПУС БУРА
-        const bodyGrad = ctx.createLinearGradient(-bodyWidth/2, 0, bodyWidth/2, 0);
-        bodyGrad.addColorStop(0, this.darkenColor(colors.body, 20));
-        bodyGrad.addColorStop(0.3, colors.body);
-        bodyGrad.addColorStop(0.7, colors.body);
-        bodyGrad.addColorStop(1, this.darkenColor(colors.body, 20));
+        this.renderBody(ctx, skinId, colors, bodyWidth, bodyHeight);
         
-        ctx.fillStyle = bodyGrad;
-        ctx.beginPath();
-        ctx.roundRect(-bodyWidth/2, -bodyHeight/2, bodyWidth, bodyHeight, 12);
-        ctx.fill();
+        // 3. КАБИНА
+        this.renderCabin(ctx, skinId, colors, bodyWidth, bodyHeight);
         
-        ctx.strokeStyle = this.darkenColor(colors.body, 40);
-        ctx.lineWidth = 2;
-        ctx.stroke();
+        // 4. ИЛЛЮМИНАТОР / ГЛАЗ / и т.д.
+        this.renderWindow(ctx, skinId, colors, bodyHeight);
         
-        // 3. КАБИНА (верхняя часть)
-        const cabinGrad = ctx.createLinearGradient(-bodyWidth/2, -bodyHeight/2, bodyWidth/2, -bodyHeight/2 + 50);
-        cabinGrad.addColorStop(0, this.darkenColor(colors.cabin, 20));
-        cabinGrad.addColorStop(0.5, colors.cabin);
-        cabinGrad.addColorStop(1, this.darkenColor(colors.cabin, 20));
-        
-        ctx.fillStyle = cabinGrad;
-        ctx.beginPath();
-        ctx.roundRect(-bodyWidth/2, -bodyHeight/2, bodyWidth, 50, [12, 12, 0, 0]);
-        ctx.fill();
-        
-        // 4. ИЛЛЮМИНАТОР
-        const windowGlow = this.isDrilling ? 0.8 + 0.2 * Math.sin(Date.now() / 100) : 0.4;
-        const windowColor = colors.window;
-        
-        ctx.fillStyle = windowColor;
-        ctx.globalAlpha = windowGlow;
-        ctx.beginPath();
-        ctx.arc(0, -bodyHeight/2 + 25, 15, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.globalAlpha = 1;
-        
-        // Ободок
-        ctx.strokeStyle = '#1a202c';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        
-        // 5. ДЕТАЛИ
-        // Полосы на корпусе
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-        ctx.fillRect(-bodyWidth/2 + 5, -10, bodyWidth - 10, 3);
-        ctx.fillRect(-bodyWidth/2 + 5, 20, bodyWidth - 10, 3);
-        
-        // Болты
-        const boltPositions = [
-            {x: -25, y: -40}, {x: 25, y: -40},
-            {x: -25, y: 40}, {x: 25, y: 40}
-        ];
-        
-        ctx.fillStyle = this.darkenColor(colors.body, 30);
-        for (const bolt of boltPositions) {
-            ctx.beginPath();
-            ctx.arc(bolt.x, bolt.y, 4, 0, Math.PI * 2);
-            ctx.fill();
-        }
+        // 5. УНИКАЛЬНЫЕ ДЕТАЛИ СКИНА
+        this.renderSkinDetails(ctx, skinId, colors, bodyWidth, bodyHeight);
         
         // 6. ИНДИКАТОР ТЕМПЕРАТУРЫ
         const tempPercent = this.temperature / this.maxTemperature;
@@ -466,7 +402,7 @@ class Drill {
         const fillHeight = 46 * tempPercent;
         ctx.fillRect(bodyWidth/2 + 7, 23 - fillHeight, 2, fillHeight);
         
-        // 7. ИНДИКАЦИЯ ПЕРЕГРЕВА - красная обводка корпуса
+        // 7. ИНДИКАЦИЯ ПЕРЕГРЕВА
         if (this.temperature > 70) {
             const pulseAlpha = 0.5 + 0.5 * Math.sin(Date.now() / 200);
             ctx.strokeStyle = `rgba(229, 62, 62, ${pulseAlpha})`;
@@ -487,6 +423,270 @@ class Drill {
         // Эффект дрифта
         if (this.game.driftSystem.multiplier > 1.5) {
             this.renderDriftEffect(ctx, screenY);
+        }
+    }
+    
+    // === ОТДЕЛЬНЫЕ ЧАСТИ БУРА ===
+    
+    renderDrillBit(ctx, skinId, colors, bodyHeight, drillLength) {
+        const drillGrad = ctx.createLinearGradient(0, bodyHeight/2, 0, bodyHeight/2 + drillLength);
+        drillGrad.addColorStop(0, colors.drill);
+        drillGrad.addColorStop(1, this.darkenColor(colors.drill, 30));
+        
+        ctx.fillStyle = drillGrad;
+        
+        if (skinId === 'lava') {
+            // Лавовый - пламя вместо сверла
+            ctx.fillStyle = '#ff6b6b';
+            ctx.beginPath();
+            ctx.moveTo(-15, bodyHeight/2);
+            ctx.quadraticCurveTo(-20, bodyHeight/2 + 30, 0, bodyHeight/2 + 60);
+            ctx.quadraticCurveTo(20, bodyHeight/2 + 30, 15, bodyHeight/2);
+            ctx.fill();
+            // Внутреннее пламя
+            ctx.fillStyle = '#ffd93d';
+            ctx.beginPath();
+            ctx.moveTo(-8, bodyHeight/2);
+            ctx.quadraticCurveTo(-10, bodyHeight/2 + 20, 0, bodyHeight/2 + 40);
+            ctx.quadraticCurveTo(10, bodyHeight/2 + 20, 8, bodyHeight/2);
+            ctx.fill();
+        } else if (skinId === 'diamond') {
+            // Алмазный - кристалл
+            ctx.fillStyle = colors.drill;
+            ctx.beginPath();
+            ctx.moveTo(0, bodyHeight/2 - 10);
+            ctx.lineTo(18, bodyHeight/2 + 20);
+            ctx.lineTo(0, bodyHeight/2 + 55);
+            ctx.lineTo(-18, bodyHeight/2 + 20);
+            ctx.closePath();
+            ctx.fill();
+            // Грани
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(0, bodyHeight/2 - 10);
+            ctx.lineTo(0, bodyHeight/2 + 55);
+            ctx.moveTo(-18, bodyHeight/2 + 20);
+            ctx.lineTo(18, bodyHeight/2 + 20);
+            ctx.stroke();
+        } else {
+            // Стандартное сверло
+            ctx.beginPath();
+            ctx.moveTo(-20, bodyHeight/2);
+            ctx.lineTo(0, bodyHeight/2 + drillLength + 15);
+            ctx.lineTo(20, bodyHeight/2);
+            ctx.closePath();
+            ctx.fill();
+            
+            ctx.strokeStyle = this.darkenColor(colors.drill, 50);
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+    }
+    
+    renderBody(ctx, skinId, colors, bodyWidth, bodyHeight) {
+        const bodyGrad = ctx.createLinearGradient(-bodyWidth/2, 0, bodyWidth/2, 0);
+        bodyGrad.addColorStop(0, this.darkenColor(colors.body, 20));
+        bodyGrad.addColorStop(0.3, colors.body);
+        bodyGrad.addColorStop(0.7, colors.body);
+        bodyGrad.addColorStop(1, this.darkenColor(colors.body, 20));
+        
+        ctx.fillStyle = bodyGrad;
+        
+        if (skinId === 'military') {
+            // Военный - угловатый корпус
+            ctx.beginPath();
+            ctx.moveTo(-bodyWidth/2, -bodyHeight/2 + 10);
+            ctx.lineTo(-bodyWidth/2 + 10, -bodyHeight/2);
+            ctx.lineTo(bodyWidth/2 - 10, -bodyHeight/2);
+            ctx.lineTo(bodyWidth/2, -bodyHeight/2 + 10);
+            ctx.lineTo(bodyWidth/2, bodyHeight/2 - 10);
+            ctx.lineTo(bodyWidth/2 - 10, bodyHeight/2);
+            ctx.lineTo(-bodyWidth/2 + 10, bodyHeight/2);
+            ctx.lineTo(-bodyWidth/2, bodyHeight/2 - 10);
+            ctx.closePath();
+            ctx.fill();
+        } else {
+            // Стандартный округлый
+            ctx.beginPath();
+            ctx.roundRect(-bodyWidth/2, -bodyHeight/2, bodyWidth, bodyHeight, 12);
+            ctx.fill();
+        }
+        
+        ctx.strokeStyle = this.darkenColor(colors.body, 40);
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+    
+    renderCabin(ctx, skinId, colors, bodyWidth, bodyHeight) {
+        const cabinGrad = ctx.createLinearGradient(-bodyWidth/2, -bodyHeight/2, bodyWidth/2, -bodyHeight/2 + 50);
+        cabinGrad.addColorStop(0, this.darkenColor(colors.cabin, 20));
+        cabinGrad.addColorStop(0.5, colors.cabin);
+        cabinGrad.addColorStop(1, this.darkenColor(colors.cabin, 20));
+        
+        ctx.fillStyle = cabinGrad;
+        
+        if (skinId === 'cyber') {
+            // Киберпанк - треугольная кабина
+            ctx.beginPath();
+            ctx.moveTo(-bodyWidth/2, -bodyHeight/2 + 50);
+            ctx.lineTo(0, -bodyHeight/2);
+            ctx.lineTo(bodyWidth/2, -bodyHeight/2 + 50);
+            ctx.closePath();
+            ctx.fill();
+        } else {
+            ctx.beginPath();
+            ctx.roundRect(-bodyWidth/2, -bodyHeight/2, bodyWidth, 50, [12, 12, 0, 0]);
+            ctx.fill();
+        }
+    }
+    
+    renderWindow(ctx, skinId, colors, bodyHeight) {
+        const windowGlow = this.isDrilling ? 0.8 + 0.2 * Math.sin(Date.now() / 100) : 0.4;
+        
+        if (skinId === 'alien') {
+            // Инопланетный - вертикальный глаз
+            ctx.fillStyle = colors.window;
+            ctx.globalAlpha = windowGlow;
+            ctx.beginPath();
+            ctx.ellipse(0, -bodyHeight/2 + 25, 8, 18, 0, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+            // Зрачок
+            ctx.fillStyle = '#000000';
+            ctx.beginPath();
+            ctx.ellipse(0, -bodyHeight/2 + 25, 3, 10, 0, 0, Math.PI * 2);
+            ctx.fill();
+        } else if (skinId === 'cyber') {
+            // Киберпанк - квадратный экран
+            ctx.fillStyle = colors.window;
+            ctx.globalAlpha = windowGlow;
+            ctx.fillRect(-12, -bodyHeight/2 + 15, 24, 24);
+            ctx.globalAlpha = 1;
+        } else {
+            // Стандартный круглый
+            ctx.fillStyle = colors.window;
+            ctx.globalAlpha = windowGlow;
+            ctx.beginPath();
+            ctx.arc(0, -bodyHeight/2 + 25, 15, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = 1;
+        }
+        
+        ctx.strokeStyle = '#1a202c';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+    
+    renderSkinDetails(ctx, skinId, colors, bodyWidth, bodyHeight) {
+        switch(skinId) {
+            case 'golden':
+                // Корона сверху
+                ctx.fillStyle = '#ffd700';
+                ctx.beginPath();
+                ctx.moveTo(-20, -bodyHeight/2);
+                ctx.lineTo(-15, -bodyHeight/2 - 15);
+                ctx.lineTo(-5, -bodyHeight/2 - 8);
+                ctx.lineTo(0, -bodyHeight/2 - 20);
+                ctx.lineTo(5, -bodyHeight/2 - 8);
+                ctx.lineTo(15, -bodyHeight/2 - 15);
+                ctx.lineTo(20, -bodyHeight/2);
+                ctx.closePath();
+                ctx.fill();
+                ctx.strokeStyle = '#b8860b';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                break;
+                
+            case 'cyber':
+                // Провода-антенны
+                ctx.strokeStyle = colors.window;
+                ctx.lineWidth = 2;
+                // Левая антенна
+                ctx.beginPath();
+                ctx.moveTo(-25, -bodyHeight/2 + 20);
+                ctx.quadraticCurveTo(-40, -bodyHeight/2 - 10, -35, -bodyHeight/2 - 25);
+                ctx.stroke();
+                // Правая антенна
+                ctx.beginPath();
+                ctx.moveTo(25, -bodyHeight/2 + 20);
+                ctx.quadraticCurveTo(40, -bodyHeight/2 - 10, 35, -bodyHeight/2 - 25);
+                ctx.stroke();
+                // Мигающие огоньки на проводах
+                if (Math.sin(Date.now() / 200) > 0) {
+                    ctx.fillStyle = '#ff00ff';
+                    ctx.beginPath();
+                    ctx.arc(-35, -bodyHeight/2 - 25, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#00ffff';
+                    ctx.beginPath();
+                    ctx.arc(35, -bodyHeight/2 - 25, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                break;
+                
+            case 'military':
+                // Бронепластины по бокам
+                ctx.fillStyle = this.darkenColor(colors.body, 20);
+                ctx.fillRect(-bodyWidth/2 - 8, -20, 8, 40);
+                ctx.fillRect(bodyWidth/2, -20, 8, 40);
+                // Заклёпки
+                ctx.fillStyle = '#4a5568';
+                for (let y = -15; y <= 15; y += 10) {
+                    ctx.beginPath();
+                    ctx.arc(-bodyWidth/2 - 4, y, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.arc(bodyWidth/2 + 4, y, 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                break;
+                
+            case 'diamond':
+                // Кристаллы на боках
+                ctx.fillStyle = colors.drill;
+                // Левый кристалл
+                ctx.beginPath();
+                ctx.moveTo(-bodyWidth/2 - 5, 0);
+                ctx.lineTo(-bodyWidth/2 - 15, -10);
+                ctx.lineTo(-bodyWidth/2 - 15, 10);
+                ctx.closePath();
+                ctx.fill();
+                // Правый кристалл
+                ctx.beginPath();
+                ctx.moveTo(bodyWidth/2 + 5, 0);
+                ctx.lineTo(bodyWidth/2 + 15, -10);
+                ctx.lineTo(bodyWidth/2 + 15, 10);
+                ctx.closePath();
+                ctx.fill();
+                break;
+                
+            case 'pirate':
+                // Повязка на глаз
+                ctx.fillStyle = '#1a202c';
+                ctx.fillRect(-18, -bodyHeight/2 + 18, 36, 14);
+                ctx.fillStyle = '#000000';
+                ctx.beginPath();
+                ctx.arc(0, -bodyHeight/2 + 25, 10, 0, Math.PI * 2);
+                ctx.fill();
+                break;
+                
+            default:
+                // Стандартные детали - полосы и болты
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+                ctx.fillRect(-bodyWidth/2 + 5, -10, bodyWidth - 10, 3);
+                ctx.fillRect(-bodyWidth/2 + 5, 20, bodyWidth - 10, 3);
+                
+                ctx.fillStyle = this.darkenColor(colors.body, 30);
+                const boltPositions = [
+                    {x: -25, y: -40}, {x: 25, y: -40},
+                    {x: -25, y: 40}, {x: 25, y: 40}
+                ];
+                for (const bolt of boltPositions) {
+                    ctx.beginPath();
+                    ctx.arc(bolt.x, bolt.y, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                }
         }
     }
     

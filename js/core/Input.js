@@ -87,15 +87,6 @@ class Input {
                 this.keyPressed = false;
             }
         });
-        
-        // === ЧИТ: клавиша C = +99999 монет и руды ===
-        window.addEventListener('keydown', (e) => {
-            if (e.code === 'KeyC') {
-                this.game.economy.addCoins(99999);
-                this.game.economy.addOre(99999);
-                this.game.showNotification('💰 ЧИТ: +99999 🪙 и 💎!', '#ffd700', 3000);
-            }
-        });
     }
     
     /**
