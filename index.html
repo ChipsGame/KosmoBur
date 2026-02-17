@@ -23,21 +23,34 @@
         }
         
         /* Разрешаем скролл в модальных окнах */
+        .modal {
+            touch-action: pan-y !important;
+        }
+        
         .modal-content {
             touch-action: pan-y !important;
             -webkit-overflow-scrolling: touch !important;
             overflow-y: auto !important;
             overscroll-behavior: contain !important;
+            pointer-events: auto !important;
         }
         
         /* Разрешаем скролл в сетке улучшений */
         .upgrades-grid {
             touch-action: pan-y !important;
+            pointer-events: auto !important;
         }
         
         /* Разрешаем скролл на карточках улучшений */
         .upgrade-card {
             touch-action: pan-y !important;
+            pointer-events: auto !important;
+        }
+        
+        /* Кнопки в карточках должны быть кликабельны */
+        .upgrade-card button {
+            touch-action: manipulation !important;
+            pointer-events: auto !important;
         }
         
         /* Фикс для iOS - предотвращаем pull-to-refresh */
@@ -55,6 +68,11 @@
             width: 100%;
             height: 100%;
             touch-action: manipulation;
+        }
+        
+        /* Когда модалка открыта - разрешаем скролл на body */
+        body:has(.modal:not(.hidden)) {
+            touch-action: pan-y;
         }
     </style>
     <title>Космический Бур</title>

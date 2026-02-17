@@ -357,7 +357,8 @@ body {
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
     margin-top: 15px;
-    padding-bottom: 10px;
+    padding-bottom: 50px; /* Увеличили отступ чтобы гарантированно был скролл */
+    min-height: min-content; /* Гарантируем что сетка занимает место */
     /* Разрешаем скролл сетки - !important чтобы перебить * selector */
     touch-action: pan-y !important;
     -webkit-overflow-scrolling: touch;

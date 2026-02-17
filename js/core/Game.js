@@ -164,8 +164,14 @@ class Game {
         // blur/focus убраны - они мешают при открытии DevTools
         
         // === ПРЕДОТВРАЩЕНИЕ УХОДА В СОН НА МОБИЛЬНЫХ ===
-        // Блокируем стандартное поведение при свайпах
+        // Блокируем стандартное поведение при свайпах ТОЛЬКО на canvas
+        // НЕ блокируем на модальных окнах
         document.addEventListener('touchmove', (e) => {
+            const modal = document.querySelector('.modal:not(.hidden)');
+            if (modal && (e.target.closest('.modal') || e.target.closest('.modal-content'))) {
+                // Если открыто модальное окно и тач внутри него - не блокируем
+                return;
+            }
             if (e.target.closest('#game-container')) {
                 e.preventDefault();
             }
@@ -273,6 +279,11 @@ class Game {
                 modalContent.style.touchAction = 'pan-y';
                 modalContent.style.webkitOverflowScrolling = 'touch';
                 modalContent.style.overscrollBehavior = 'contain';
+                
+                // Отладка - проверяем нужен ли скролл
+                console.log('Modal content height:', modalContent.clientHeight);
+                console.log('Modal scroll height:', modalContent.scrollHeight);
+                console.log('Needs scroll:', modalContent.scrollHeight > modalContent.clientHeight);
             }
         });
 
@@ -337,56 +348,11 @@ class Game {
     
     /**
      * Фикс для скролла в модальных окнах на мобильных устройствах
+     * Упрощённая версия - полагаемся на CSS
      */
     setupModalScrollFix() {
-        let scrollStartY = 0;
-        
-        // touchstart - запоминаем начальную позицию
-        document.addEventListener('touchstart', (e) => {
-            scrollStartY = e.touches[0].clientY;
-        }, { passive: true });
-        
-        // touchmove - управляем скроллом
-        document.addEventListener('touchmove', (e) => {
-            const openModal = document.querySelector('.modal:not(.hidden)');
-            if (!openModal) return;
-            
-            const modalContent = openModal.querySelector('.modal-content');
-            if (!modalContent) {
-                e.preventDefault();
-                return;
-            }
-            
-            // Проверяем, находится ли тач внутри модального контента
-            // Используем composedPath для Shadow DOM совместимости
-            const path = e.composedPath ? e.composedPath() : [e.target];
-            const isInsideModal = path.includes(modalContent);
-            
-            if (!isInsideModal) {
-                e.preventDefault();
-                return;
-            }
-            
-            // Мы внутри модального контента
-            const currentY = e.touches[0].clientY;
-            const deltaY = scrollStartY - currentY;
-            
-            const isScrollingUp = deltaY > 0;
-            const isScrollingDown = deltaY < 0;
-            const scrollTop = modalContent.scrollTop;
-            const scrollHeight = modalContent.scrollHeight;
-            const clientHeight = modalContent.clientHeight;
-            const canScrollUp = scrollTop > 0;
-            const canScrollDown = scrollTop + clientHeight < scrollHeight;
-            
-            // Если скроллим в направлении где есть куда скроллить - разрешаем
-            if ((isScrollingUp && canScrollUp) || (isScrollingDown && canScrollDown)) {
-                return; // Не блокируем - разрешаем скролл
-            }
-            
-            // Если достигли края - блокируем чтобы не было bounce-эффекта страницы
-            e.preventDefault();
-        }, { passive: false });
+        // Ничего не делаем - все фиксы в CSS и в едином обработчике touchmove выше
+        console.log('Modal scroll fix initialized');
     }
 
     handleResize() {
