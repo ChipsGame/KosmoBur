@@ -24,10 +24,20 @@
         
         /* Разрешаем скролл в модальных окнах */
         .modal-content {
-            touch-action: pan-y;
-            -webkit-overflow-scrolling: touch;
-            overflow-y: auto;
-            overscroll-behavior: contain;
+            touch-action: pan-y !important;
+            -webkit-overflow-scrolling: touch !important;
+            overflow-y: auto !important;
+            overscroll-behavior: contain !important;
+        }
+        
+        /* Разрешаем скролл в сетке улучшений */
+        .upgrades-grid {
+            touch-action: pan-y !important;
+        }
+        
+        /* Разрешаем скролл на карточках улучшений */
+        .upgrade-card {
+            touch-action: pan-y !important;
         }
         
         /* Фикс для iOS - предотвращаем pull-to-refresh */

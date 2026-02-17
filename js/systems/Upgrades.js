@@ -327,6 +327,10 @@ class Upgrades {
         const container = document.querySelector('.upgrades-grid');
         container.innerHTML = '';
         
+        // Фикс для мобильного скролла - разрешаем скролл на контейнере
+        container.style.touchAction = 'pan-y';
+        container.style.webkitOverflowScrolling = 'touch';
+        
         // Фильтруем улучшения по категории и доступности
         const availableUpgrades = this.upgrades.filter(upg => {
             // Всегда показываем базовые и авто
@@ -347,6 +351,14 @@ class Upgrades {
 
             const card = document.createElement('div');
             card.className = `upgrade-card ${maxed ? 'maxed' : ''} ${isLocked ? 'locked' : ''}`;
+            // Фикс для мобильного скролла
+            card.style.touchAction = 'pan-y';
+            card.addEventListener('touchstart', (e) => {
+                // Разрешаем скролл, не блокируем событие
+            }, { passive: true });
+            card.addEventListener('touchmove', (e) => {
+                // Разрешаем скролл, не блокируем событие
+            }, { passive: true });
             
             if (isLocked) {
                 const lockText = this.getLockText(upg);
@@ -368,7 +380,29 @@ class Upgrades {
                 `;
                 
                 if (!maxed) {
-                    card.querySelector('button').addEventListener('click', () => {
+                    const btn = card.querySelector('button');
+                    // Фикс для мобильных - используем touchend вместо click для быстрого отклика
+                    // но не блокируем скролл
+                    let touchStarted = false;
+                    
+                    btn.addEventListener('touchstart', (e) => {
+                        touchStarted = true;
+                        e.stopPropagation(); // Но не предотвращаем скролл
+                    }, { passive: true });
+                    
+                    btn.addEventListener('touchend', (e) => {
+                        if (touchStarted) {
+                            touchStarted = false;
+                            if (this.buy(upg.id)) {
+                                this.renderUI();
+                                this.game.saveManager.save();
+                            }
+                        }
+                    }, { passive: true });
+                    
+                    // Fallback для десктопа
+                    btn.addEventListener('click', (e) => {
+                        e.preventDefault();
                         if (this.buy(upg.id)) {
                             this.renderUI();
                             this.game.saveManager.save();

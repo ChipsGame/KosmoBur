@@ -267,6 +267,13 @@ class Game {
         document.getElementById('btn-upgrades').addEventListener('click', () => {
             this.openModal('modal-upgrades');
             this.upgrades.renderUI();
+            // Фикс скролла для мобильных - применяем стили после открытия
+            const modalContent = document.querySelector('#modal-upgrades .modal-content');
+            if (modalContent) {
+                modalContent.style.touchAction = 'pan-y';
+                modalContent.style.webkitOverflowScrolling = 'touch';
+                modalContent.style.overscrollBehavior = 'contain';
+            }
         });
 
         document.getElementById('btn-achievements').addEventListener('click', () => {
@@ -330,41 +337,56 @@ class Game {
     
     /**
      * Фикс для скролла в модальных окнах на мобильных устройствах
-     * Упрощённая версия - используем нативный скролл с CSS
      */
     setupModalScrollFix() {
-        // Глобальный обработчик для предотвращения скролла страницы при открытом модале
-        // но разрешаем скролл внутри модального контента
+        let scrollStartY = 0;
+        
+        // touchstart - запоминаем начальную позицию
+        document.addEventListener('touchstart', (e) => {
+            scrollStartY = e.touches[0].clientY;
+        }, { passive: true });
+        
+        // touchmove - управляем скроллом
         document.addEventListener('touchmove', (e) => {
             const openModal = document.querySelector('.modal:not(.hidden)');
-            if (openModal) {
-                const modalContent = openModal.querySelector('.modal-content');
-                if (modalContent && modalContent.contains(e.target)) {
-                    // Разрешаем скролл внутри модального контента
-                    // Браузер сам разберётся с границами
-                    return;
-                } else {
-                    // Тач вне контента модала - блокируем
-                    e.preventDefault();
-                }
+            if (!openModal) return;
+            
+            const modalContent = openModal.querySelector('.modal-content');
+            if (!modalContent) {
+                e.preventDefault();
+                return;
             }
+            
+            // Проверяем, находится ли тач внутри модального контента
+            // Используем composedPath для Shadow DOM совместимости
+            const path = e.composedPath ? e.composedPath() : [e.target];
+            const isInsideModal = path.includes(modalContent);
+            
+            if (!isInsideModal) {
+                e.preventDefault();
+                return;
+            }
+            
+            // Мы внутри модального контента
+            const currentY = e.touches[0].clientY;
+            const deltaY = scrollStartY - currentY;
+            
+            const isScrollingUp = deltaY > 0;
+            const isScrollingDown = deltaY < 0;
+            const scrollTop = modalContent.scrollTop;
+            const scrollHeight = modalContent.scrollHeight;
+            const clientHeight = modalContent.clientHeight;
+            const canScrollUp = scrollTop > 0;
+            const canScrollDown = scrollTop + clientHeight < scrollHeight;
+            
+            // Если скроллим в направлении где есть куда скроллить - разрешаем
+            if ((isScrollingUp && canScrollUp) || (isScrollingDown && canScrollDown)) {
+                return; // Не блокируем - разрешаем скролл
+            }
+            
+            // Если достигли края - блокируем чтобы не было bounce-эффекта страницы
+            e.preventDefault();
         }, { passive: false });
-        
-        // Предотвращаем pull-to-refresh на мобильных когда модал открыт
-        document.addEventListener('touchstart', (e) => {
-            const openModal = document.querySelector('.modal:not(.hidden)');
-            if (openModal) {
-                const modalContent = openModal.querySelector('.modal-content');
-                if (modalContent && modalContent.contains(e.target)) {
-                    // Проверяем, можно ли скроллить вверх
-                    const canScrollUp = modalContent.scrollTop > 0;
-                    if (!canScrollUp) {
-                        // На вершине - предотвращаем pull-to-refresh
-                        modalContent.style.overscrollBehavior = 'contain';
-                    }
-                }
-            }
-        }, { passive: true });
     }
 
     handleResize() {
