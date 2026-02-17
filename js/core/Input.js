@@ -20,30 +20,55 @@ class Input {
         // Для клавиатуры - отслеживаем зажатие
         this.keyPressed = false;
         
+        // Позиция последнего клика для эффекта
+        this.lastClickX = null;
+        this.lastClickY = null;
+        
+        // Эффекты кликов
+        this.clickEffects = [];
+        
         this.setupListeners();
     }
 
     setupListeners() {
         const canvas = this.game.canvas;
+        const gameContainer = document.getElementById('game-container');
 
-        // ЛЕВАЯ кнопка мыши - клик
-        canvas.addEventListener('mousedown', (e) => {
+        // ЛЕВАЯ кнопка мыши - клик ВЕЗДЕ на game-container
+        gameContainer.addEventListener('mousedown', (e) => {
             if (e.button === 0) { // Только левая кнопка
+                // Не обрабатываем клики по UI элементам
+                if (e.target.closest('#ui-layer') || e.target.closest('.modal')) {
+                    return;
+                }
                 e.stopPropagation();
+                // Сохраняем позицию клика относительно canvas
+                const rect = canvas.getBoundingClientRect();
+                this.lastClickX = (e.clientX - rect.left) * (canvas.width / rect.width);
+                this.lastClickY = (e.clientY - rect.top) * (canvas.height / rect.height);
                 this.onClick();
             }
         });
         
         // ПРАВАЯ кнопка мыши - только блокируем меню, без клика
-        canvas.addEventListener('contextmenu', (e) => {
+        gameContainer.addEventListener('contextmenu', (e) => {
             e.preventDefault();
             return false;
         });
 
-        // Тач - тап
-        canvas.addEventListener('touchstart', (e) => {
+        // Тач - тап ВЕЗДЕ на game-container
+        gameContainer.addEventListener('touchstart', (e) => {
+            // Не обрабатываем тачи по UI элементам
+            if (e.target.closest('#ui-layer') || e.target.closest('.modal')) {
+                return;
+            }
             e.preventDefault();
             e.stopPropagation();
+            // Сохраняем позицию тача относительно canvas
+            const rect = canvas.getBoundingClientRect();
+            const touch = e.touches[0];
+            this.lastClickX = (touch.clientX - rect.left) * (canvas.width / rect.width);
+            this.lastClickY = (touch.clientY - rect.top) * (canvas.height / rect.height);
             this.onClick();
         }, { passive: false });
 
@@ -62,20 +87,6 @@ class Input {
                 this.keyPressed = false;
             }
         });
-        
-        // Клик по всей области игры (только если не на canvas или UI)
-        const gameContainer = document.getElementById('game-container');
-        if (gameContainer) {
-            gameContainer.addEventListener('click', (e) => {
-                // Не обрабатываем клики по UI элементам и canvas
-                if (e.target.closest('#ui-layer') || 
-                    e.target.closest('.modal') ||
-                    e.target === canvas) {
-                    return;
-                }
-                this.onClick();
-            });
-        }
     }
     
     /**
@@ -104,39 +115,91 @@ class Input {
         this.clickHistory = this.clickHistory.filter(time => now - time < 1000);
         this.clicksPerSecond = this.clickHistory.length;
         
-        // Визуальный эффект клика
-        this.showClickEffect();
+        // Добавляем визуальный эффект клика
+        this.addClickEffect();
     }
     
     /**
-     * Показать визуальный эффект клика
+     * Добавить эффект клика в Canvas
      */
-    showClickEffect() {
-        // Создаём небольшую пульсацию на экране
-        const gameContainer = document.getElementById('game-container');
-        if (!gameContainer) return;
+    addClickEffect() {
+        // Если есть позиция клика - создаём эффект там
+        // Иначе - в центре экрана (для клавиатуры)
+        const x = this.lastClickX !== null ? this.lastClickX : this.game.width / 2;
+        const y = this.lastClickY !== null ? this.lastClickY : this.game.height / 2;
         
-        const effect = document.createElement('div');
-        effect.className = 'click-effect';
-        effect.style.cssText = `
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 50px;
-            height: 50px;
-            border: 2px solid rgba(255, 255, 255, 0.5);
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            pointer-events: none;
-            z-index: 5;
-            animation: click-pulse 0.3s ease-out forwards;
-        `;
+        this.clickEffects.push({
+            x: x,
+            y: y,
+            radius: 10,
+            maxRadius: 60,
+            alpha: 1,
+            life: 0.4, // секунды
+            maxLife: 0.4
+        });
         
-        gameContainer.appendChild(effect);
-        
-        setTimeout(() => {
-            effect.remove();
-        }, 300);
+        // НЕ сбрасываем позицию здесь - она сбросится при следующем клике
+        // this.lastClickX = null;
+        // this.lastClickY = null;
+    }
+    
+    /**
+     * Обновить эффекты кликов
+     */
+    updateClickEffects(dt) {
+        for (let i = this.clickEffects.length - 1; i >= 0; i--) {
+            const effect = this.clickEffects[i];
+            effect.life -= dt;
+            
+            // Прогресс от 0 до 1
+            const progress = 1 - (effect.life / effect.maxLife);
+            
+            // Радиус растёт
+            effect.radius = 10 + (effect.maxRadius - 10) * progress;
+            
+            // Прозрачность: сначала растёт, потом падает
+            if (progress < 0.3) {
+                effect.alpha = progress / 0.3; // 0 -> 1
+            } else {
+                effect.alpha = 1 - ((progress - 0.3) / 0.7); // 1 -> 0
+            }
+            
+            // Удаляем завершённые эффекты
+            if (effect.life <= 0) {
+                this.clickEffects.splice(i, 1);
+            }
+        }
+    }
+    
+    /**
+     * Отрисовать эффекты кликов
+     */
+    renderClickEffects(ctx) {
+        for (const effect of this.clickEffects) {
+            ctx.save();
+            
+            // Внешнее свечение
+            ctx.beginPath();
+            ctx.arc(effect.x, effect.y, effect.radius, 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(100, 200, 255, ${effect.alpha * 0.8})`;
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            
+            // Внутреннее свечение
+            ctx.beginPath();
+            ctx.arc(effect.x, effect.y, effect.radius * 0.7, 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(150, 220, 255, ${effect.alpha * 0.5})`;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Центральная точка
+            ctx.beginPath();
+            ctx.arc(effect.x, effect.y, 5, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(200, 240, 255, ${effect.alpha})`;
+            ctx.fill();
+            
+            ctx.restore();
+        }
     }
     
     /**
