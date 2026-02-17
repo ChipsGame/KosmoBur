@@ -1,0 +1,928 @@
+/*
+ * КОСМИЧЕСКИЙ БУР - Главный класс игры
+ * Версия: 1.1 (Оптимизированная)
+ * Ориентация: Портрет (9:16)
+ */
+
+class Game {
+    constructor() {
+        this.canvas = document.getElementById('gameCanvas');
+        this.ctx = this.canvas.getContext('2d');
+
+        // Фиксированное разрешение для Canvas
+        this.width = 1080;
+        this.height = 1920;
+        this.canvas.width = this.width;
+        this.canvas.height = this.height;
+
+        // Инициализация систем
+        this.renderer = new Renderer(this);
+        this.input = new Input(this);
+        this.economy = new Economy();
+        this.upgrades = new Upgrades(this);
+        this.driftSystem = new DriftSystem(this);
+        
+        // Новые системы для удержания игроков
+        this.autoDrill = new AutoDrill(this);
+        this.prestige = new Prestige(this);
+        this.offlineProgress = new OfflineProgress(this);
+        this.dailyRewards = new DailyRewards(this);
+
+        this.saveManager = new SaveManager(this);
+
+        // Сущности
+        this.drill = new Drill(this);
+        this.layers = [];
+        this.particles = [];
+
+        // Состояние игры
+        this.isRunning = false;
+        this.isPaused = false; // Для паузы при сворачивании
+        this.lastTime = 0;
+        this.camera = { y: 0 };
+
+        // Счётчик пройденных слоёв
+        this.currentLayer = 0;
+        
+        // Оптимизация: флаг для отслеживания первого запуска
+        this.firstFrame = true;
+        // Оптимизация: кэш для быстрого доступа к видимым слоям
+        this.visibleLayers = [];
+        
+        // Флаг показа уведомления о престиже
+        this.prestigeNotificationShown = false;
+
+        this.init();
+    }
+
+    init() {
+        this.setupEventListeners();
+        this.createStarfield();
+        this.generateInitialLayers();
+        this.saveManager.load();
+        // ПОСЛЕ загрузки пересоздаём слои, так как позиция бура могла измениться
+        this.regenerateLayersAfterLoad();
+        
+        // Применяем бонусы престижа
+        this.prestige.applyBonuses();
+        
+        // Проверяем оффлайн-прогресс и ежедневные награды
+        this.checkOfflineAndDaily();
+        
+        this.start();
+    }
+    
+    checkOfflineAndDaily() {
+        // Проверяем что загрузка завершена
+        setTimeout(() => {
+            // Сначала показываем ежедневную награду если доступна
+            this.dailyRewards.checkOnStart();
+            
+            // Затем оффлайн-прогресс
+            setTimeout(() => {
+                this.offlineProgress.checkOnStart();
+            }, 500);
+        }, 500);
+        
+        // === ОБРАБОТКА ВИДИМОСТИ СТРАНИЦЫ (пауза при сворачивании) ===
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                // Сохраняем время выхода ДО паузы
+                this.offlineProgress.saveExitTime();
+                // Ставим на паузу
+                this.pause();
+            } else {
+                // ПРОВЕРЯЕМ оффлайн-прогресс, но НЕ снимаем паузу автоматически!
+                setTimeout(() => {
+                    this.offlineProgress.checkOnStart();
+                }, 500);
+                // Игрок сам должен нажать кнопку или кликнуть на экран паузы
+            }
+        });
+        
+        // Сохраняем время выхода при закрытии страницы
+        window.addEventListener('beforeunload', () => {
+            this.offlineProgress.saveExitTime();
+        });
+        
+        // === БЛОКИРОВКА КОНТЕКСТНОГО МЕНЮ ВЕЗДЕ ===
+        document.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+        }, true); // true = перехват на этапе capture
+        
+        // Блокировка на всех элементах
+        const allElements = document.querySelectorAll('*');
+        allElements.forEach(el => {
+            el.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            });
+        });
+        
+        // === ПАУЗА ТОЛЬКО ПРИ СВОРАЧИВАНИИ ВКЛАДКИ ===
+        // blur/focus убраны - они мешают при открытии DevTools
+        
+        // === ПРЕДОТВРАЩЕНИЕ УХОДА В СОН НА МОБИЛЬНЫХ ===
+        // Блокируем стандартное поведение при свайпах
+        document.addEventListener('touchmove', (e) => {
+            if (e.target.closest('#game-container')) {
+                e.preventDefault();
+            }
+        }, { passive: false });
+    }
+    
+    /**
+     * Поставить игру на паузу
+     */
+    pause() {
+        if (this.isPaused) return;
+        this.isPaused = true;
+        // НЕ сбрасываем isRunning - loop должен продолжать работать для рендера
+        document.getElementById('pause-screen').classList.add('active');
+        const btnPause = document.getElementById('btn-pause');
+        if (btnPause) btnPause.textContent = '▶️';
+        
+        // Останавливаем все аудио (если есть)
+        this.stopAllAudio();
+        
+        console.log('Игра на паузе');
+    }
+    
+    /**
+     * Возобновить игру
+     */
+    resume() {
+        if (!this.isPaused) return;
+        this.isPaused = false;
+        this.isRunning = true;
+        this.lastTime = performance.now();
+        document.getElementById('pause-screen').classList.remove('active');
+        const btnPause = document.getElementById('btn-pause');
+        if (btnPause) btnPause.textContent = '⏸️';
+        console.log('Игра возобновлена');
+    }
+    
+    /**
+     * Остановить все аудио (для паузы)
+     */
+    stopAllAudio() {
+        // Останавливаем все HTML5 audio элементы
+        const audios = document.querySelectorAll('audio');
+        audios.forEach(audio => {
+            audio.pause();
+        });
+        
+        // Останавливаем Web Audio API контекст если есть
+        if (this.audioContext) {
+            this.audioContext.suspend();
+        }
+    }
+    
+    /**
+     * Переключить паузу
+     */
+    togglePause() {
+        if (this.isPaused) {
+            this.resume();
+        } else {
+            this.pause();
+        }
+    }
+    
+    createStarfield() {
+        const container = document.getElementById('game-container');
+        
+        // Создаём туманности (для красоты по бокам на ПК)
+        for (let i = 1; i <= 3; i++) {
+            const nebula = document.createElement('div');
+            nebula.className = `nebula-${i}`;
+            container.insertBefore(nebula, container.firstChild);
+        }
+    }
+    
+    regenerateLayersAfterLoad() {
+        // Если позиция бура сильно изменилась (загрузка сохранения),
+        // пересоздаём слои относительно новой позиции
+        if (this.drill.y > 400) {
+            this.layers = [];
+            
+            // Вычисляем сколько слоёв нужно создать
+            const layerHeight = 80;
+            const startY = 200 + 100 + 40 + 20; // Позиция первого слоя
+            const layersNeeded = Math.max(10, Math.floor((this.drill.y - startY) / layerHeight) + 5);
+            
+            for (let i = 0; i < layersNeeded; i++) {
+                this.addLayer(this.currentLayer + i);
+            }
+            this.currentLayer += layersNeeded;
+            this.updateVisibleLayers();
+            // Сбрасываем камеру на новую позицию
+            this.camera.y = this.drill.y - 300;
+        }
+    }
+
+    setupEventListeners() {
+        // Кнопки меню
+        document.getElementById('btn-upgrades').addEventListener('click', () => {
+            this.openModal('modal-upgrades');
+            this.upgrades.renderUI();
+        });
+
+        document.getElementById('btn-achievements').addEventListener('click', () => {
+            this.openModal('modal-achievements');
+        });
+
+        document.getElementById('btn-settings').addEventListener('click', () => {
+            this.showSettingsMenu();
+        });
+        
+        // Кнопка паузы
+        document.getElementById('btn-pause').addEventListener('click', () => {
+            this.togglePause();
+        });
+        
+        // Клик на экран паузы для продолжения
+        document.getElementById('pause-screen').addEventListener('click', () => {
+            this.resume();
+        });
+        
+        // Кнопка престижа убрана - теперь только в настройках
+        // и уведомление при достижении 1000м
+
+        // Закрытие модалок
+        document.querySelectorAll('.close-modal').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.target.closest('.modal').classList.add('hidden');
+            });
+        });
+
+        // Ресайз
+        window.addEventListener('resize', () => this.handleResize());
+        this.handleResize();
+    }
+
+    handleResize() {
+        // CSS адаптация, Canvas остаётся фиксированным
+        const container = document.getElementById('game-container');
+        const aspect = this.width / this.height;
+        const windowAspect = window.innerWidth / window.innerHeight;
+
+        if (windowAspect > aspect) {
+            // Широкий экран (ПК) — полосы по бокам
+            this.canvas.style.height = '100vh';
+            this.canvas.style.width = `${window.innerHeight * aspect}px`;
+        } else {
+            // Узкий экран (телефон) — полный экран
+            this.canvas.style.width = '100vw';
+            this.canvas.style.height = `${window.innerWidth / aspect}px`;
+        }
+        
+        // Адаптация для очень коротких экранов
+        this.adaptToShortScreen();
+    }
+    
+    adaptToShortScreen() {
+        const screenHeight = window.innerHeight;
+        const screenWidth = window.innerWidth;
+        
+        // Логирование для отладки
+        console.log('Размер экрана:', screenWidth, 'x', screenHeight, 'px');
+        
+        // Если экран очень короткий (менее 500px)
+        if (screenHeight < 500) {
+            console.log('Короткий экран обнаружен, применяем адаптацию');
+            document.body.classList.add('short-screen');
+        } else {
+            document.body.classList.remove('short-screen');
+        }
+        
+        // Если экран очень узкий (менее 400px)
+        if (screenWidth < 400) {
+            console.log('Узкий экран обнаружен');
+            document.body.classList.add('narrow-screen');
+        } else {
+            document.body.classList.remove('narrow-screen');
+        }
+    }
+
+    generateInitialLayers() {
+        // Оптимизация: создаем только 10 слоев вместо 20 для быстрой загрузки
+        console.log('Создание начальных слоев...');
+        for (let i = 0; i < 10; i++) {
+            this.addLayer(i);
+        }
+        console.log('Начальные слои созданы:', this.layers.length);
+        
+        // ВАЖНО: сразу обновляем видимые слои для первого рендера
+        this.updateVisibleLayers();
+        
+        // Позиционируем камеру так, чтобы бур был в центре первого слоя
+        this.adjustInitialCamera();
+    }
+    
+    adjustInitialCamera() {
+        // Устанавливаем камеру так, чтобы бур был виден правильно
+        // Бур начинается на позиции y (150 для коротких экранов, 200 для больших)
+        // Мы хотим, чтобы первый слой был немного ниже бура для начала бурения
+        this.camera.y = this.drill.y - 300;
+        
+        // Также устанавливаем targetY для бура, чтобы он начал с правильной позиции
+        this.drill.targetY = this.drill.y;
+        console.log('Начальная позиция бура:', this.drill.y, 'Позиция камеры:', this.camera.y);
+    }
+
+    addLayer(index) {
+        // Получаем позицию Y последнего слоя (если он есть)
+        let previousLayerY = null;
+        if (this.layers.length > 0) {
+            const lastLayer = this.layers[this.layers.length - 1];
+            previousLayerY = lastLayer.y;
+        }
+        
+        const layer = new Layer(this, index, previousLayerY);
+        this.layers.push(layer);
+        return layer;
+    }
+
+    start() {
+        this.isRunning = true;
+        this.lastTime = performance.now();
+        
+        // Оптимизация: даем кадр на полную отрисовку перед началом игры
+        setTimeout(() => {
+            requestAnimationFrame((t) => this.loop(t));
+        }, 50);
+    }
+
+    loop(timestamp) {
+        if (!this.isRunning) return;
+        
+        // Если на паузе - не обновляем, но продолжаем рендерить
+        if (this.isPaused) {
+            this.render();
+            requestAnimationFrame((t) => this.loop(t));
+            return;
+        }
+
+        const deltaTime = (timestamp - this.lastTime) / 1000;
+        this.lastTime = timestamp;
+        
+        // Оптимизация: пропускаем кадры если deltaTime слишком большая
+        if (deltaTime > 0.1) {
+            console.warn('Пропущен кадр, deltaTime:', deltaTime);
+            requestAnimationFrame((t) => this.loop(t));
+            return;
+        }
+
+        this.update(deltaTime);
+        this.render();
+
+        requestAnimationFrame((t) => this.loop(t));
+    }
+
+    update(dt) {
+        // Оптимизация: обновляем только видимые слои и те, что близко к буру
+        this.updateVisibleLayers();
+        
+        // Обновляем ввод (клики)
+        this.input.update();
+        
+        // Обновляем дрифт
+        this.driftSystem.update(dt);
+
+        // Обновляем бур
+        this.drill.update(dt);
+        
+        // Обновляем автобур
+        this.autoDrill.update(dt);
+
+        // Обновляем только видимые слои
+        for (let layer of this.visibleLayers) {
+            layer.update(dt);
+        }
+
+        // Обновляем частицы
+        this.particles = this.particles.filter(p => {
+            p.update(dt);
+            return p.life > 0;
+        });
+
+        // Генерация новых слоёв (только если нужно)
+        this.generateNewLayersIfNeeded();
+
+        // Очистка старых слоёв (оптимизированная)
+        this.cleanupOldLayers();
+
+        // Автосохранение
+        this.saveManager.update(dt);
+
+        // Обновление UI
+        this.updateUI();
+        
+        // Проверка на доступность престижа
+        this.checkPrestigeAvailability();
+    }
+    
+    /**
+     * Проверка доступности престижа (показываем уведомление при 1000м)
+     */
+    checkPrestigeAvailability() {
+        // Показываем уведомление один раз при достижении 1000м
+        if (this.drill.depth >= 1000 && !this.prestigeNotificationShown) {
+            this.prestigeNotificationShown = true;
+            this.showPrestigeAvailableNotification();
+        }
+    }
+    
+    /**
+     * Показать уведомление о доступности престижа
+     */
+    showPrestigeAvailableNotification() {
+        // Удаляем старое уведомление если есть
+        const oldModal = document.getElementById('modal-prestige-available');
+        if (oldModal) oldModal.remove();
+        
+        const modal = document.createElement('div');
+        modal.id = 'modal-prestige-available';
+        modal.className = 'modal';
+        
+        const tokens = this.prestige.calculateTokens();
+        
+        modal.innerHTML = `
+            <div class="modal-content prestige-available-modal">
+                <h2>🎉 Достигнуто 1000м!</h2>
+                
+                <div class="prestige-info-text">
+                    <p>Поздравляем! Вы достигли глубины <strong>1000 метров</strong>!</p>
+                    <p>Теперь вам доступен <strong>ПРЕСТИЖ</strong>:</p>
+                    <ul>
+                        <li>🔄 Сброс текущего прогресса</li>
+                        <li>💎 Получение токенов (${tokens} шт.)</li>
+                        <li>✨ Постоянные бонусы к прогрессу</li>
+                        <li>📈 Быстрый старт с бонусными монетами</li>
+                    </ul>
+                    <p style="color: #ffd700; margin-top: 15px;">
+                        💡 Престиж можно выполнить в любое время через меню настроек (⚙️)
+                    </p>
+                </div>
+                
+                <div class="prestige-buttons">
+                    <button class="prestige-btn-do" id="prestige-do-now">Выполнить сейчас</button>
+                    <button class="prestige-btn-later" id="prestige-later">Продолжить игру</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Обработчики
+        modal.querySelector('#prestige-do-now').addEventListener('click', () => {
+            modal.remove();
+            this.showPrestigeModal();
+        });
+        
+        modal.querySelector('#prestige-later').addEventListener('click', () => {
+            modal.remove();
+        });
+    }
+    
+    updateVisibleLayers() {
+        // Оптимизация: кэшируем видимые слои для быстрого доступа
+        this.visibleLayers = this.layers.filter(layer => {
+            // Если слой разрушен, не обновляем его
+            if (layer.isDestroyed) return false;
+            
+            // Проверяем, виден ли слой на экране
+            const screenY = layer.y - this.camera.y;
+            return screenY > -300 && screenY < this.height + 300;
+        });
+    }
+    
+    generateNewLayersIfNeeded() {
+        // Бесконечная генерация слоёв
+        if (this.layers.length > 0) {
+            const bottomLayer = this.layers[this.layers.length - 1];
+            // Генерируем заранее, пока слой не слишком близко к нижней границе экрана
+            if (bottomLayer.y - this.camera.y < this.height + 500) {
+                // Создаем не более 3 слоев за кадр для плавности
+                for (let i = 0; i < 3; i++) {
+                    this.addLayer(this.currentLayer + this.layers.length);
+                }
+            }
+        } else {
+            // Если почему-то нет слоев, создаем начальные
+            for (let i = 0; i < 15; i++) {
+                this.addLayer(this.currentLayer + i);
+            }
+        }
+    }
+    
+    cleanupOldLayers() {
+        // Удаляем только слои, которые далеко за пределами экрана СВЕРХУ
+        // (которые бур уже прошел) и они разрушены
+        for (let i = this.layers.length - 1; i >= 0; i--) {
+            const layer = this.layers[i];
+            // Если слой далеко над камерой (пройден)
+            if (layer.y + layer.height < this.camera.y - 1000) {
+                // Удаляем только если слой разрушен и частицы исчезли
+                if (layer.isDestroyed && layer.destroyParticles.length === 0) {
+                    this.layers.splice(i, 1);
+                }
+            }
+        }
+    }
+
+    render() {
+        // Оптимизация: очищаем только видимую область
+        this.ctx.clearRect(0, 0, this.width, this.height);
+
+        // Фон (космос) - рисуется в CSS, тут можно добавить эффекты если нужно
+
+        // Оптимизация: рисуем только видимые слои
+        // Если visibleLayers пустой на первом кадре, используем все слои
+        const layersToRender = this.visibleLayers.length > 0 ? this.visibleLayers : this.layers;
+        
+        for (let layer of layersToRender) {
+            if (!layer.isDestroyed) {
+                layer.render(this.ctx, this.camera);
+            }
+        }
+
+        // Бур
+        this.drill.render(this.ctx, this.camera);
+
+        // Частицы
+        this.particles.forEach(p => p.render(this.ctx, this.camera));
+
+        // Эффекты дрифта
+        this.driftSystem.renderEffects(this.ctx);
+        
+        // Дебаг информация (только для разработки)
+        if (this.firstFrame) {
+            this.renderDebugInfo();
+        }
+        
+        // Сбрасываем флаг первого кадра ПОСЛЕ рендера
+        this.firstFrame = false;
+    }
+    
+    renderDebugInfo() {
+        this.ctx.save();
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        this.ctx.font = '16px Arial';
+        this.ctx.textAlign = 'left';
+        this.ctx.fillText(`Слои: ${this.layers.length}`, 20, 30);
+        this.ctx.fillText(`Бур Y: ${Math.floor(this.drill.y)}`, 20, 50);
+        this.ctx.fillText(`Камера Y: ${Math.floor(this.camera.y)}`, 20, 70);
+        this.ctx.fillText(`Экран: ${window.innerWidth}x${window.innerHeight}`, 20, 90);
+        
+        // Показываем позицию первого слоя
+        if (this.layers.length > 0) {
+            const firstLayer = this.layers[0];
+            this.ctx.fillText(`Первый слой Y: ${Math.floor(firstLayer.y)}`, 20, 110);
+        }
+        
+        this.ctx.restore();
+    }
+
+    updateUI() {
+        // Ресурсы
+        document.getElementById('coins').textContent = Utils.formatNumber(Math.floor(this.economy.coins));
+        document.getElementById('ore').textContent = this.economy.ore;
+        document.getElementById('depth-meter').textContent = 
+            Math.floor(this.drill.depth) + 'м';
+
+        // Дрифт
+        const driftFill = document.getElementById('drift-fill');
+        const driftMult = document.getElementById('drift-multiplier');
+        driftFill.style.width = (this.driftSystem.charge / this.driftSystem.maxCharge * 100) + '%';
+        driftMult.textContent = '×' + this.driftSystem.multiplier.toFixed(1);
+        
+        // Визуальная обратная связь для высокого дрифта
+        const driftPanel = document.getElementById('drift-panel');
+        if (this.driftSystem.multiplier > 2.0) {
+            driftPanel.classList.add('high-value');
+        } else {
+            driftPanel.classList.remove('high-value');
+        }
+        
+        // Обновляем CPS
+        const cpsElement = document.getElementById('cps-display');
+        if (cpsElement) {
+            cpsElement.textContent = this.input.clicksPerSecond + ' клик/с';
+        }
+        
+        // Обновляем автоклик
+        const autoElement = document.getElementById('auto-display');
+        if (autoElement) {
+            const autoSpeed = this.autoDrill.getEffectiveSpeed();
+            autoElement.textContent = `🤖 ${autoSpeed.toFixed(1)}/с`;
+        }
+    }
+
+    openModal(id) {
+        document.querySelectorAll('.modal').forEach(m => m.classList.add('hidden'));
+        document.getElementById(id).classList.remove('hidden');
+    }
+
+    createParticle(x, y, type, color, size = null) {
+        this.particles.push(new Particle(x, y, type, color, size));
+    }
+    
+    /**
+     * Показать меню настроек
+     */
+    showSettingsMenu() {
+        // Удаляем старое окно
+        const oldModal = document.getElementById('modal-settings');
+        if (oldModal) oldModal.remove();
+        
+        const modal = document.createElement('div');
+        modal.id = 'modal-settings';
+        modal.className = 'modal';
+        
+        modal.innerHTML = `
+            <div class="modal-content settings-modal">
+                <h2>⚙️ Настройки</h2>
+                
+                <div class="settings-section">
+                    <h3>🎮 Игра</h3>
+                    <button class="settings-btn" id="btn-daily">📅 Ежедневные награды</button>
+                    <button class="settings-btn" id="btn-prestige-menu">🔄 Престиж</button>
+                </div>
+                
+                <div class="settings-section">
+                    <h3>📊 Статистика</h3>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-label">Всего монет:</span>
+                            <span class="stat-value">${Utils.formatNumber(Math.floor(this.economy.totalEarned))}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Макс. глубина:</span>
+                            <span class="stat-value">${Math.floor(this.drill.depth)}м</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Автокликов:</span>
+                            <span class="stat-value">${Utils.formatNumber(this.autoDrill.totalAutoClicks)}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Престижей:</span>
+                            <span class="stat-value">${this.prestige.count}</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="close-modal" id="settings-close">✕</button>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Обработчики
+        modal.querySelector('#btn-daily').addEventListener('click', () => {
+            modal.remove();
+            this.dailyRewards.showModal();
+        });
+        
+        modal.querySelector('#btn-prestige-menu').addEventListener('click', () => {
+            modal.remove();
+            this.showPrestigeModal();
+        });
+        
+        modal.querySelector('#settings-close').addEventListener('click', () => {
+            modal.remove();
+        });
+    }
+    
+    /**
+     * Показать модальное окно престижа
+     */
+    showPrestigeModal() {
+        const tokens = this.prestige.calculateTokens();
+        const nextBonus = this.prestige.getNextBonusInfo();
+        const activeBonuses = this.prestige.getBonusesDescription();
+        
+        // Удаляем старое окно
+        const oldModal = document.getElementById('modal-prestige');
+        if (oldModal) oldModal.remove();
+        
+        const modal = document.createElement('div');
+        modal.id = 'modal-prestige';
+        modal.className = 'modal';
+        
+        const canPrestige = this.drill.depth >= this.prestige.minDepth;
+        
+        // HTML для активных бонусов
+        const bonusesHTML = activeBonuses.length > 0 
+            ? activeBonuses.map(b => `
+                <div class="prestige-bonus-item">
+                    <span class="bonus-name">${b.name}</span>
+                    <span class="bonus-desc">${b.description}</span>
+                </div>
+            `).join('')
+            : '<p style="color: #888;">Пока нет активных бонусов</p>';
+        
+        // HTML для следующего бонуса
+        const nextBonusHTML = nextBonus 
+            ? `<div class="next-bonus">
+                <h4>Следующий бонус:</h4>
+                <p>${nextBonus.name}</p>
+                <p style="color: #ffd700;">Требуется: ${nextBonus.needed} токенов</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${(nextBonus.current / nextBonus.needed * 100)}%"></div>
+                </div>
+                <p style="font-size: 12px;">Осталось: ${nextBonus.remaining} токенов</p>
+               </div>`
+            : '<p style="color: #6bcf7f;">🎉 Все бонусы получены!</p>';
+        
+        modal.innerHTML = `
+            <div class="modal-content prestige-modal">
+                <h2>🔄 Престиж</h2>
+                
+                <div class="prestige-info">
+                    <div class="prestige-tokens">
+                        <span class="token-icon">💎</span>
+                        <span class="token-count">${this.prestige.tokens}</span>
+                        <span class="token-label">токенов</span>
+                    </div>
+                    <div class="prestige-count">Престижей: ${this.prestige.count}</div>
+                </div>
+                
+                <div class="prestige-section">
+                    <h3>✨ Активные бонусы:</h3>
+                    <div class="prestige-bonuses">
+                        ${bonusesHTML}
+                    </div>
+                </div>
+                
+                <div class="prestige-section">
+                    ${nextBonusHTML}
+                </div>
+                
+                <div class="prestige-action">
+                    ${canPrestige 
+                        ? `<p class="prestige-gain">Вы получите: <strong>+${tokens}</strong> токенов</p>
+                           <button class="prestige-btn" id="do-prestige">Выполнить престиж!</button>`
+                        : `<p class="prestige-locked">Доступно с ${this.prestige.minDepth}м глубины</p>
+                           <p style="font-size: 12px; color: #888;">Текущая: ${Math.floor(this.drill.depth)}м</p>`
+                    }
+                </div>
+                
+                <div class="prestige-warning">
+                    ⚠️ Престиж сбросит ваш прогресс, но даст постоянные бонусы!
+                </div>
+                
+                <button class="close-modal" id="prestige-close">✕</button>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Обработчики
+        if (canPrestige) {
+            modal.querySelector('#do-prestige').addEventListener('click', () => {
+                modal.remove();
+                this.showPrestigeConfirmModal();
+            });
+        }
+        
+        modal.querySelector('#prestige-close').addEventListener('click', () => {
+            modal.remove();
+        });
+    }
+    
+    /**
+     * Показать подтверждение престижа (игровое, не браузерное!)
+     */
+    showPrestigeConfirmModal() {
+        // Удаляем старое окно если есть
+        const oldModal = document.getElementById('modal-prestige-confirm');
+        if (oldModal) oldModal.remove();
+        
+        const modal = document.createElement('div');
+        modal.id = 'modal-prestige-confirm';
+        modal.className = 'modal';
+        
+        modal.innerHTML = `
+            <div class="modal-content prestige-confirm-modal">
+                <h2>⚠️ Подтвердите действие</h2>
+                
+                <div class="confirm-text">
+                    <p>Вы уверены?</p>
+                    <p style="color: #ff6b6b;">Ваш прогресс будет сброшен!</p>
+                    <p style="color: #6bcf7f;">Но вы получите постоянные бонусы 💎</p>
+                </div>
+                
+                <div class="confirm-buttons">
+                    <button class="confirm-btn-yes" id="prestige-confirm-yes">✓ Да, выполнить</button>
+                    <button class="confirm-btn-no" id="prestige-confirm-no">✕ Отмена</button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Обработчики
+        modal.querySelector('#prestige-confirm-yes').addEventListener('click', () => {
+            const result = this.prestige.doPrestige();
+            if (result) {
+                modal.remove();
+                this.showPrestigeSuccess(result);
+            }
+        });
+        
+        modal.querySelector('#prestige-confirm-no').addEventListener('click', () => {
+            modal.remove();
+        });
+    }
+    
+    /**
+     * Показать успешное выполнение престижа
+     */
+    showPrestigeSuccess(result) {
+        // Используем игровое уведомление вместо модалки
+        this.showNotification(
+            `🎉 ПРЕСТИЖ ВЫПОЛНЕН! +${result.tokensGained} 💎`,
+            '#f093fb',
+            5000
+        );
+        
+        // Дополнительное уведомление с бонусами
+        setTimeout(() => {
+            this.showNotification(
+                `Всего токенов: ${result.totalTokens} | Престижей: ${result.prestigeCount}`,
+                '#ffd700',
+                4000
+            );
+        }, 1000);
+    }
+    
+    /**
+     * Показать игровое уведомление (не браузерное!)
+     * Создаёт DOM-элемент вместо alert
+     */
+    showNotification(text, color = '#fff', duration = 3000) {
+        const notif = document.createElement('div');
+        notif.className = 'game-notification';
+        notif.textContent = text;
+        notif.style.borderColor = color;
+        notif.style.color = color;
+        
+        document.getElementById('game-container').appendChild(notif);
+        
+        // Удаляем после анимации
+        setTimeout(() => {
+            notif.remove();
+        }, duration);
+    }
+
+}
+
+// Запуск при загрузке
+window.addEventListener('load', async () => {
+    console.log('Загрузка игры Космический Бур...');
+    
+    // Инициализация Яндекс SDK
+    await initYandexSDK();
+    
+    window.game = new Game();
+    console.log('Игра загружена!');
+});
+
+/**
+ * Инициализация Яндекс SDK
+ */
+async function initYandexSDK() {
+    try {
+        // Проверяем что SDK загружен
+        if (typeof YaGames === 'undefined') {
+            console.warn('YaGames SDK не загружен');
+            return;
+        }
+        
+        // Инициализируем SDK
+        window.ysdk = await YaGames.init();
+        console.log('Yandex SDK инициализирован');
+        
+        // Получаем язык пользователя
+        const playerLang = window.ysdk.environment.i18n.lang;
+        console.log('Язык пользователя:', playerLang);
+        
+        // Сохраняем язык
+        window.gameLanguage = playerLang || 'ru';
+        
+        // Отключаем медиа-сессию (чтобы не показывать плеер в уведомлениях)
+        if ('mediaSession' in navigator) {
+            navigator.mediaSession.metadata = null;
+            console.log('MediaSession отключена');
+        }
+        
+    } catch (e) {
+        console.error('Ошибка инициализации Yandex SDK:', e);
+        window.gameLanguage = 'ru';
+    }
+}

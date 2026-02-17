@@ -1,0 +1,1767 @@
+/* ===== БАЗОВЫЕ НАСТРОЙКИ ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+body {
+    background: #0a0a0a;
+    overflow: hidden;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+#game-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: 
+        /* Звёзды */
+        radial-gradient(1px 1px at 5% 10%, rgba(255,255,255,0.8), transparent),
+        radial-gradient(1px 1px at 15% 25%, rgba(255,255,255,0.6), transparent),
+        radial-gradient(1px 1px at 25% 8%, rgba(255,255,255,0.9), transparent),
+        radial-gradient(1px 1px at 35% 35%, rgba(255,255,255,0.7), transparent),
+        radial-gradient(1px 1px at 45% 15%, rgba(255,255,255,0.8), transparent),
+        radial-gradient(1px 1px at 55% 40%, rgba(255,255,255,0.6), transparent),
+        radial-gradient(1px 1px at 65% 12%, rgba(255,255,255,0.9), transparent),
+        radial-gradient(1px 1px at 75% 28%, rgba(255,255,255,0.7), transparent),
+        radial-gradient(1px 1px at 85% 5%, rgba(255,255,255,0.8), transparent),
+        radial-gradient(1px 1px at 95% 32%, rgba(255,255,255,0.6), transparent),
+        radial-gradient(1px 1px at 10% 45%, rgba(255,255,255,0.9), transparent),
+        radial-gradient(1px 1px at 20% 60%, rgba(255,255,255,0.7), transparent),
+        radial-gradient(1px 1px at 30% 50%, rgba(255,255,255,0.8), transparent),
+        radial-gradient(1px 1px at 40% 70%, rgba(255,255,255,0.6), transparent),
+        radial-gradient(1px 1px at 50% 55%, rgba(255,255,255,0.9), transparent),
+        radial-gradient(1px 1px at 60% 75%, rgba(255,255,255,0.7), transparent),
+        radial-gradient(1px 1px at 70% 48%, rgba(255,255,255,0.8), transparent),
+        radial-gradient(1px 1px at 80% 68%, rgba(255,255,255,0.6), transparent),
+        radial-gradient(1px 1px at 90% 52%, rgba(255,255,255,0.9), transparent),
+        radial-gradient(1px 1px at 3% 78%, rgba(255,255,255,0.7), transparent),
+        radial-gradient(1px 1px at 13% 85%, rgba(255,255,255,0.8), transparent),
+        radial-gradient(1px 1px at 23% 72%, rgba(255,255,255,0.6), transparent),
+        radial-gradient(1px 1px at 33% 90%, rgba(255,255,255,0.9), transparent),
+        radial-gradient(1px 1px at 43% 80%, rgba(255,255,255,0.7), transparent),
+        radial-gradient(1px 1px at 53% 95%, rgba(255,255,255,0.8), transparent),
+        radial-gradient(1px 1px at 63% 82%, rgba(255,255,255,0.6), transparent),
+        radial-gradient(1px 1px at 73% 92%, rgba(255,255,255,0.9), transparent),
+        radial-gradient(1px 1px at 83% 78%, rgba(255,255,255,0.7), transparent),
+        radial-gradient(1px 1px at 93% 88%, rgba(255,255,255,0.8), transparent),
+        /* Базовый космический фон */
+        linear-gradient(180deg, #020205 0%, #080810 30%, #0c0c18 70%, #050508 100%);
+    overflow: hidden;
+}
+
+/* Кастомный фон из файла - поверх всего */
+#game-container .custom-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url('css/spacefield_a-000.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Туманности - мягкие, размытые */
+#game-container .nebula-1,
+#game-container .nebula-2,
+#game-container .nebula-3 {
+    position: absolute;
+    pointer-events: none;
+    z-index: 0;
+    filter: blur(80px);
+    opacity: 0.6;
+}
+
+/* Фиолетовая туманность слева сверху */
+#game-container .nebula-1 {
+    left: -5%;
+    top: 0%;
+    width: 40%;
+    height: 50%;
+    background: radial-gradient(circle at center, rgba(100, 50, 150, 0.5) 0%, rgba(60, 30, 100, 0.25) 50%, transparent 70%);
+    animation: nebula-drift-1 20s ease-in-out infinite;
+}
+
+/* Голубая туманность справа */
+#game-container .nebula-2 {
+    right: 0%;
+    top: 15%;
+    width: 35%;
+    height: 45%;
+    background: radial-gradient(circle at center, rgba(50, 100, 150, 0.4) 0%, rgba(30, 60, 100, 0.2) 50%, transparent 70%);
+    animation: nebula-drift-2 25s ease-in-out infinite;
+}
+
+/* Розовая туманность снизу */
+#game-container .nebula-3 {
+    left: 20%;
+    bottom: -5%;
+    width: 60%;
+    height: 40%;
+    background: radial-gradient(circle at center, rgba(150, 60, 100, 0.35) 0%, rgba(100, 40, 70, 0.18) 50%, transparent 70%);
+    animation: nebula-drift-3 18s ease-in-out infinite;
+}
+
+/* Декоративные элементы - планеты по бокам для ПК (только на фоне!) */
+#game-container::before,
+#game-container::after {
+    content: '';
+    position: fixed;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Планета слева - только на фоне, не перекрывает игру */
+#game-container::before {
+    left: 2%;
+    top: 15%;
+    width: 200px;
+    height: 200px;
+    background: 
+        radial-gradient(circle at 30% 40%, rgba(0,0,0,0.3) 0%, transparent 15%),
+        radial-gradient(circle at 60% 30%, rgba(0,0,0,0.2) 0%, transparent 10%),
+        radial-gradient(circle at 70% 70%, rgba(0,0,0,0.25) 0%, transparent 12%),
+        radial-gradient(circle at 40% 40%, rgba(180, 100, 255, 0.4) 0%, rgba(100, 50, 150, 0.3) 40%, rgba(50, 20, 80, 0.4) 70%, transparent 100%);
+    border-radius: 50%;
+    box-shadow: 0 0 40px rgba(150, 80, 200, 0.2);
+    opacity: 0.4;
+}
+
+/* Планета справа - только на фоне */
+#game-container::after {
+    right: 2%;
+    bottom: 20%;
+    width: 150px;
+    height: 150px;
+    background: 
+        radial-gradient(circle at 50% 50%, rgba(0,0,0,0.2) 0%, transparent 20%),
+        radial-gradient(circle at 20% 60%, rgba(0,0,0,0.15) 0%, transparent 15%),
+        radial-gradient(circle at 50% 40%, rgba(100, 200, 255, 0.5) 0%, rgba(50, 100, 150, 0.3) 40%, rgba(20, 50, 80, 0.4) 70%, transparent 100%);
+    border-radius: 50%;
+    box-shadow: 0 0 30px rgba(80, 150, 200, 0.2);
+    opacity: 0.5;
+}
+
+/* Дополнительные астероиды */
+#game-container .asteroid-1,
+#game-container .asteroid-2 {
+    position: absolute;
+    pointer-events: none;
+    border-radius: 50%;
+    z-index: 1;
+}
+
+/* Скрываем планеты на мобильных и когда экран маленький */
+@media (max-aspect-ratio: 9/16), (max-width: 1200px) {
+    #game-container::before,
+    #game-container::after {
+        display: none !important;
+    }
+}
+
+/* Показываем планеты только на больших экранах ПК */
+@media (min-width: 1400px) and (min-height: 900px) {
+    #game-container::before,
+    #game-container::after {
+        display: block;
+    }
+}
+
+/* Анимация пульсации планет */
+@keyframes planet-pulse {
+    0%, 100% { transform: scale(1); opacity: 0.6; }
+    50% { transform: scale(1.08); opacity: 0.9; }
+}
+
+@keyframes planet-pulse-2 {
+    0%, 100% { transform: scale(1); opacity: 0.7; }
+    50% { transform: scale(1.05); opacity: 0.95; }
+}
+
+#game-container::before {
+    animation: planet-pulse 6s ease-in-out infinite;
+}
+
+#game-container::after {
+    animation: planet-pulse-2 8s ease-in-out infinite;
+}
+
+/* Анимация дрейфа туманностей */
+@keyframes nebula-drift-1 {
+    0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.5; }
+    33% { transform: translate(20px, 15px) scale(1.05); opacity: 0.6; }
+    66% { transform: translate(-10px, 20px) scale(0.95); opacity: 0.45; }
+}
+
+@keyframes nebula-drift-2 {
+    0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.5; }
+    33% { transform: translate(-15px, 20px) scale(0.95); opacity: 0.6; }
+    66% { transform: translate(20px, -10px) scale(1.05); opacity: 0.45; }
+}
+
+@keyframes nebula-drift-3 {
+    0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.4; }
+    33% { transform: translate(25px, -15px) scale(1.03); opacity: 0.55; }
+    66% { transform: translate(-15px, 10px) scale(0.97); opacity: 0.35; }
+}
+
+/* Анимация мерцания для звёзд */
+@keyframes twinkle {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; }
+}
+
+#game-container .stars-bg {
+    animation: twinkle 3s ease-in-out infinite;
+}
+
+#gameCanvas {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    width: 100%;
+    height: 100%;
+    position: relative;
+    z-index: 1;
+}
+
+/* ===== UI СЛОЙ ===== */
+#ui-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: auto;
+    min-height: 200px;
+    pointer-events: none;
+    z-index: 10;
+}
+
+#ui-layer > * {
+    pointer-events: auto;
+}
+
+/* Верхняя панель */
+#top-bar {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(0,0,0,0.6);
+    padding: 8px 12px;
+    border-radius: 15px;
+    backdrop-filter: blur(5px);
+    z-index: 20;
+    min-height: 50px;
+}
+
+.resource {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: #fff;
+    font-weight: bold;
+    font-size: clamp(14px, 4vw, 18px);
+    min-width: 80px;
+}
+
+.resource .icon {
+    font-size: clamp(16px, 4vw, 20px);
+}
+
+#depth-meter {
+    color: #ffd700;
+    font-weight: bold;
+    font-size: clamp(16px, 4vw, 20px);
+    text-shadow: 0 0 10px rgba(255,215,0,0.5);
+    text-align: center;
+    flex: 0 0 auto;
+}
+
+/* Дрифт панель */
+#drift-panel {
+    position: absolute;
+    top: 70px;
+    left: 10px;
+    right: 70px;
+    background: rgba(0,0,0,0.6);
+    padding: 6px 8px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 20;
+    max-width: calc(100vw - 90px);
+}
+
+#drift-bar {
+    flex: 1;
+    height: 16px;
+    background: #333;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #555;
+    min-width: 0;
+}
+
+#drift-fill {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, #ff6b6b, #ffd93d, #6bcf7f);
+    transition: width 0.1s linear;
+    box-shadow: 0 0 5px currentColor;
+}
+
+#drift-multiplier {
+    color: #fff;
+    font-weight: bold;
+    font-size: clamp(12px, 3vw, 16px);
+    min-width: 35px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+/* CPS панель */
+#cps-panel {
+    position: absolute;
+    top: 95px;
+    left: 10px;
+    background: rgba(0,0,0,0.5);
+    padding: 4px 10px;
+    border-radius: 10px;
+    z-index: 20;
+}
+
+#cps-display {
+    color: #6bcf7f;
+    font-weight: bold;
+    font-size: clamp(11px, 3vw, 14px);
+}
+
+/* Автоклик панель */
+#auto-panel {
+    position: absolute;
+    top: 95px;
+    left: 100px;
+    background: rgba(0,0,0,0.5);
+    padding: 4px 10px;
+    border-radius: 10px;
+    z-index: 20;
+}
+
+#auto-display {
+    color: #f093fb;
+    font-weight: bold;
+    font-size: clamp(11px, 3vw, 14px);
+}
+
+/* Пауза панель */
+#pause-panel {
+    position: absolute;
+    top: 95px;
+    right: 70px;
+    z-index: 20;
+}
+
+.pause-btn {
+    width: 35px;
+    height: 35px;
+    border-radius: 8px;
+    border: none;
+    background: rgba(0,0,0,0.6);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pause-btn:hover {
+    background: rgba(0,0,0,0.8);
+}
+
+/* Экран паузы */
+#pause-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.8);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    flex-direction: column;
+}
+
+#pause-screen.active {
+    display: flex;
+}
+
+.pause-title {
+    font-size: 48px;
+    color: #fff;
+    font-weight: bold;
+    margin-bottom: 30px;
+    text-shadow: 0 0 20px rgba(255,255,255,0.5);
+}
+
+.pause-hint {
+    font-size: 18px;
+    color: #aaa;
+}
+
+/* Правое меню */
+#right-menu {
+    position: absolute;
+    top: 75px;
+    right: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 20;
+}
+
+/* На очень широких экранах (ПК) - меню ещё ниже */
+@media (min-aspect-ratio: 16/9) {
+    #right-menu {
+        top: 80px;
+    }
+    
+    #drift-panel {
+        top: 60px;
+    }
+}
+
+.menu-btn {
+    width: 45px;
+    height: 45px;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    transition: transform 0.1s, box-shadow 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.menu-btn:active {
+    transform: scale(0.95);
+}
+
+/* Панель усилителей */
+#boosts-panel {
+    position: absolute;
+    bottom: 15px;
+    left: 10px;
+    right: 10px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    z-index: 20;
+    flex-wrap: wrap;
+}
+
+.boost-slot {
+    width: 55px;
+    height: 55px;
+    background: rgba(0,0,0,0.7);
+    border-radius: 12px;
+    border: 2px solid #444;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.boost-slot.active {
+    border-color: #ffd700;
+    box-shadow: 0 0 15px rgba(255,215,0,0.4);
+}
+
+.boost-slot.cooldown {
+    opacity: 0.5;
+}
+
+.boost-icon {
+    font-size: 24px;
+}
+
+.boost-timer {
+    position: absolute;
+    bottom: 3px;
+    font-size: 10px;
+    color: #fff;
+    font-weight: bold;
+}
+
+/* БЕЗОПАСНАЯ ЗОНА для бурения */
+#safe-drill-area {
+    position: absolute;
+    top: 130px;
+    bottom: 90px;
+    left: 10px;
+    right: 10px;
+    z-index: 0;
+    pointer-events: none;
+    border: 1px dashed rgba(255,255,255,0.1);
+    display: none;
+}
+
+/* Модальные окна */
+.modal {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal.hidden {
+    display: none;
+}
+
+.modal-content {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    padding: 20px;
+    border-radius: 15px;
+    max-width: 90%;
+    max-height: 80%;
+    overflow-y: auto;
+    position: relative;
+    color: white;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+}
+
+.modal-content h2 {
+    text-align: center;
+    margin-bottom: 15px;
+    font-size: clamp(18px, 5vw, 24px);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.close-modal {
+    position: fixed;
+    top: 15px;
+    right: 15px;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255,255,255,0.3);
+    color: white;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1001;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+}
+
+.close-modal:hover {
+    background: rgba(255,255,255,0.5);
+}
+
+/* Модальное окно улучшений */
+.upgrades-modal-content {
+    max-width: 95%;
+    width: 500px;
+    max-height: 75vh;
+    overflow-y: auto;
+    padding-top: 15px;
+}
+
+/* Сетка улучшений - 2 колонки */
+.upgrades-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-top: 15px;
+    padding-bottom: 10px;
+}
+
+.upgrade-card {
+    background: rgba(255,255,255,0.1);
+    padding: 10px;
+    border-radius: 10px;
+    text-align: center;
+    border: 2px solid transparent;
+    transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 140px;
+}
+
+.upgrade-card:hover {
+    border-color: #ffd700;
+    transform: translateY(-2px);
+}
+
+.upgrade-card.maxed {
+    opacity: 0.8;
+    border-color: #6bcf7f;
+    background: rgba(107, 207, 127, 0.1);
+}
+
+.upgrade-card.locked {
+    opacity: 0.5;
+    background: rgba(0,0,0,0.3);
+}
+
+.upgrade-icon {
+    font-size: 28px;
+    margin-bottom: 5px;
+}
+
+.upgrade-name {
+    font-size: 12px;
+    margin-bottom: 3px;
+    font-weight: bold;
+    line-height: 1.2;
+}
+
+.upgrade-name.locked-name {
+    opacity: 0.7;
+    font-size: 11px;
+}
+
+.upgrade-lock-text {
+    font-size: 10px;
+    color: #888;
+    margin-bottom: 5px;
+}
+
+.upgrade-level {
+    font-size: 10px;
+    color: #aaa;
+    margin-bottom: 3px;
+}
+
+.upgrade-effect {
+    font-size: 11px;
+    color: #6bcf7f;
+    font-weight: bold;
+    margin-bottom: 8px;
+    line-height: 1.2;
+    min-height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.upgrade-cost-btn {
+    background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%);
+    border: none;
+    padding: 6px 12px;
+    border-radius: 15px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 12px;
+    margin-top: auto;
+    width: 100%;
+}
+
+.upgrade-cost-btn:disabled {
+    background: #555;
+    cursor: not-allowed;
+}
+
+.upgrade-cost-btn.maxed-btn {
+    background: #6bcf7f;
+}
+
+.upgrade-cost-btn.disabled-btn {
+    background: #444;
+    color: #888;
+}
+
+.upgrade-cost {
+    background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%);
+    border: none;
+    padding: 6px 12px;
+    border-radius: 15px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.upgrade-cost:disabled {
+    background: #555;
+    cursor: not-allowed;
+}
+
+/* ===== НОВЫЕ СТИЛИ ДЛЯ ФИЧ ===== */
+
+/* Оффлайн модал */
+.offline-modal {
+    text-align: center;
+    min-width: 280px;
+}
+
+.offline-time {
+    font-size: 32px;
+    color: #ffd700;
+    font-weight: bold;
+    margin: 15px 0;
+}
+
+.offline-rewards {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+.reward-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.reward-icon {
+    font-size: 28px;
+}
+
+.reward-value {
+    font-size: 20px;
+    font-weight: bold;
+    color: #6bcf7f;
+}
+
+.offline-claim-btn {
+    background: linear-gradient(90deg, #6bcf7f 0%, #4CAF50 100%);
+    border: none;
+    padding: 12px 30px;
+    border-radius: 25px;
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 15px;
+}
+
+/* Ежедневные награды */
+.daily-modal {
+    min-width: 300px;
+    max-width: 400px;
+}
+
+.daily-streak {
+    text-align: center;
+    color: #ff6b6b;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.daily-days-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin: 15px 0;
+}
+
+.daily-day {
+    background: rgba(0,0,0,0.3);
+    border-radius: 10px;
+    padding: 10px 5px;
+    text-align: center;
+    border: 2px solid transparent;
+    position: relative;
+}
+
+.daily-day.available {
+    border-color: #ffd700;
+    box-shadow: 0 0 10px rgba(255,215,0,0.3);
+    animation: pulse-glow 2s infinite;
+}
+
+.daily-day.claimed {
+    border-color: #6bcf7f;
+    opacity: 0.7;
+}
+
+.daily-day.locked {
+    opacity: 0.4;
+}
+
+@keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 10px rgba(255,215,0,0.3); }
+    50% { box-shadow: 0 0 20px rgba(255,215,0,0.6); }
+}
+
+.daily-day-number {
+    font-size: 11px;
+    color: #aaa;
+}
+
+.daily-day-icon {
+    font-size: 24px;
+    margin: 5px 0;
+}
+
+.daily-day-reward {
+    font-size: 11px;
+    color: #ffd700;
+}
+
+.daily-check {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #6bcf7f;
+    color: white;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+.daily-info {
+    text-align: center;
+    font-size: 12px;
+    color: #aaa;
+    margin: 15px 0;
+}
+
+.daily-claim-btn {
+    background: linear-gradient(90deg, #ffd700 0%, #ffaa00 100%);
+    border: none;
+    padding: 12px 30px;
+    border-radius: 25px;
+    color: #333;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    width: 100%;
+}
+
+.daily-claim-btn:disabled {
+    background: #555;
+    color: #888;
+}
+
+/* Престиж подтверждение модал */
+.prestige-confirm-modal {
+    min-width: 280px;
+    max-width: 350px;
+    text-align: center;
+}
+
+.confirm-text {
+    margin: 20px 0;
+    font-size: 16px;
+    line-height: 1.6;
+}
+
+.confirm-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.confirm-btn-yes {
+    flex: 1;
+    background: linear-gradient(90deg, #6bcf7f 0%, #4CAF50 100%);
+    border: none;
+    padding: 12px;
+    border-radius: 10px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.confirm-btn-no {
+    flex: 1;
+    background: rgba(255,255,255,0.2);
+    border: none;
+    padding: 12px;
+    border-radius: 10px;
+    color: white;
+    cursor: pointer;
+}
+
+/* Престиж доступен модал */
+.prestige-available-modal {
+    min-width: 300px;
+    max-width: 400px;
+    text-align: center;
+}
+
+.prestige-info-text {
+    text-align: left;
+    margin: 15px 0;
+    line-height: 1.6;
+}
+
+.prestige-info-text ul {
+    margin: 10px 0;
+    padding-left: 20px;
+}
+
+.prestige-info-text li {
+    margin: 5px 0;
+}
+
+.prestige-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.prestige-btn-do {
+    flex: 1;
+    background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%);
+    border: none;
+    padding: 12px;
+    border-radius: 10px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.prestige-btn-later {
+    flex: 1;
+    background: rgba(255,255,255,0.2);
+    border: none;
+    padding: 12px;
+    border-radius: 10px;
+    color: white;
+    cursor: pointer;
+}
+
+/* Престиж модал */
+.prestige-modal {
+    min-width: 300px;
+    max-width: 400px;
+}
+
+.prestige-info {
+    text-align: center;
+    margin: 15px 0;
+    padding: 15px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 10px;
+}
+
+.prestige-tokens {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.token-icon {
+    font-size: 32px;
+}
+
+.token-count {
+    font-size: 36px;
+    font-weight: bold;
+    color: #f093fb;
+}
+
+.token-label {
+    font-size: 14px;
+    color: #aaa;
+}
+
+.prestige-count {
+    color: #888;
+    font-size: 14px;
+}
+
+.prestige-section {
+    margin: 15px 0;
+}
+
+.prestige-section h3 {
+    font-size: 14px;
+    color: #aaa;
+    margin-bottom: 10px;
+}
+
+.prestige-bonuses {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.prestige-bonus-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 8px;
+    font-size: 13px;
+}
+
+.bonus-name {
+    color: #fff;
+}
+
+.bonus-desc {
+    color: #6bcf7f;
+}
+
+.next-bonus {
+    background: rgba(255,215,0,0.1);
+    border: 1px solid rgba(255,215,0,0.3);
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+}
+
+.next-bonus h4 {
+    color: #ffd700;
+    margin-bottom: 8px;
+}
+
+.progress-bar {
+    height: 8px;
+    background: #333;
+    border-radius: 4px;
+    margin: 10px 0;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ffd700, #ffaa00);
+    transition: width 0.3s;
+}
+
+.prestige-action {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.prestige-gain {
+    color: #6bcf7f;
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.prestige-btn {
+    background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%);
+    border: none;
+    padding: 15px 40px;
+    border-radius: 25px;
+    color: white;
+    font-weight: bold;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.prestige-locked {
+    color: #ff6b6b;
+    font-size: 14px;
+}
+
+.prestige-warning {
+    text-align: center;
+    font-size: 12px;
+    color: #ff6b6b;
+    padding: 10px;
+    background: rgba(255,107,107,0.1);
+    border-radius: 8px;
+    margin-top: 10px;
+}
+
+/* Успех престижа */
+.prestige-success-modal {
+    text-align: center;
+    min-width: 280px;
+}
+
+.success-content {
+    margin: 20px 0;
+}
+
+.big-token {
+    font-size: 64px;
+    display: block;
+}
+
+.tokens-gained {
+    font-size: 36px;
+    font-weight: bold;
+    color: #f093fb;
+}
+
+.success-message {
+    color: #6bcf7f;
+    margin: 15px 0;
+}
+
+.success-btn {
+    background: linear-gradient(90deg, #6bcf7f 0%, #4CAF50 100%);
+    border: none;
+    padding: 12px 30px;
+    border-radius: 25px;
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 15px;
+}
+
+/* Настройки */
+.settings-modal {
+    min-width: 280px;
+    max-width: 350px;
+}
+
+.settings-section {
+    margin: 15px 0;
+}
+
+.settings-section h3 {
+    font-size: 14px;
+    color: #aaa;
+    margin-bottom: 10px;
+}
+
+.settings-btn {
+    display: block;
+    width: 100%;
+    background: rgba(255,255,255,0.1);
+    border: none;
+    padding: 12px;
+    border-radius: 10px;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+    margin-bottom: 8px;
+    text-align: left;
+}
+
+.settings-btn:hover {
+    background: rgba(255,255,255,0.2);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.stat-item {
+    background: rgba(0,0,0,0.3);
+    padding: 10px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.stat-label {
+    display: block;
+    font-size: 11px;
+    color: #aaa;
+    margin-bottom: 4px;
+}
+
+.stat-value {
+    display: block;
+    font-size: 14px;
+    font-weight: bold;
+    color: #ffd700;
+}
+
+/* Частицы наград */
+.reward-particle {
+    position: absolute;
+    font-size: 24px;
+    animation: float-up 1s ease-out forwards;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+@keyframes float-up {
+    0% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-100px) scale(0.5);
+        opacity: 0;
+    }
+}
+
+/* Эффект клика */
+.click-effect {
+    position: absolute;
+    pointer-events: none;
+    z-index: 5;
+}
+
+@keyframes click-pulse {
+    0% {
+        transform: translate(-50%, -50%) scale(0.5);
+        opacity: 1;
+        border-width: 3px;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(2);
+        opacity: 0;
+        border-width: 0;
+    }
+}
+
+/* ===== УВЕДОМЛЕНИЯ В ИГРЕ ===== */
+.game-notification {
+    position: absolute;
+    top: 120px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    border: 2px solid;
+    border-radius: 15px;
+    padding: 15px 30px;
+    color: #fff;
+    font-weight: bold;
+    font-size: 18px;
+    z-index: 1000;
+    pointer-events: none;
+    animation: notification-in 0.3s ease-out, notification-out 0.3s ease-in 2.7s forwards;
+    white-space: nowrap;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+}
+
+@keyframes notification-in {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+@keyframes notification-out {
+    from {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px);
+    }
+}
+
+/* ===== ЗАПРЕТ НА ВЫДЕЛЕНИЕ И КОНТЕКСТНОЕ МЕНЮ ===== */
+* {
+    -webkit-touch-callout: none !important;
+    -webkit-user-select: none !important;
+    -khtml-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+    user-select: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-user-drag: none !important;
+    -khtml-user-drag: none !important;
+    -moz-user-drag: none !important;
+    -o-user-drag: none !important;
+}
+
+/* Запрет на выделение для всех элементов */
+html, body, div, span, canvas, button, img {
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+    user-select: none !important;
+    -webkit-touch-callout: none !important;
+}
+
+/* ===== ПРЕДОТВРАЩЕНИЕ ОТТЯГИВАНИЯ НА МОБИЛЬНЫХ ===== */
+body {
+    overscroll-behavior: none;
+    touch-action: none;
+}
+
+/* Запрет на контекстное меню для canvas */
+canvas {
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  pointer-events: auto;
+}
+
+/* ===== АДАПТИВНОСТЬ ===== */
+
+/* 1. Для экранов ниже 700px */
+@media (max-height: 700px) {
+    #top-bar {
+        top: 8px;
+        left: 8px;
+        right: 8px;
+        padding: 6px 10px;
+        min-height: 45px;
+    }
+
+    #drift-panel {
+        top: 55px;
+        left: 8px;
+        right: 60px;
+        padding: 4px 6px;
+    }
+    
+    #cps-panel {
+        top: 78px;
+        left: 8px;
+        padding: 2px 8px;
+    }
+    
+    #auto-panel {
+        top: 78px;
+        left: 90px;
+        padding: 2px 8px;
+    }
+    
+    #pause-panel {
+        top: 78px;
+        right: 60px;
+    }
+    
+    .pause-btn {
+        width: 30px;
+        height: 30px;
+        font-size: 14px;
+    }
+    
+    #right-menu {
+        top: 60px;
+        right: 8px;
+        gap: 6px;
+    }
+    
+    .menu-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+    }
+
+    #boosts-panel {
+        bottom: 12px;
+        left: 8px;
+        right: 8px;
+        gap: 8px;
+    }
+    
+    .boost-slot {
+        width: 48px;
+        height: 48px;
+    }
+    
+    .boost-icon {
+        font-size: 20px;
+    }
+}
+
+/* 2. Для экранов ниже 600px (iPhone SE) */
+@media (max-height: 600px) {
+    #top-bar {
+        top: 5px;
+        left: 5px;
+        right: 5px;
+        padding: 5px 8px;
+        min-height: 40px;
+    }
+    
+    #drift-panel {
+        top: 50px;
+        left: 5px;
+        right: 50px;
+        padding: 2px 4px;
+    }
+    
+    #cps-panel {
+        top: 72px;
+        left: 5px;
+        padding: 2px 6px;
+    }
+    
+    #auto-panel {
+        top: 72px;
+        left: 80px;
+        padding: 2px 6px;
+    }
+    
+    #pause-panel {
+        top: 72px;
+        right: 50px;
+    }
+    
+    .pause-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
+    }
+    
+    #drift-bar {
+        height: 12px;
+    }
+    
+    #drift-multiplier {
+        font-size: 11px;
+        min-width: 28px;
+    }
+    
+    #right-menu {
+        top: 50px;
+    }
+    
+    #right-menu {
+        top: 50px;
+        right: 5px;
+        gap: 5px;
+    }
+    
+    .menu-btn {
+        width: 35px;
+        height: 35px;
+        font-size: 16px;
+        border-radius: 8px;
+    }
+    
+    .resource {
+        font-size: 14px;
+        min-width: 70px;
+        gap: 3px;
+    }
+    
+    .resource .icon {
+        font-size: 16px;
+    }
+    
+    #depth-meter {
+        font-size: 14px;
+    }
+    
+    #drift-bar {
+        height: 14px;
+    }
+    
+    #drift-multiplier {
+        font-size: 12px;
+        min-width: 30px;
+    }
+    
+    #boosts-panel {
+        bottom: 8px;
+        left: 5px;
+        right: 5px;
+    }
+    
+    .boost-slot {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+    }
+    
+    .boost-icon {
+        font-size: 18px;
+    }
+    
+    .boost-timer {
+        font-size: 9px;
+        bottom: 2px;
+    }
+}
+
+/* 3. Для экстремально коротких экранов (< 500px) */
+@media (max-height: 500px) {
+    #top-bar {
+        flex-direction: row;
+        gap: 5px;
+        padding: 4px 6px;
+        flex-wrap: wrap;
+        min-height: 35px;
+    }
+    
+    #drift-panel {
+        top: 40px;
+        right: 45px;
+        padding: 1px 3px;
+    }
+    
+    #cps-panel {
+        top: 58px;
+        left: 5px;
+        padding: 1px 5px;
+    }
+    
+    #auto-panel {
+        top: 58px;
+        left: 70px;
+        padding: 1px 5px;
+    }
+    
+    #pause-panel {
+        top: 58px;
+        right: 45px;
+    }
+    
+    #drift-bar {
+        height: 10px;
+    }
+    
+    #drift-multiplier {
+        font-size: 10px;
+        min-width: 25px;
+    }
+    
+    #right-menu {
+        top: 40px;
+    }
+    
+    .menu-btn {
+        width: 30px;
+        height: 30px;
+        font-size: 14px;
+    }
+    
+    #boosts-panel {
+        bottom: 5px;
+    }
+    
+    .boost-slot {
+        width: 35px;
+        height: 35px;
+        border-radius: 6px;
+    }
+    
+    .boost-icon {
+        font-size: 16px;
+    }
+}
+
+/* 4. Для очень узких экранов (< 400px шириной) */
+@media (max-width: 400px) {
+    #top-bar {
+        flex-wrap: nowrap;
+        justify-content: space-between;
+        gap: 3px;
+    }
+    
+    .resource {
+        min-width: 60px;
+        font-size: 12px;
+    }
+    
+    .resource .icon {
+        font-size: 14px;
+    }
+    
+    #depth-meter {
+        font-size: 12px;
+        min-width: 50px;
+    }
+    
+    #drift-panel {
+        right: 45px;
+    }
+    
+    #right-menu {
+        gap: 3px;
+    }
+    
+    .menu-btn {
+        width: 30px;
+        height: 30px;
+        font-size: 13px;
+    }
+    
+    #boosts-panel {
+        gap: 6px;
+    }
+    
+    .boost-slot {
+        width: 32px;
+        height: 32px;
+    }
+    
+    .boost-icon {
+        font-size: 14px;
+    }
+    
+    .boost-timer {
+        font-size: 8px;
+    }
+}
+
+/* 5. Для экстремально узких экранов (< 350px) */
+@media (max-width: 350px) {
+    #top-bar {
+        padding: 3px 5px;
+    }
+    
+    .resource {
+        min-width: 50px;
+        font-size: 11px;
+    }
+    
+    .resource .icon {
+        font-size: 12px;
+    }
+    
+    #depth-meter {
+        font-size: 11px;
+        min-width: 40px;
+    }
+    
+    #drift-panel {
+        right: 40px;
+    }
+    
+    .menu-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 12px;
+    }
+    
+    .boost-slot {
+        width: 30px;
+        height: 30px;
+    }
+    
+    .boost-icon {
+        font-size: 13px;
+    }
+}
+
+/* Убираем ненужные CSS классы для JavaScript адаптации */
+/* Они больше не нужны, так как есть медиа-запросы */
+
+/* Оптимизация для портретной ориентации */
+@media (orientation: portrait) {
+    #drift-panel {
+        max-width: calc(100vw - 80px);
+    }
+    
+    #boosts-panel {
+        justify-content: space-around;
+    }
+}
+
+/* Оптимизация для ландшафтной ориентации */
+@media (orientation: landscape) {
+    #top-bar {
+        top: 5px;
+        padding: 5px 10px;
+        min-height: 40px;
+    }
+    
+    #drift-panel {
+        top: 50px;
+        left: 10px;
+        right: auto;
+        width: calc(100% - 170px);
+        max-width: 400px;
+        padding: 3px 5px;
+    }
+    
+    #drift-bar {
+        height: 12px;
+    }
+    
+    #right-menu {
+        top: 50px;
+        right: 10px;
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .menu-btn {
+        width: 34px;
+        height: 34px;
+        font-size: 14px;
+    }
+    
+    #boosts-panel {
+        flex-direction: row;
+        gap: 8px;
+        bottom: 10px;
+    }
+}
+
+/* Специально для Surface Duo и похожих устройств */
+@media (orientation: landscape) and (max-height: 750px) {
+    #drift-panel {
+        top: 48px;
+    }
+    
+    #right-menu {
+        top: 48px;
+    }
+}
+
+@media (orientation: landscape) and (max-height: 650px) {
+    #drift-panel {
+        top: 45px;
+        padding: 2px 4px;
+    }
+    
+    #drift-bar {
+        height: 10px;
+    }
+    
+    #right-menu {
+        top: 45px;
+    }
+    
+    .menu-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 13px;
+    }
+}
+
+/* Обеспечиваем визуальную обратную связь */
+#drift-panel.high-value #drift-fill {
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.8; }
+    100% { opacity: 1; }
+}
