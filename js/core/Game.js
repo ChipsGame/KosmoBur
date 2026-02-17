@@ -9,24 +9,12 @@ class Game {
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
 
-        // Адаптивное разрешение для Canvas
-        // На мобильных используем меньшее разрешение для производительности
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        
-        if (isMobile) {
-            // Для мобильных - меньшее разрешение
-            this.width = 540;
-            this.height = 960;
-        } else {
-            // Для ПК - полное разрешение
-            this.width = 1080;
-            this.height = 1920;
-        }
-        
+        // Фиксированное разрешение для Canvas
+        // Используем меньший размер для лучшей производительности
+        this.width = 720;
+        this.height = 1280;
         this.canvas.width = this.width;
         this.canvas.height = this.height;
-        
-        console.log('Canvas размер:', this.width, 'x', this.height, 'Мобильный:', isMobile);
 
         // Инициализация систем
         this.renderer = new Renderer(this);
@@ -693,13 +681,6 @@ class Game {
     render() {
         // Оптимизация: очищаем только видимую область
         this.ctx.clearRect(0, 0, this.width, this.height);
-        
-        // Масштабирование для мобильных
-        // Все координаты рассчитаны на 1080x1920, масштабируем если canvas меньше
-        const scaleX = this.width / 1080;
-        const scaleY = this.height / 1920;
-        this.ctx.save();
-        this.ctx.scale(scaleX, scaleY);
 
         // Фон (космос) - рисуется в CSS, тут можно добавить эффекты если нужно
 
@@ -730,9 +711,6 @@ class Game {
         
         // Эффекты кликов
         this.input.renderClickEffects(this.ctx);
-        
-        // Восстанавливаем масштаб
-        this.ctx.restore();
         
         // Дебаг информация (только для разработки)
         if (this.firstFrame) {

@@ -4,20 +4,19 @@ class Drill {
         this.x = game.width / 2;
         
         // Оптимизированная начальная позиция: бур должен быть сразу над первым слоем
-        // Используем размер canvas вместо window (надежнее на мобильных)
-        const canvasHeight = game.height;
+        const screenHeight = window.innerHeight;
         
-        // Адаптация под разные размеры canvas
-        if (canvasHeight <= 960) {
-            // Мобильные (маленький canvas)
-            this.y = 150;
-            this.height = 100;
-        } else if (canvasHeight < 1500) {
+        // Адаптация под разные экраны
+        if (screenHeight < 500) {
+            // Очень короткие экраны (iPhone SE и подобные)
+            this.y = 120;
+            this.height = 140;
+        } else if (screenHeight < 700) {
             // Средние экраны
             this.y = 180;
             this.height = 170;
         } else {
-            // Большие экраны (ПК)
+            // Большие экраны
             this.y = 200;
             this.height = 200;
         }
@@ -73,8 +72,7 @@ class Drill {
             y: this.y, 
             width: this.width, 
             height: this.height,
-            canvasSize: `${canvasHeight}`,
-            isMobile: canvasHeight <= 960
+            screenHeight: screenHeight
         });
     }
 
