@@ -100,6 +100,44 @@ class Game {
             }
         });
         
+        // === ДОПОЛНИТЕЛЬНЫЕ ОБРАБОТЧИКИ ДЛЯ МОБИЛЬНЫХ ===
+        // pagehide - срабатывает при сворачивании приложения на iOS/Android
+        window.addEventListener('pagehide', (e) => {
+            this.offlineProgress.saveExitTime();
+            this.pause();
+        });
+        
+        // freeze - срабатывает когда страница замораживается браузером
+        document.addEventListener('freeze', () => {
+            this.offlineProgress.saveExitTime();
+            this.pause();
+        });
+        
+        // resume - когда страница размораживается
+        document.addEventListener('resume', () => {
+            // НЕ снимаем паузу автоматически
+            setTimeout(() => {
+                this.offlineProgress.checkOnStart();
+            }, 500);
+        });
+        
+        // blur - когда окно теряет фокус (резервный вариант)
+        window.addEventListener('blur', () => {
+            // Небольшая задержка чтобы отличить от обычных кликов
+            this._blurTimeout = setTimeout(() => {
+                this.offlineProgress.saveExitTime();
+                this.pause();
+            }, 100);
+        });
+        
+        // focus - когда окно получает фокус
+        window.addEventListener('focus', () => {
+            if (this._blurTimeout) {
+                clearTimeout(this._blurTimeout);
+                this._blurTimeout = null;
+            }
+        });
+        
         // Сохраняем время выхода при закрытии страницы
         window.addEventListener('beforeunload', () => {
             this.offlineProgress.saveExitTime();
@@ -292,87 +330,41 @@ class Game {
     
     /**
      * Фикс для скролла в модальных окнах на мобильных устройствах
+     * Упрощённая версия - используем нативный скролл с CSS
      */
     setupModalScrollFix() {
-        // Функция для добавления обработчиков к модальному окну
-        const addScrollHandlers = (modal) => {
-            const modalContent = modal.querySelector('.modal-content');
-            if (!modalContent) return;
-            
-            // Удаляем старые обработчики если есть (чтобы не дублировать)
-            modalContent.removeEventListener('touchstart', this.handleTouchStart);
-            modalContent.removeEventListener('touchmove', this.handleTouchMove);
-            
-            // Разрешаем скролл внутри модального контента
-            modalContent.addEventListener('touchstart', this.handleTouchStart, { passive: true });
-            modalContent.addEventListener('touchmove', this.handleTouchMove, { passive: false });
-        };
-        
-        // Сохраняем ссылки на обработчики
-        this.handleTouchStart = (e) => {
-            const modalContent = e.currentTarget;
-            modalContent.dataset.scrollTop = modalContent.scrollTop;
-            modalContent.dataset.clientY = e.touches[0].clientY;
-        };
-        
-        this.handleTouchMove = (e) => {
-            const modalContent = e.currentTarget;
-            const scrollTop = parseFloat(modalContent.dataset.scrollTop || 0);
-            const clientY = parseFloat(modalContent.dataset.clientY || 0);
-            const currentClientY = e.touches[0].clientY;
-            const deltaY = clientY - currentClientY;
-            
-            const isScrollingUp = deltaY > 0;
-            const isScrollingDown = deltaY < 0;
-            const canScrollUp = scrollTop > 0;
-            const canScrollDown = scrollTop + modalContent.clientHeight < modalContent.scrollHeight;
-            
-            // Если можем скроллить в нужном направлении - разрешаем
-            if ((isScrollingUp && canScrollUp) || (isScrollingDown && canScrollDown)) {
-                return;
-            }
-            
-            // Если достигли края - предотвращаем bounce-эффект страницы
-            if ((isScrollingUp && !canScrollUp) || (isScrollingDown && !canScrollDown)) {
-                e.preventDefault();
-            }
-        };
-        
-        // Обрабатываем существующие модальные окна
-        document.querySelectorAll('.modal').forEach(addScrollHandlers);
-        
-        // Наблюдаем за появлением новых модальных окон
-        const observer = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                mutation.addedNodes.forEach((node) => {
-                    if (node.nodeType === 1 && node.classList.contains('modal')) {
-                        addScrollHandlers(node);
-                    }
-                });
-            });
-        });
-        
-        observer.observe(document.body, { childList: true, subtree: true });
-        
         // Глобальный обработчик для предотвращения скролла страницы при открытом модале
+        // но разрешаем скролл внутри модального контента
         document.addEventListener('touchmove', (e) => {
             const openModal = document.querySelector('.modal:not(.hidden)');
             if (openModal) {
-                // Если тач внутри модального контента - проверяем нужно ли блокировать
                 const modalContent = openModal.querySelector('.modal-content');
                 if (modalContent && modalContent.contains(e.target)) {
-                    // Проверяем, можно ли скроллить
-                    const canScroll = modalContent.scrollHeight > modalContent.clientHeight;
-                    if (!canScroll) {
-                        e.preventDefault();
-                    }
-                    // Иначе позволяем всплыть к обработчику выше
+                    // Разрешаем скролл внутри модального контента
+                    // Браузер сам разберётся с границами
+                    return;
                 } else {
                     // Тач вне контента модала - блокируем
                     e.preventDefault();
                 }
             }
         }, { passive: false });
+        
+        // Предотвращаем pull-to-refresh на мобильных когда модал открыт
+        document.addEventListener('touchstart', (e) => {
+            const openModal = document.querySelector('.modal:not(.hidden)');
+            if (openModal) {
+                const modalContent = openModal.querySelector('.modal-content');
+                if (modalContent && modalContent.contains(e.target)) {
+                    // Проверяем, можно ли скроллить вверх
+                    const canScrollUp = modalContent.scrollTop > 0;
+                    if (!canScrollUp) {
+                        // На вершине - предотвращаем pull-to-refresh
+                        modalContent.style.overscrollBehavior = 'contain';
+                    }
+                }
+            }
+        }, { passive: true });
     }
 
     handleResize() {

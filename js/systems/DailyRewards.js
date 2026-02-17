@@ -265,20 +265,14 @@ class DailyRewards {
      * Показать анимацию получения награды
      */
     showClaimAnimation(reward) {
-        // Создаём эффект "всплывающих" ресурсов
-        const container = document.getElementById('game-container');
-        
-        for (let i = 0; i < 10; i++) {
-            setTimeout(() => {
-                const particle = document.createElement('div');
-                particle.className = 'reward-particle';
-                particle.textContent = Math.random() > 0.5 ? '🪙' : '💎';
-                particle.style.left = `${50 + (Math.random() - 0.5) * 40}%`;
-                particle.style.top = '50%';
-                container.appendChild(particle);
-                
-                setTimeout(() => particle.remove(), 1000);
-            }, i * 100);
+        // Показываем простое уведомление вместо DOM-анимации
+        // Это предотвращает лаги на мобильных устройствах
+        if (window.game && window.game.showNotification) {
+            window.game.showNotification(
+                `🎁 +${Utils.formatNumber(reward.coins)} 🪙 +${reward.ore} 💎`,
+                '#ffd700',
+                3000
+            );
         }
     }
     

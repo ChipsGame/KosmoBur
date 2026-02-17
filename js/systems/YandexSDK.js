@@ -27,6 +27,9 @@ class YandexSDK {
             
             console.log('Yandex SDK инициализирован');
             
+            // Настраиваем обработчики жизненного цикла для мобильных
+            this.setupLifecycleHandlers();
+            
             // Показываем рекламу сразу при запуске игры
             setTimeout(() => this.showFullscreenAd(), 2000);
             
@@ -35,6 +38,31 @@ class YandexSDK {
             console.error('Ошибка инициализации Yandex SDK:', e);
             return false;
         }
+    }
+    
+    /**
+     * Настроить обработчики жизненного цикла приложения
+     * Важно для правильной работы паузы на мобильных
+     */
+    setupLifecycleHandlers() {
+        if (!this.ysdk) return;
+        
+        // Обработчик событий жизненного цикла приложения
+        this.ysdk.on('game_api_pause', () => {
+            console.log('Yandex SDK: игра приостановлена');
+            if (window.game) window.game.pause();
+        });
+        
+        this.ysdk.on('game_api_resume', () => {
+            console.log('Yandex SDK: игра возобновлена');
+            // НЕ снимаем паузу автоматически - игрок сам нажмёт ▶️
+            // Но проверяем оффлайн-прогресс
+            if (window.game && window.game.offlineProgress) {
+                setTimeout(() => {
+                    window.game.offlineProgress.checkOnStart();
+                }, 500);
+            }
+        });
     }
     
     /**
@@ -84,6 +112,7 @@ class YandexSDK {
         if (!this.isReady || this.isAdShowing) return false;
         
         this.isAdShowing = true;
+        let rewardReceived = false;
         
         return new Promise((resolve) => {
             this.ysdk.adv.showRewardedVideo({
@@ -94,19 +123,26 @@ class YandexSDK {
                     },
                     onRewarded: () => {
                         console.log('Награда получена!');
+                        rewardReceived = true;
                         if (onReward) onReward();
-                        resolve(true);
                     },
                     onClose: () => {
-                        console.log('Rewarded реклама закрыта');
+                        console.log('Rewarded реклама закрыта, награда:', rewardReceived);
                         this.isAdShowing = false;
-                        if (window.game) window.game.resume();
-                        resolve(false);
+                        // Возобновляем игру только если награда была получена
+                        // или если игрок закрыл без награды - тогда он сам нажмёт ▶️
+                        if (window.game) {
+                            if (rewardReceived) {
+                                window.game.resume();
+                            }
+                            // Если награды не было - игра остаётся на паузе
+                        }
+                        resolve(rewardReceived);
                     },
                     onError: (error) => {
                         console.error('Ошибка rewarded рекламы:', error);
                         this.isAdShowing = false;
-                        if (window.game) window.game.resume();
+                        // При ошибке тоже не снимаем паузу автоматически
                         resolve(false);
                     }
                 }

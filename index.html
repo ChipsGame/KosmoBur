@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
     <meta name="yandex-games" content="true">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -27,6 +27,16 @@
             touch-action: pan-y;
             -webkit-overflow-scrolling: touch;
             overflow-y: auto;
+            overscroll-behavior: contain;
+        }
+        
+        /* Фикс для iOS - предотвращаем pull-to-refresh */
+        @supports (-webkit-touch-callout: none) {
+            .modal-content {
+                /* Дополнительные фиксы для iOS Safari */
+                -webkit-transform: translateZ(0);
+                transform: translateZ(0);
+            }
         }
         html, body {
             overscroll-behavior: none;

@@ -245,18 +245,24 @@ body {
     padding: 25px;
     border-radius: 20px;
     max-width: 90%;
-    max-height: 85%;
+    max-height: 85vh;
     overflow-y: auto;
+    overflow-x: hidden;
     position: relative;
     color: white;
     box-shadow: 
         0 20px 60px rgba(0,0,0,0.6),
         inset 0 1px 0 rgba(255,255,255,0.1);
     border: 1px solid rgba(255,255,255,0.15);
+    /* Критично для плавного скролла на iOS */
     touch-action: pan-y;
     -webkit-overflow-scrolling: touch;
+    /* Предотвращаем pull-to-refresh */
+    overscroll-behavior: contain;
     width: 420px;
     animation: modalSlideIn 0.3s ease;
+    /* Для Android - плавный скролл */
+    scroll-behavior: smooth;
 }
 
 @keyframes modalSlideIn {
@@ -321,17 +327,25 @@ body {
 .upgrades-modal-content {
     max-width: 95%;
     width: 500px;
-    max-height: 75vh;
+    max-height: 80vh;
     overflow-y: auto;
+    overflow-x: hidden;
     padding-top: 15px;
+    /* Критично для плавного скролла */
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    scroll-behavior: smooth;
 }
 
 /* Список достижений */
 #achievements-list {
     max-height: 60vh;
     overflow-y: auto;
+    overflow-x: hidden;
     touch-action: pan-y;
     -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
     padding-right: 5px;
 }
 
