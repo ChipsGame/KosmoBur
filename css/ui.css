@@ -21,102 +21,16 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    background: 
-        radial-gradient(1px 1px at 5% 10%, rgba(255,255,255,0.8), transparent),
-        radial-gradient(1px 1px at 15% 25%, rgba(255,255,255,0.6), transparent),
-        radial-gradient(1px 1px at 25% 8%, rgba(255,255,255,0.9), transparent),
-        radial-gradient(1px 1px at 35% 35%, rgba(255,255,255,0.7), transparent),
-        radial-gradient(1px 1px at 45% 15%, rgba(255,255,255,0.8), transparent),
-        radial-gradient(1px 1px at 55% 40%, rgba(255,255,255,0.6), transparent),
-        radial-gradient(1px 1px at 65% 12%, rgba(255,255,255,0.9), transparent),
-        radial-gradient(1px 1px at 75% 28%, rgba(255,255,255,0.7), transparent),
-        radial-gradient(1px 1px at 85% 5%, rgba(255,255,255,0.8), transparent),
-        radial-gradient(1px 1px at 95% 32%, rgba(255,255,255,0.6), transparent),
-        radial-gradient(1px 1px at 10% 45%, rgba(255,255,255,0.9), transparent),
-        radial-gradient(1px 1px at 20% 60%, rgba(255,255,255,0.7), transparent),
-        radial-gradient(1px 1px at 30% 50%, rgba(255,255,255,0.8), transparent),
-        radial-gradient(1px 1px at 40% 70%, rgba(255,255,255,0.6), transparent),
-        radial-gradient(1px 1px at 50% 55%, rgba(255,255,255,0.9), transparent),
-        radial-gradient(1px 1px at 60% 75%, rgba(255,255,255,0.7), transparent),
-        radial-gradient(1px 1px at 70% 48%, rgba(255,255,255,0.8), transparent),
-        radial-gradient(1px 1px at 80% 68%, rgba(255,255,255,0.6), transparent),
-        radial-gradient(1px 1px at 90% 52%, rgba(255,255,255,0.9), transparent),
-        radial-gradient(1px 1px at 3% 78%, rgba(255,255,255,0.7), transparent),
-        radial-gradient(1px 1px at 13% 85%, rgba(255,255,255,0.8), transparent),
-        radial-gradient(1px 1px at 23% 72%, rgba(255,255,255,0.6), transparent),
-        radial-gradient(1px 1px at 33% 90%, rgba(255,255,255,0.9), transparent),
-        radial-gradient(1px 1px at 43% 80%, rgba(255,255,255,0.7), transparent),
-        radial-gradient(1px 1px at 53% 95%, rgba(255,255,255,0.8), transparent),
-        radial-gradient(1px 1px at 63% 82%, rgba(255,255,255,0.6), transparent),
-        radial-gradient(1px 1px at 73% 92%, rgba(255,255,255,0.9), transparent),
-        radial-gradient(1px 1px at 83% 78%, rgba(255,255,255,0.7), transparent),
-        radial-gradient(1px 1px at 93% 88%, rgba(255,255,255,0.8), transparent),
-        linear-gradient(180deg, #020205 0%, #080810 30%, #0c0c18 70%, #050508 100%);
+    background: linear-gradient(180deg, #0a0a1a 0%, #1a1a3a 50%, #0f0f2f 100%);
     overflow: hidden;
-}
-
-/* Туманности */
-#game-container .nebula-1,
-#game-container .nebula-2,
-#game-container .nebula-3 {
-    position: absolute;
-    pointer-events: none;
-    z-index: 0;
-    filter: blur(80px);
-    opacity: 0.6;
-}
-
-#game-container .nebula-1 {
-    left: -5%;
-    top: 0%;
-    width: 40%;
-    height: 50%;
-    background: radial-gradient(circle at center, rgba(100, 50, 150, 0.5) 0%, rgba(60, 30, 100, 0.25) 50%, transparent 70%);
-    animation: nebula-drift-1 20s ease-in-out infinite;
-}
-
-#game-container .nebula-2 {
-    right: 0%;
-    top: 15%;
-    width: 35%;
-    height: 45%;
-    background: radial-gradient(circle at center, rgba(50, 100, 150, 0.4) 0%, rgba(30, 60, 100, 0.2) 50%, transparent 70%);
-    animation: nebula-drift-2 25s ease-in-out infinite;
-}
-
-#game-container .nebula-3 {
-    left: 20%;
-    bottom: -5%;
-    width: 60%;
-    height: 40%;
-    background: radial-gradient(circle at center, rgba(150, 60, 100, 0.35) 0%, rgba(100, 40, 70, 0.18) 50%, transparent 70%);
-    animation: nebula-drift-3 18s ease-in-out infinite;
-}
-
-@keyframes nebula-drift-1 {
-    0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.5; }
-    33% { transform: translate(20px, 15px) scale(1.05); opacity: 0.6; }
-    66% { transform: translate(-10px, 20px) scale(0.95); opacity: 0.45; }
-}
-
-@keyframes nebula-drift-2 {
-    0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.5; }
-    33% { transform: translate(-15px, 20px) scale(0.95); opacity: 0.6; }
-    66% { transform: translate(20px, -10px) scale(1.05); opacity: 0.45; }
-}
-
-@keyframes nebula-drift-3 {
-    0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.4; }
-    33% { transform: translate(25px, -15px) scale(1.03); opacity: 0.55; }
-    66% { transform: translate(-15px, 10px) scale(0.97); opacity: 0.35; }
 }
 
 #gameCanvas {
     display: block;
     max-width: 100%;
     max-height: 100%;
-    width: 100%;
-    height: 100%;
+    width: auto;
+    height: auto;
     position: relative;
     z-index: 1;
 }
@@ -301,7 +215,7 @@ body {
     color: #aaa;
 }
 
-/* Модальные окна */
+/* Модальные окна - CRITICAL: position:absolute для iPhone 7 */
 .modal {
     position: absolute;
     top: 0;
@@ -313,51 +227,94 @@ body {
     justify-content: center;
     align-items: center;
     z-index: 1000;
+    animation: modalFadeIn 0.2s ease;
+}
+
+@keyframes modalFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 .modal.hidden {
     display: none;
 }
 
+/* Базовый контент модалки */
 .modal-content {
-    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-    padding: 20px;
-    border-radius: 15px;
+    background: linear-gradient(145deg, #1e3c72 0%, #2a5298 50%, #1e3c72 100%);
+    padding: 25px;
+    border-radius: 20px;
     max-width: 90%;
-    max-height: 80%;
+    max-height: 85%;
     overflow-y: auto;
     position: relative;
     color: white;
-    box-shadow: 0 15px 40px rgba(0,0,0,0.5);
+    box-shadow: 
+        0 20px 60px rgba(0,0,0,0.6),
+        inset 0 1px 0 rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.15);
     touch-action: pan-y;
     -webkit-overflow-scrolling: touch;
-    width: 400px;
+    width: 420px;
+    animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+    from { 
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+    }
+    to { 
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
 .modal-content h2 {
     text-align: center;
-    margin-bottom: 15px;
-    font-size: clamp(18px, 5vw, 24px);
+    margin-bottom: 20px;
+    margin-top: 5px;
+    padding-right: 45px;
+    font-size: clamp(20px, 5vw, 26px);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
 }
 
+/* Кнопка закрытия (крестик) - CRITICAL: position:absolute для iPhone 7 */
 .close-modal {
-    position: fixed;
-    top: 15px;
-    right: 15px;
-    width: 35px;
-    height: 35px;
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
-    border: none;
-    background: rgba(255,255,255,0.3);
+    border: 2px solid rgba(255,255,255,0.4);
+    background: linear-gradient(135deg, rgba(255,100,100,0.9) 0%, rgba(200,50,50,0.9) 100%);
     color: white;
-    font-size: 18px;
+    font-size: 20px;
+    font-weight: bold;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1001;
+    z-index: 1002;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    transition: all 0.15s ease;
+    -webkit-tap-highlight-color: rgba(255,255,255,0.3);
+}
+
+.close-modal:hover {
+    transform: scale(1.1);
+    background: linear-gradient(135deg, rgba(255,120,120,1) 0%, rgba(220,70,70,1) 100%);
+}
+
+.close-modal:active {
+    transform: scale(0.95);
 }
 
 /* Модальное окно улучшений */
@@ -485,326 +442,6 @@ body {
 .upgrade-cost-btn.disabled-btn {
     background: #444;
     color: #888;
-}
-
-/* ===== НАСТРОЙКИ ===== */
-.settings-modal {
-    min-width: 280px;
-    max-width: 350px;
-    border: 2px solid rgba(255,255,255,0.2);
-    box-shadow: 0 0 30px rgba(102, 126, 234, 0.3), inset 0 0 20px rgba(255,255,255,0.05);
-}
-
-.settings-section {
-    margin: 15px 0;
-    padding: 12px;
-    background: rgba(0,0,0,0.2);
-    border-radius: 12px;
-    border: 1px solid rgba(255,255,255,0.1);
-}
-
-.settings-section h3 {
-    font-size: 14px;
-    color: #ffd700;
-    margin-bottom: 12px;
-    text-shadow: 0 0 10px rgba(255,215,0,0.3);
-}
-
-.settings-btn {
-    display: block;
-    width: 100%;
-    background: linear-gradient(135deg, rgba(102,126,234,0.3) 0%, rgba(118,75,162,0.3) 100%);
-    border: 1px solid rgba(255,255,255,0.15);
-    padding: 12px 15px;
-    border-radius: 10px;
-    color: white;
-    font-size: 14px;
-    cursor: pointer;
-    margin-bottom: 8px;
-    text-align: left;
-    transition: all 0.2s;
-}
-
-.settings-btn:hover {
-    background: linear-gradient(135deg, rgba(102,126,234,0.5) 0%, rgba(118,75,162,0.5) 100%);
-    border-color: rgba(255,255,255,0.3);
-    transform: translateX(3px);
-}
-
-.settings-btn:disabled {
-    background: rgba(255,255,255,0.05);
-    color: #888;
-    cursor: not-allowed;
-    border-color: transparent;
-}
-
-.stats-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-}
-
-.stat-item {
-    background: rgba(0,0,0,0.3);
-    padding: 10px;
-    border-radius: 8px;
-    text-align: center;
-}
-
-.stat-label {
-    display: block;
-    font-size: 11px;
-    color: #aaa;
-    margin-bottom: 4px;
-}
-
-.stat-value {
-    display: block;
-    font-size: 14px;
-    font-weight: bold;
-    color: #ffd700;
-}
-
-/* ===== ЕЖЕДНЕВНЫЕ НАГРАДЫ ===== */
-.daily-modal {
-    min-width: 300px;
-    max-width: 400px;
-}
-
-.daily-streak {
-    text-align: center;
-    color: #ff6b6b;
-    font-weight: bold;
-    margin-bottom: 15px;
-}
-
-.daily-days-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-    margin: 15px 0;
-}
-
-.daily-day {
-    background: rgba(0,0,0,0.3);
-    border-radius: 10px;
-    padding: 10px 5px;
-    text-align: center;
-    border: 2px solid transparent;
-    position: relative;
-}
-
-.daily-day.available {
-    border-color: #ffd700;
-    box-shadow: 0 0 10px rgba(255,215,0,0.3);
-    animation: pulse-glow 2s infinite;
-}
-
-.daily-day.claimed {
-    border-color: #6bcf7f;
-    opacity: 0.7;
-}
-
-.daily-day.locked {
-    opacity: 0.4;
-}
-
-@keyframes pulse-glow {
-    0%, 100% { box-shadow: 0 0 10px rgba(255,215,0,0.3); }
-    50% { box-shadow: 0 0 20px rgba(255,215,0,0.6); }
-}
-
-.daily-day-number {
-    font-size: 11px;
-    color: #aaa;
-}
-
-.daily-day-icon {
-    font-size: 24px;
-    margin: 5px 0;
-}
-
-.daily-day-reward {
-    font-size: 11px;
-    color: #ffd700;
-}
-
-.daily-check {
-    position: absolute;
-    top: -5px;
-    right: -5px;
-    background: #6bcf7f;
-    color: white;
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-}
-
-.daily-info {
-    text-align: center;
-    font-size: 12px;
-    color: #aaa;
-    margin: 15px 0;
-}
-
-.daily-claim-btn {
-    background: linear-gradient(90deg, #ffd700 0%, #ffaa00 100%);
-    border: none;
-    padding: 12px 30px;
-    border-radius: 25px;
-    color: #333;
-    font-weight: bold;
-    font-size: 16px;
-    cursor: pointer;
-    width: 100%;
-}
-
-.daily-claim-btn:disabled {
-    background: #555;
-    color: #888;
-}
-
-/* ===== ПРЕСТИЖ ===== */
-.prestige-modal {
-    min-width: 300px;
-    max-width: 400px;
-}
-
-.prestige-info {
-    text-align: center;
-    margin: 15px 0;
-    padding: 15px;
-    background: rgba(0,0,0,0.3);
-    border-radius: 10px;
-}
-
-.prestige-tokens {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    margin-bottom: 10px;
-}
-
-.token-icon {
-    font-size: 32px;
-}
-
-.token-count {
-    font-size: 36px;
-    font-weight: bold;
-    color: #f093fb;
-}
-
-.token-label {
-    font-size: 14px;
-    color: #aaa;
-}
-
-.prestige-count {
-    color: #888;
-    font-size: 14px;
-}
-
-.prestige-section {
-    margin: 15px 0;
-}
-
-.prestige-section h3 {
-    font-size: 14px;
-    color: #aaa;
-    margin-bottom: 10px;
-}
-
-.prestige-bonuses {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.prestige-bonus-item {
-    display: flex;
-    justify-content: space-between;
-    padding: 8px 12px;
-    background: rgba(255,255,255,0.05);
-    border-radius: 8px;
-    font-size: 13px;
-}
-
-.bonus-name {
-    color: #fff;
-}
-
-.bonus-desc {
-    color: #6bcf7f;
-}
-
-.next-bonus {
-    background: rgba(255,215,0,0.1);
-    border: 1px solid rgba(255,215,0,0.3);
-    border-radius: 10px;
-    padding: 12px;
-    text-align: center;
-}
-
-.next-bonus h4 {
-    color: #ffd700;
-    margin-bottom: 8px;
-}
-
-.progress-bar {
-    height: 8px;
-    background: #333;
-    border-radius: 4px;
-    margin: 10px 0;
-    overflow: hidden;
-}
-
-.progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #ffd700, #ffaa00);
-    transition: width 0.3s;
-}
-
-.prestige-action {
-    text-align: center;
-    margin: 20px 0;
-}
-
-.prestige-gain {
-    color: #6bcf7f;
-    font-size: 18px;
-    margin-bottom: 10px;
-}
-
-.prestige-btn {
-    background: linear-gradient(90deg, #f093fb 0%, #f5576c 100%);
-    border: none;
-    padding: 15px 40px;
-    border-radius: 25px;
-    color: white;
-    font-weight: bold;
-    font-size: 18px;
-    cursor: pointer;
-}
-
-.prestige-locked {
-    color: #ff6b6b;
-    font-size: 14px;
-}
-
-.prestige-warning {
-    text-align: center;
-    font-size: 12px;
-    color: #ff6b6b;
-    padding: 10px;
-    background: rgba(255,107,107,0.1);
-    border-radius: 8px;
-    margin-top: 10px;
 }
 
 /* ===== АДАПТИВНОСТЬ ===== */
@@ -984,4 +621,596 @@ body {
         width: 38px;
         height: 38px;
     }
+}
+
+/* Кнопка закрытия на мобильных - УВЕЛИЧЕННАЯ */
+@media (max-width: 500px) {
+    .close-modal {
+        width: 48px;
+        height: 48px;
+        font-size: 24px;
+        top: 8px;
+        right: 8px;
+        background: rgba(0,0,0,0.8);
+        border: 3px solid rgba(255,255,255,0.5);
+    }
+}
+
+/* ===== СТИЛИ ДЛЯ ВСЕХ МОДАЛОК ===== */
+
+/* --- Настройки --- */
+.settings-modal {
+    width: 450px;
+    max-width: 95%;
+}
+
+.settings-section {
+    background: rgba(0,0,0,0.2);
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 15px;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.settings-section h3 {
+    margin-bottom: 12px;
+    color: #ffd700;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.settings-btn {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 8px;
+    border: none;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.settings-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(102,126,234,0.4);
+}
+
+.settings-btn:disabled {
+    background: #444;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.stat-item {
+    background: rgba(255,255,255,0.1);
+    padding: 10px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.stat-label {
+    display: block;
+    font-size: 11px;
+    color: #aaa;
+    margin-bottom: 4px;
+}
+
+.stat-value {
+    display: block;
+    font-size: 14px;
+    font-weight: bold;
+    color: #6bcf7f;
+}
+
+/* --- Престиж --- */
+.prestige-modal {
+    width: 450px;
+    max-width: 95%;
+}
+
+.prestige-info {
+    background: linear-gradient(135deg, rgba(255,215,0,0.15) 0%, rgba(255,215,0,0.05) 100%);
+    border: 2px solid rgba(255,215,0,0.3);
+    border-radius: 15px;
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.prestige-tokens {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 24px;
+    margin-bottom: 5px;
+}
+
+.token-icon {
+    font-size: 32px;
+}
+
+.token-count {
+    font-weight: bold;
+    color: #ffd700;
+}
+
+.token-label {
+    font-size: 14px;
+    color: #aaa;
+}
+
+.prestige-count {
+    font-size: 12px;
+    color: #888;
+}
+
+.prestige-section {
+    background: rgba(0,0,0,0.2);
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.prestige-section h3 {
+    margin-bottom: 12px;
+    color: #6bcf7f;
+    font-size: 14px;
+}
+
+.prestige-bonuses {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.prestige-bonus-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: rgba(107,207,127,0.1);
+    border-radius: 8px;
+    border-left: 3px solid #6bcf7f;
+}
+
+.prestige-bonus-item .bonus-icon {
+    font-size: 20px;
+}
+
+.prestige-bonus-item .bonus-text {
+    flex: 1;
+    font-size: 13px;
+}
+
+.prestige-action {
+    text-align: center;
+    padding: 15px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 12px;
+    margin-bottom: 15px;
+}
+
+.prestige-gain {
+    font-size: 16px;
+    margin-bottom: 12px;
+    color: #ffd700;
+}
+
+.prestige-btn {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
+    color: #000;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+}
+
+.prestige-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255,215,0,0.4);
+}
+
+.prestige-locked {
+    color: #888;
+    font-size: 14px;
+}
+
+.prestige-warning {
+    background: rgba(255,100,100,0.15);
+    border: 1px solid rgba(255,100,100,0.3);
+    border-radius: 8px;
+    padding: 12px;
+    font-size: 12px;
+    color: #ff8888;
+    text-align: center;
+    margin-bottom: 15px;
+}
+
+.next-bonus {
+    background: rgba(100,150,255,0.1);
+    border-radius: 10px;
+    padding: 15px;
+    text-align: center;
+}
+
+.next-bonus h4 {
+    color: #6696ff;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.progress-bar {
+    height: 8px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 10px 0;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #6696ff, #66c7ff);
+    border-radius: 4px;
+    transition: width 0.3s;
+}
+
+/* --- Престиж доступен (уведомление при 1000м) --- */
+.prestige-available-modal {
+    width: 400px;
+    text-align: center;
+}
+
+.prestige-available-modal .prestige-icon {
+    font-size: 64px;
+    margin-bottom: 15px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.prestige-available-modal p {
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.prestige-available-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.prestige-available-buttons button {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-prestige-now {
+    background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
+    color: #000;
+}
+
+.btn-prestige-later {
+    background: rgba(255,255,255,0.1);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+/* --- Престиж подтверждение --- */
+.prestige-confirm-modal {
+    width: 380px;
+    text-align: center;
+}
+
+.prestige-confirm-modal .warning-icon {
+    font-size: 48px;
+    margin-bottom: 15px;
+}
+
+.prestige-confirm-modal h3 {
+    color: #ff6b6b;
+    margin-bottom: 15px;
+    font-size: 20px;
+}
+
+.prestige-confirm-modal p {
+    margin-bottom: 20px;
+    line-height: 1.5;
+    color: #ccc;
+}
+
+.prestige-confirm-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.prestige-confirm-buttons button {
+    flex: 1;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-confirm-yes {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+    color: white;
+}
+
+.btn-confirm-no {
+    background: rgba(255,255,255,0.1);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+/* --- Ежедневные награды --- */
+.daily-modal {
+    width: 480px;
+    max-width: 95%;
+}
+
+.daily-streak {
+    text-align: center;
+    background: linear-gradient(135deg, rgba(255,100,100,0.2) 0%, rgba(255,150,50,0.2) 100%);
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 15px;
+    color: #ffaa66;
+    font-weight: bold;
+}
+
+.daily-days-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.daily-day {
+    background: rgba(0,0,0,0.2);
+    border-radius: 10px;
+    padding: 10px 5px;
+    text-align: center;
+    border: 2px solid transparent;
+    transition: all 0.2s;
+}
+
+.daily-day.available {
+    border-color: #6bcf7f;
+    background: rgba(107,207,127,0.1);
+    animation: glow 2s infinite;
+}
+
+.daily-day.claimed {
+    border-color: #ffd700;
+    background: rgba(255,215,0,0.1);
+    opacity: 0.7;
+}
+
+.daily-day.locked {
+    opacity: 0.4;
+}
+
+@keyframes glow {
+    0%, 100% { box-shadow: 0 0 5px rgba(107,207,127,0.3); }
+    50% { box-shadow: 0 0 20px rgba(107,207,127,0.6); }
+}
+
+.daily-day-number {
+    font-size: 11px;
+    color: #aaa;
+    margin-bottom: 5px;
+}
+
+.daily-day-icon {
+    font-size: 24px;
+    margin-bottom: 5px;
+}
+
+.daily-day-reward {
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.daily-check {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: #6bcf7f;
+    color: white;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.daily-info {
+    background: rgba(0,0,0,0.2);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.daily-info p {
+    font-size: 12px;
+    color: #aaa;
+    margin-bottom: 5px;
+}
+
+.daily-claim-btn {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #6bcf7f 0%, #4caf50 100%);
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+}
+
+.daily-claim-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(107,207,127,0.4);
+}
+
+.daily-claim-btn:disabled {
+    background: #444;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* --- Оффлайн прогресс --- */
+.offline-modal {
+    width: 400px;
+    text-align: center;
+}
+
+.offline-icon {
+    font-size: 48px;
+    margin-bottom: 15px;
+}
+
+.offline-time {
+    font-size: 18px;
+    color: #ffd700;
+    margin-bottom: 15px;
+    font-weight: bold;
+}
+
+.offline-earnings {
+    background: rgba(0,0,0,0.2);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.offline-earnings h3 {
+    margin-bottom: 15px;
+    color: #6bcf7f;
+}
+
+.offline-resource {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 20px;
+    margin-bottom: 8px;
+}
+
+.offline-resource .resource-icon {
+    font-size: 24px;
+}
+
+.offline-resource .resource-value {
+    font-weight: bold;
+    color: #ffd700;
+}
+
+.offline-claim-btn {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #6696ff 0%, #66c7ff 100%);
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.offline-claim-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102,150,255,0.4);
+}
+
+/* --- Улучшения --- */
+.upgrades-modal-content {
+    width: 520px;
+    max-width: 95%;
+    max-height: 80vh;
+}
+
+/* --- Достижения --- */
+.achievement-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    border-left: 3px solid transparent;
+}
+
+.achievement-item.unlocked {
+    border-left-color: #ffd700;
+    background: rgba(255,215,0,0.1);
+}
+
+.achievement-item.locked {
+    opacity: 0.6;
+}
+
+.achievement-icon {
+    font-size: 28px;
+}
+
+.achievement-info {
+    flex: 1;
+}
+
+.achievement-name {
+    font-weight: bold;
+    margin-bottom: 3px;
+}
+
+.achievement-desc {
+    font-size: 11px;
+    color: #aaa;
+}
+
+.achievement-reward {
+    font-size: 12px;
+    color: #6bcf7f;
+    font-weight: bold;
 }

@@ -170,22 +170,24 @@ class OfflineProgress {
         
         modal.innerHTML = `
             <div class="modal-content offline-modal">
-                <h2>🌙 Вы отсутствовали</h2>
+                <div class="offline-icon">🌙</div>
+                <h2>Вы отсутствовали</h2>
                 <div class="offline-time">${data.offlineTimeText}</div>
                 
-                <div class="offline-rewards">
-                    <div class="reward-item">
-                        <span class="reward-icon">🪙</span>
-                        <span class="reward-value">+${Utils.formatNumber(data.coins)}</span>
+                <div class="offline-earnings">
+                    <h3>Заработано:</h3>
+                    <div class="offline-resource">
+                        <span class="resource-icon">🪙</span>
+                        <span class="resource-value">+${Utils.formatNumber(data.coins)}</span>
                     </div>
-                    <div class="reward-item">
-                        <span class="reward-icon">💎</span>
-                        <span class="reward-value">+${data.ore}</span>
+                    <div class="offline-resource">
+                        <span class="resource-icon">💎</span>
+                        <span class="resource-value">+${data.ore}</span>
                     </div>
                     ${data.depth > 0 ? `
-                    <div class="reward-item">
-                        <span class="reward-icon">📏</span>
-                        <span class="reward-value">+${data.depth}м</span>
+                    <div class="offline-resource">
+                        <span class="resource-icon">📏</span>
+                        <span class="resource-value">+${data.depth}м</span>
                     </div>
                     ` : ''}
                 </div>

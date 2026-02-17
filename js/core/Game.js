@@ -7,28 +7,11 @@
 class Game {
     constructor() {
         this.canvas = document.getElementById('gameCanvas');
-        
-        // ОПТИМИЗАЦИЯ: Отключаем сглаживание для производительности на слабых устройствах
-        this.ctx = this.canvas.getContext('2d', { 
-            alpha: false,
-            antialias: false,
-            powerPreference: 'low-power'
-        });
+        this.ctx = this.canvas.getContext('2d');
 
         // Фиксированное разрешение для Canvas
-        // ОПТИМИЗАЦИЯ: Уменьшаем разрешение для слабых устройств
-        const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-        const isOldDevice = /iPhone OS 10|iPhone OS 11|iPhone OS 12|iPhone OS 13|iPhone OS 14/i.test(navigator.userAgent);
-        
-        if (isOldDevice) {
-            // Для старых iPhone (7, 8, SE) - понижаем разрешение
-            this.width = 540;
-            this.height = 960;
-        } else {
-            this.width = 1080;
-            this.height = 1920;
-        }
-        
+        this.width = 1080;
+        this.height = 1920;
         this.canvas.width = this.width;
         this.canvas.height = this.height;
 
@@ -250,6 +233,7 @@ class Game {
 
         document.getElementById('btn-achievements').addEventListener('click', () => {
             this.openModal('modal-achievements');
+            this.renderAchievements();
         });
 
         document.getElementById('btn-settings').addEventListener('click', () => {
@@ -308,21 +292,85 @@ class Game {
     
     /**
      * Фикс для скролла в модальных окнах на мобильных устройствах
-     * УПРОЩЕНО для оптимизации
      */
     setupModalScrollFix() {
-        // Простой обработчик - разрешаем скролл внутри модальных окон
-        document.addEventListener('touchmove', (e) => {
-            const modalContent = e.target.closest('.modal-content');
-            if (modalContent) {
-                // Разрешаем скролл внутри контента
+        // Функция для добавления обработчиков к модальному окну
+        const addScrollHandlers = (modal) => {
+            const modalContent = modal.querySelector('.modal-content');
+            if (!modalContent) return;
+            
+            // Удаляем старые обработчики если есть (чтобы не дублировать)
+            modalContent.removeEventListener('touchstart', this.handleTouchStart);
+            modalContent.removeEventListener('touchmove', this.handleTouchMove);
+            
+            // Разрешаем скролл внутри модального контента
+            modalContent.addEventListener('touchstart', this.handleTouchStart, { passive: true });
+            modalContent.addEventListener('touchmove', this.handleTouchMove, { passive: false });
+        };
+        
+        // Сохраняем ссылки на обработчики
+        this.handleTouchStart = (e) => {
+            const modalContent = e.currentTarget;
+            modalContent.dataset.scrollTop = modalContent.scrollTop;
+            modalContent.dataset.clientY = e.touches[0].clientY;
+        };
+        
+        this.handleTouchMove = (e) => {
+            const modalContent = e.currentTarget;
+            const scrollTop = parseFloat(modalContent.dataset.scrollTop || 0);
+            const clientY = parseFloat(modalContent.dataset.clientY || 0);
+            const currentClientY = e.touches[0].clientY;
+            const deltaY = clientY - currentClientY;
+            
+            const isScrollingUp = deltaY > 0;
+            const isScrollingDown = deltaY < 0;
+            const canScrollUp = scrollTop > 0;
+            const canScrollDown = scrollTop + modalContent.clientHeight < modalContent.scrollHeight;
+            
+            // Если можем скроллить в нужном направлении - разрешаем
+            if ((isScrollingUp && canScrollUp) || (isScrollingDown && canScrollDown)) {
                 return;
             }
             
-            // Блокируем скролл страницы если открыто модальное окно
+            // Если достигли края - предотвращаем bounce-эффект страницы
+            if ((isScrollingUp && !canScrollUp) || (isScrollingDown && !canScrollDown)) {
+                e.preventDefault();
+            }
+        };
+        
+        // Обрабатываем существующие модальные окна
+        document.querySelectorAll('.modal').forEach(addScrollHandlers);
+        
+        // Наблюдаем за появлением новых модальных окон
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                mutation.addedNodes.forEach((node) => {
+                    if (node.nodeType === 1 && node.classList.contains('modal')) {
+                        addScrollHandlers(node);
+                    }
+                });
+            });
+        });
+        
+        observer.observe(document.body, { childList: true, subtree: true });
+        
+        // Глобальный обработчик для предотвращения скролла страницы при открытом модале
+        document.addEventListener('touchmove', (e) => {
             const openModal = document.querySelector('.modal:not(.hidden)');
             if (openModal) {
-                e.preventDefault();
+                // Если тач внутри модального контента - проверяем нужно ли блокировать
+                const modalContent = openModal.querySelector('.modal-content');
+                if (modalContent && modalContent.contains(e.target)) {
+                    // Проверяем, можно ли скроллить
+                    const canScroll = modalContent.scrollHeight > modalContent.clientHeight;
+                    if (!canScroll) {
+                        e.preventDefault();
+                    }
+                    // Иначе позволяем всплыть к обработчику выше
+                } else {
+                    // Тач вне контента модала - блокируем
+                    e.preventDefault();
+                }
             }
         }, { passive: false });
     }
@@ -467,11 +515,7 @@ class Game {
             layer.update(dt);
         }
 
-        // Обновляем частицы (с ограничением для оптимизации)
-        const MAX_PARTICLES = 50; // Максимум 50 частиц одновременно
-        if (this.particles.length > MAX_PARTICLES) {
-            this.particles = this.particles.slice(0, MAX_PARTICLES);
-        }
+        // Обновляем частицы
         this.particles = this.particles.filter(p => {
             p.update(dt);
             return p.life > 0;
@@ -525,25 +569,38 @@ class Game {
         
         modal.innerHTML = `
             <div class="modal-content prestige-available-modal">
-                <h2>🎉 Достигнуто 1000м!</h2>
+                <div class="prestige-icon">🎉</div>
+                <h2>Достигнуто 1000м!</h2>
                 
-                <div class="prestige-info-text">
-                    <p>Поздравляем! Вы достигли глубины <strong>1000 метров</strong>!</p>
-                    <p>Теперь вам доступен <strong>ПРЕСТИЖ</strong>:</p>
-                    <ul>
-                        <li>🔄 Сброс текущего прогресса</li>
-                        <li>💎 Получение токенов (${tokens} шт.)</li>
-                        <li>✨ Постоянные бонусы к прогрессу</li>
-                        <li>📈 Быстрый старт с бонусными монетами</li>
-                    </ul>
-                    <p style="color: #ffd700; margin-top: 15px;">
-                        💡 Престиж можно выполнить в любое время через меню настроек (⚙️)
-                    </p>
+                <p>Поздравляем! Вы достигли глубины <strong>1000 метров</strong>!</p>
+                <p>Теперь вам доступен <strong>Престиж</strong>:</p>
+                
+                <div class="prestige-bonuses">
+                    <div class="prestige-bonus-item">
+                        <span class="bonus-icon">🔄</span>
+                        <span class="bonus-text">Сброс текущего прогресса</span>
+                    </div>
+                    <div class="prestige-bonus-item">
+                        <span class="bonus-icon">💎</span>
+                        <span class="bonus-text">Получение <strong>${tokens}</strong> токенов</span>
+                    </div>
+                    <div class="prestige-bonus-item">
+                        <span class="bonus-icon">✨</span>
+                        <span class="bonus-text">Постоянные бонусы к прогрессу</span>
+                    </div>
+                    <div class="prestige-bonus-item">
+                        <span class="bonus-icon">📈</span>
+                        <span class="bonus-text">Быстрый старт с бонусными монетами</span>
+                    </div>
                 </div>
                 
-                <div class="prestige-buttons">
-                    <button class="prestige-btn-do" id="prestige-do-now">Выполнить сейчас</button>
-                    <button class="prestige-btn-later" id="prestige-later">Продолжить игру</button>
+                <p style="color: #ffd700; font-size: 12px; margin: 15px 0;">
+                    💡 Престиж можно выполнить в любое время через меню настроек
+                </p>
+                
+                <div class="prestige-available-buttons">
+                    <button class="btn-prestige-now" id="prestige-do-now">Выполнить сейчас</button>
+                    <button class="btn-prestige-later" id="prestige-later">Потом</button>
                 </div>
             </div>
         `;
@@ -689,8 +746,6 @@ class Game {
     }
 
     createParticle(x, y, type, color, size = null) {
-        // ОПТИМИЗАЦИЯ: Не создаём частицы если их уже много
-        if (this.particles.length >= 50) return;
         this.particles.push(new Particle(x, y, type, color, size));
     }
     
@@ -902,17 +957,15 @@ class Game {
         
         modal.innerHTML = `
             <div class="modal-content prestige-confirm-modal">
-                <h2>⚠️ Подтвердите действие</h2>
+                <div class="warning-icon">⚠️</div>
+                <h3>Вы уверены?</h3>
                 
-                <div class="confirm-text">
-                    <p>Вы уверены?</p>
-                    <p style="color: #ff6b6b;">Ваш прогресс будет сброшен!</p>
-                    <p style="color: #6bcf7f;">Но вы получите постоянные бонусы 💎</p>
-                </div>
+                <p>Ваш прогресс будет сброшен!</p>
+                <p style="color: #6bcf7f; margin-top: 10px;">Но вы получите постоянные бонусы 💎</p>
                 
-                <div class="confirm-buttons">
-                    <button class="confirm-btn-yes" id="prestige-confirm-yes">✓ Да, выполнить</button>
-                    <button class="confirm-btn-no" id="prestige-confirm-no">✕ Отмена</button>
+                <div class="prestige-confirm-buttons">
+                    <button class="btn-confirm-yes" id="prestige-confirm-yes">Да, выполнить</button>
+                    <button class="btn-confirm-no" id="prestige-confirm-no">Отмена</button>
                 </div>
             </div>
         `;

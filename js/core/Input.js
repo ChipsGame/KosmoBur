@@ -110,10 +110,33 @@ class Input {
     
     /**
      * Показать визуальный эффект клика
-     * УБРАНО для оптимизации - эффект теперь только на canvas
      */
     showClickEffect() {
-        // Эффект клика теперь только через canvas (без DOM-элементов)
+        // Создаём небольшую пульсацию на экране
+        const gameContainer = document.getElementById('game-container');
+        if (!gameContainer) return;
+        
+        const effect = document.createElement('div');
+        effect.className = 'click-effect';
+        effect.style.cssText = `
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 50px;
+            height: 50px;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 5;
+            animation: click-pulse 0.3s ease-out forwards;
+        `;
+        
+        gameContainer.appendChild(effect);
+        
+        setTimeout(() => {
+            effect.remove();
+        }, 300);
     }
     
     /**
