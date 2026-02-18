@@ -40,22 +40,19 @@ html, body {
 
 #gameCanvas {
     display: block;
-    /* Убираем max-width/max-height чтобы избежать обрезки */
     width: auto;
     height: auto;
     position: relative;
     z-index: 1;
-    /* Предотвращаем любые CSS-трансформации которые могут ломать рендер */
-    transform: none;
-    /* КРИТИЧНО: Убираем translateZ(0) - он вызывает раздвоение на iOS! */
-    /* Включаем backface-visibility для стабильности */
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-    /* Запрещаем браузеру менять размеры canvas */
-    image-rendering: -webkit-optimize-contrast;
-    image-rendering: crisp-edges;
-    /* ВАЖНО: Canvas должен быть непрозрачным! */
-    background-color: #0a0a1a;
+    /* КРИТИЧНО для iOS: принудительное обновление */
+    will-change: transform;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    /* Запрещаем сглаживание */
+    image-rendering: pixelated;
+    -webkit-image-rendering: pixelated;
+    /* Непрозрачный фон */
+    background-color: #000;
 }
 
 /* ===== UI СЛОЙ ===== */

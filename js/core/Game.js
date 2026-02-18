@@ -496,12 +496,8 @@ class Game {
             this.update(deltaTime);
             this.render();
             
-            // КРИТИЧНО: Принудительно обновляем DOM для Safari
-            if (this.frameCount % 60 === 0) {
-                this.canvas.style.display = 'none';
-                this.canvas.offsetHeight; // Force reflow
-                this.canvas.style.display = 'block';
-            }
+            // КРИТИЧНО: Микро-сдвиг для принудительного обновления Safari
+            this.canvas.style.transform = `translateZ(${this.frameCount % 2}px)`;
             this.frameCount++;
         } catch (e) {
             console.error('Ошибка в game loop:', e);
