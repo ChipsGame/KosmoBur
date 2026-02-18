@@ -255,38 +255,8 @@ class Game {
     }
     
     createStarfield() {
-        const container = document.getElementById('game-container');
-        
-        // Создаём звёздное небо - слой 1 (медленные звёзды)
-        const stars1 = document.createElement('div');
-        stars1.className = 'stars-bg';
-        container.insertBefore(stars1, container.firstChild);
-        
-        // Создаём звёздное небо - слой 2 (быстрые звёзды)
-        const stars2 = document.createElement('div');
-        stars2.className = 'stars-bg-2';
-        container.insertBefore(stars2, container.firstChild);
-        
-        // Создаём мерцающие звёзды
-        const twinkle = document.createElement('div');
-        twinkle.className = 'stars-twinkle';
-        container.insertBefore(twinkle, container.firstChild);
-        
-        // Создаём планеты
-        const planet1 = document.createElement('div');
-        planet1.className = 'planet-bg';
-        container.insertBefore(planet1, container.firstChild);
-        
-        const planet2 = document.createElement('div');
-        planet2.className = 'planet-bg-2';
-        container.insertBefore(planet2, container.firstChild);
-        
-        // Создаём метеоры (только 3 для производительности)
-        for (let i = 0; i < 3; i++) {
-            const meteor = document.createElement('div');
-            meteor.className = 'meteor';
-            container.insertBefore(meteor, container.firstChild);
-        }
+        // ОТКЛЮЧЕНО: CSS-анимации вызывают раздвоение canvas на iOS
+        // Фон теперь рисуется в canvas
     }
     
     regenerateLayersAfterLoad() {

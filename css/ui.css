@@ -85,7 +85,7 @@ html, body {
     background: rgba(0,0,0,0.6);
     padding: 6px 10px;
     border-radius: 12px;
-    backdrop-filter: blur(5px);
+    /* backdrop-filter отключен - вызывает артефакты на iOS */
     z-index: 20;
     min-height: 44px;
 }
@@ -151,12 +151,7 @@ html, body {
 
 .menu-btn.ad-btn {
     background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    animation: pulse-ad 2s infinite;
-}
-
-@keyframes pulse-ad {
-    0%, 100% { box-shadow: 0 0 5px rgba(240, 147, 251, 0.5); }
-    50% { box-shadow: 0 0 15px rgba(240, 147, 251, 0.8); }
+    /* animation отключена - вызывает артефакты на iOS */
 }
 
 /* Панель статуса (клики, автоклик) - без фона */
@@ -936,12 +931,7 @@ html, body {
 .prestige-available-modal .prestige-icon {
     font-size: 64px;
     margin-bottom: 15px;
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.1); }
+    /* animation отключена - вызывает артефакты на iOS */
 }
 
 .prestige-available-modal p {
