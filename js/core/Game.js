@@ -7,7 +7,8 @@
 class Game {
     constructor() {
         this.canvas = document.getElementById('gameCanvas');
-        this.ctx = this.canvas.getContext('2d');
+        // alpha: false - отключаем прозрачность canvas для стабильности на iOS
+        this.ctx = this.canvas.getContext('2d', { alpha: false });
 
         // Фиксированное логическое разрешение для Canvas
         this.width = 1080;
@@ -710,9 +711,13 @@ class Game {
 
     render() {
         // КРИТИЧНО: Полная очистка canvas для предотвращения артефактов на iOS
-        this.ctx.clearRect(0, 0, this.width, this.height);
-        // Дополнительная очистка с прозрачным чёрным для iOS Safari
-        this.ctx.fillStyle = 'rgba(10, 10, 10, 0)';
+        // Рисуем градиентный фон вместо сплошного цвета
+        const bgGradient = this.ctx.createLinearGradient(0, 0, 0, this.height);
+        bgGradient.addColorStop(0, '#0a0a1a');
+        bgGradient.addColorStop(0.3, '#1a1a3a');
+        bgGradient.addColorStop(0.6, '#0d1b2a');
+        bgGradient.addColorStop(1, '#1b263b');
+        this.ctx.fillStyle = bgGradient;
         this.ctx.fillRect(0, 0, this.width, this.height);
         
         // Отладка: проверяем что рендер работает

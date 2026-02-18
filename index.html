@@ -258,10 +258,14 @@
                 -webkit-transform: translateZ(0);
                 transform: translateZ(0);
             }
-            /* Фикс для раздвоения canvas на iOS */
-            #gameCanvas {
-                -webkit-transform: translate3d(0, 0, 0);
-                transform: translate3d(0, 0, 0);
+            /* Фикс для раздвоения canvas на iOS - отключаем анимации фона */
+            .stars-bg, .stars-bg-2, .stars-twinkle, .planet-bg, .planet-bg-2, .meteor {
+                animation: none !important;
+                display: none !important;
+            }
+            /* Упрощаем фон */
+            #game-container {
+                background: linear-gradient(180deg, #0a0a1a 0%, #1a1a3a 50%, #0d1b2a 100%) !important;
             }
         }
         
@@ -276,7 +280,7 @@
 </head>
 <body>
     <div id="game-container">
-        <canvas id="gameCanvas" willReadFrequently="true"></canvas>
+        <canvas id="gameCanvas"></canvas>
 
         <!-- UI Overlay -->
         <div id="ui-layer">

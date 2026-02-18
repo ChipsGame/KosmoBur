@@ -55,6 +55,8 @@ html, body {
     /* Запрещаем браузеру менять размеры canvas */
     image-rendering: -webkit-optimize-contrast;
     image-rendering: crisp-edges;
+    /* ВАЖНО: Canvas должен быть непрозрачным! */
+    background-color: #0a0a1a;
 }
 
 /* ===== UI СЛОЙ ===== */
