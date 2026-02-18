@@ -9,11 +9,19 @@ class Game {
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
 
-        // Фиксированное разрешение для Canvas
+        // Фиксированное логическое разрешение для Canvas
         this.width = 1080;
         this.height = 1920;
+        
+        // Учитываем DPR для чёткости на мобильных
+        this.dpr = window.devicePixelRatio || 1;
+        
+        // Устанавливаем разрешение canvas
         this.canvas.width = this.width;
         this.canvas.height = this.height;
+        
+        // Отключаем сглаживание для чётких пикселей
+        this.ctx.imageSmoothingEnabled = false;
 
         // Инициализация систем
         this.renderer = new Renderer(this);
@@ -353,8 +361,16 @@ class Game {
             });
         });
 
-        // Ресайз
-        window.addEventListener('resize', () => this.handleResize());
+        // Ресайз с debounce для предотвращения циклов
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => this.handleResize(), 100);
+        });
+        // Также слушаем orientationchange для мобильных
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => this.handleResize(), 300);
+        });
         this.handleResize();
         
         // === ФИКС СКРОЛЛА ДЛЯ МОДАЛЬНЫХ ОКОН НА МОБИЛЬНЫХ ===
@@ -375,6 +391,10 @@ class Game {
         const container = document.getElementById('game-container');
         const aspect = this.width / this.height;
         const windowAspect = window.innerWidth / window.innerHeight;
+        
+        // Сбрасываем стили перед пересчётом
+        this.canvas.style.width = '';
+        this.canvas.style.height = '';
 
         if (windowAspect > aspect) {
             // Широкий экран (ПК) — полосы по бокам
@@ -386,8 +406,22 @@ class Game {
             this.canvas.style.height = `${window.innerWidth / aspect}px`;
         }
         
+        // Принудительно центрируем canvas
+        this.canvas.style.margin = 'auto';
+        this.canvas.style.position = 'relative';
+        this.canvas.style.left = '0';
+        this.canvas.style.top = '0';
+        
+        // ВАЖНО: Не меняем canvas.width/height здесь!
+        // Они остаются фиксированными 1080x1920 для стабильного рендера
+        
         // Адаптация для очень коротких экранов
         this.adaptToShortScreen();
+        
+        // Принудительный ре-рендер
+        if (this.isRunning) {
+            this.render();
+        }
     }
     
     adaptToShortScreen() {
