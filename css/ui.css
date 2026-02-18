@@ -36,10 +36,7 @@ html, body {
     align-items: center;
     /* Фон теперь задаётся в index.html */
     overflow: hidden;
-    /* Важно: изолируем контейнер для корректного рендера canvas */
-    isolation: isolate;
-    /* Предотвращаем hardware-acceleration артефакты */
-    transform: translateZ(0);
+    /* Убираем translateZ(0) - он может вызывать артефакты на iOS */
 }
 
 #gameCanvas {
@@ -51,14 +48,13 @@ html, body {
     z-index: 1;
     /* Предотвращаем любые CSS-трансформации которые могут ломать рендер */
     transform: none;
-    transform-origin: center center;
-    /* Важно: предотвращаем артефакты композитинга на мобильных */
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
+    /* КРИТИЧНО: Убираем translateZ(0) - он вызывает раздвоение на iOS! */
+    /* Включаем backface-visibility для стабильности */
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
     /* Запрещаем браузеру менять размеры canvas */
     image-rendering: -webkit-optimize-contrast;
     image-rendering: crisp-edges;
-    image-rendering: pixelated;
 }
 
 /* ===== UI СЛОЙ ===== */

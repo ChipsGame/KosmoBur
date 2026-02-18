@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, shrink-to-fit=no">
     <meta name="yandex-games" content="true">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -258,6 +258,11 @@
                 -webkit-transform: translateZ(0);
                 transform: translateZ(0);
             }
+            /* Фикс для раздвоения canvas на iOS */
+            #gameCanvas {
+                -webkit-transform: translate3d(0, 0, 0);
+                transform: translate3d(0, 0, 0);
+            }
         }
         
         /* Когда модалка открыта - разрешаем скролл на body */
@@ -343,14 +348,22 @@
         // Принудительно обновляем viewport при загрузке
         (function() {
             function updateViewport() {
-                const vh = window.innerHeight * 0.01;
+                // Используем documentElement.clientHeight для iOS (без адресной строки)
+                const vh = document.documentElement.clientHeight * 0.01;
                 document.documentElement.style.setProperty('--vh', `${vh}px`);
+                
+                // Принудительно скрываем адресную строку на iOS
+                if (window.scrollY === 0) {
+                    window.scrollTo(0, 1);
+                }
             }
             updateViewport();
             window.addEventListener('resize', updateViewport);
             window.addEventListener('orientationchange', () => {
-                setTimeout(updateViewport, 100);
+                setTimeout(updateViewport, 300);
             });
+            // Обновляем при скролле для iOS
+            window.addEventListener('scroll', updateViewport);
         })();
     </script>
     

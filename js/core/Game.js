@@ -388,9 +388,11 @@ class Game {
 
     handleResize() {
         // CSS адаптация, Canvas остаётся фиксированным
-        const container = document.getElementById('game-container');
         const aspect = this.width / this.height;
-        const windowAspect = window.innerWidth / window.innerHeight;
+        // Используем document.documentElement.clientHeight для корректной высоты на iOS
+        const clientWidth = document.documentElement.clientWidth;
+        const clientHeight = document.documentElement.clientHeight;
+        const windowAspect = clientWidth / clientHeight;
         
         // Сбрасываем стили перед пересчётом
         this.canvas.style.width = '';
@@ -398,22 +400,17 @@ class Game {
 
         if (windowAspect > aspect) {
             // Широкий экран (ПК) — полосы по бокам
-            this.canvas.style.height = '100vh';
-            this.canvas.style.width = `${window.innerHeight * aspect}px`;
+            this.canvas.style.height = `${clientHeight}px`;
+            this.canvas.style.width = `${clientHeight * aspect}px`;
         } else {
             // Узкий экран (телефон) — полный экран
-            this.canvas.style.width = '100vw';
-            this.canvas.style.height = `${window.innerWidth / aspect}px`;
+            this.canvas.style.width = `${clientWidth}px`;
+            this.canvas.style.height = `${clientWidth / aspect}px`;
         }
         
         // Принудительно центрируем canvas
         this.canvas.style.margin = 'auto';
         this.canvas.style.position = 'relative';
-        this.canvas.style.left = '0';
-        this.canvas.style.top = '0';
-        
-        // ВАЖНО: Не меняем canvas.width/height здесь!
-        // Они остаются фиксированными 1080x1920 для стабильного рендера
         
         // Адаптация для очень коротких экранов
         this.adaptToShortScreen();
@@ -712,8 +709,11 @@ class Game {
     }
 
     render() {
-        // Оптимизация: очищаем только видимую область
+        // КРИТИЧНО: Полная очистка canvas для предотвращения артефактов на iOS
         this.ctx.clearRect(0, 0, this.width, this.height);
+        // Дополнительная очистка с прозрачным чёрным для iOS Safari
+        this.ctx.fillStyle = 'rgba(10, 10, 10, 0)';
+        this.ctx.fillRect(0, 0, this.width, this.height);
         
         // Отладка: проверяем что рендер работает
         if (this.firstFrame) {
