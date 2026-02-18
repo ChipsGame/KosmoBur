@@ -28,15 +28,14 @@ html, body {
     top: 0;
     left: 0;
     width: 100vw;
-    /* Используем --vh для корректной высоты на мобильных */
     height: 100vh;
     height: calc(var(--vh, 1vh) * 100);
     display: flex;
     justify-content: center;
     align-items: center;
-    /* Фон теперь задаётся в index.html */
+    /* Убираем CSS-градиент - фон рисуется в canvas */
+    background: #000;
     overflow: hidden;
-    /* Убираем translateZ(0) - он может вызывать артефакты на iOS */
 }
 
 #gameCanvas {

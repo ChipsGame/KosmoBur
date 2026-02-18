@@ -83,6 +83,10 @@ class Game {
         // Проверяем оффлайн-прогресс и ежедневные награды
         this.checkOfflineAndDaily();
         
+        // Принудительный resize для мобильных
+        setTimeout(() => this.handleResize(), 100);
+        setTimeout(() => this.handleResize(), 500);
+        
         this.start();
     }
     
@@ -711,7 +715,7 @@ class Game {
 
     render() {
         // КРИТИЧНО: Полная очистка canvas для предотвращения артефактов на iOS
-        // Рисуем градиентный фон вместо сплошного цвета
+        // Рисуем градиентный фон
         const bgGradient = this.ctx.createLinearGradient(0, 0, 0, this.height);
         bgGradient.addColorStop(0, '#0a0a1a');
         bgGradient.addColorStop(0.3, '#1a1a3a');
@@ -719,6 +723,22 @@ class Game {
         bgGradient.addColorStop(1, '#1b263b');
         this.ctx.fillStyle = bgGradient;
         this.ctx.fillRect(0, 0, this.width, this.height);
+        
+        // Рисуем статичные звёзды (простые белые точки)
+        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+        const starPositions = [
+            [100, 100], [200, 150], [300, 80], [500, 200], [700, 120],
+            [900, 180], [150, 300], [400, 400], [600, 350], [800, 450],
+            [250, 600], [550, 700], [750, 650], [100, 800], [350, 900],
+            [650, 850], [850, 950], [200, 1100], [450, 1200], [700, 1150]
+        ];
+        for (const [sx, sy] of starPositions) {
+            const y = (sy - this.camera.y * 0.1) % this.height;
+            const finalY = y < 0 ? y + this.height : y;
+            this.ctx.beginPath();
+            this.ctx.arc(sx, finalY, 1.5, 0, Math.PI * 2);
+            this.ctx.fill();
+        }
         
         // Отладка: проверяем что рендер работает
         if (this.firstFrame) {

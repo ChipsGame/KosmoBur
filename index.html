@@ -252,20 +252,19 @@
         }
         
         /* Фикс для iOS - предотвращаем pull-to-refresh */
+        /* ФИКС: Отключаем все CSS-анимации фона для предотвращения раздвоения canvas */
+        .stars-bg, .stars-bg-2, .stars-twinkle, .meteor {
+            display: none !important;
+        }
+        /* Оставляем планеты но без анимации */
+        .planet-bg, .planet-bg-2 {
+            animation: none !important;
+        }
+        
         @supports (-webkit-touch-callout: none) {
             .modal-content {
-                /* Дополнительные фиксы для iOS Safari */
                 -webkit-transform: translateZ(0);
                 transform: translateZ(0);
-            }
-            /* Фикс для раздвоения canvas на iOS - отключаем анимации фона */
-            .stars-bg, .stars-bg-2, .stars-twinkle, .planet-bg, .planet-bg-2, .meteor {
-                animation: none !important;
-                display: none !important;
-            }
-            /* Упрощаем фон */
-            #game-container {
-                background: linear-gradient(180deg, #0a0a1a 0%, #1a1a3a 50%, #0d1b2a 100%) !important;
             }
         }
         
