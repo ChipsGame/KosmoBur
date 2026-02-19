@@ -138,36 +138,16 @@ class MobileFixes {
     
     static fixIOSCanvas() {
         // КРИТИЧНО: Фиксы для Canvas на iOS
+        // НЕ меняем позиционирование - оно настраивается в Game.js
+        // Только включаем аппаратное ускорение для стабильности
         const canvas = document.getElementById('gameCanvas');
         if (!canvas) return;
         
-        // 1. Убираем все трансформации
-        canvas.style.transform = 'none';
-        canvas.style.webkitTransform = 'none';
-        
-        // 2. Фиксируем позиционирование
-        canvas.style.position = 'absolute';
-        canvas.style.top = '0';
-        canvas.style.left = '0';
-        
-        // 3. Убираем отступы и границы
-        canvas.style.margin = '0';
-        canvas.style.padding = '0';
-        canvas.style.border = 'none';
-        
-        // 4. Предотвращаем сглаживание
-        canvas.style.imageRendering = 'pixelated';
-        canvas.style.imageRendering = 'crisp-edges';
-        
-        // 5. Включаем аппаратное ускорение
+        // Только backface-visibility для стабильности
         canvas.style.webkitBackfaceVisibility = 'hidden';
         canvas.style.backfaceVisibility = 'hidden';
         
-        // 6. Убираем тени и эффекты
-        canvas.style.boxShadow = 'none';
-        canvas.style.filter = 'none';
-        
-        console.log('iOS Canvas фиксы применены');
+        console.log('iOS Canvas фиксы применены (только backface-visibility)');
     }
     
     static disableComplexAnimations() {
@@ -191,13 +171,9 @@ class MobileFixes {
     
     static fixAndroidCanvasFlicker() {
         // Фикс для мерцания Canvas на Android
-        const canvas = document.getElementById('gameCanvas');
-        if (!canvas) return;
-        
-        canvas.style.webkitTransform = 'translateZ(0)';
-        canvas.style.transform = 'translateZ(0)';
-        
-        console.log('Android Canvas фиксы применены');
+        // НЕ используем translateZ(0) - он конфликтует с центрированием
+        // Центрирование уже настроено в основном коде
+        console.log('Android Canvas фиксы применены (центрирование через CSS)');
     }
     
     static fixAndroidBackButton() {
