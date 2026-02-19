@@ -5,7 +5,7 @@
  */
 
 class Game {
-    constructor() {
+        constructor() {
         this.canvas = document.getElementById('gameCanvas');
         // alpha: false - отключаем прозрачность canvas для стабильности на iOS
         this.ctx = this.canvas.getContext('2d', { alpha: false });
@@ -17,9 +17,12 @@ class Game {
         // Учитываем DPR для чёткости на мобильных
         this.dpr = window.devicePixelRatio || 1;
         
-        // Устанавливаем разрешение canvas
-        this.canvas.width = this.width;
-        this.canvas.height = this.height;
+        // КРИТИЧНО: Устанавливаем разрешение canvas с учетом DPR для четкости
+        this.canvas.width = this.width * this.dpr;
+        this.canvas.height = this.height * this.dpr;
+        
+        // Масштабируем контекст для правильного отображения
+        this.ctx.scale(this.dpr, this.dpr);
         
         // Отключаем сглаживание для чётких пикселей
         this.ctx.imageSmoothingEnabled = false;
@@ -65,9 +68,6 @@ class Game {
         
         // Флаг показа уведомления о престиже
         this.prestigeNotificationShown = false;
-        
-        // Счётчик кадров для принудительного обновления Safari
-        this.frameCount = 0;
 
         this.init();
     }
@@ -85,10 +85,6 @@ class Game {
         
         // Проверяем оффлайн-прогресс и ежедневные награды
         this.checkOfflineAndDaily();
-        
-        // Принудительный resize для мобильных
-        setTimeout(() => this.handleResize(), 100);
-        setTimeout(() => this.handleResize(), 500);
         
         this.start();
     }
@@ -258,8 +254,38 @@ class Game {
     }
     
     createStarfield() {
-        // ОТКЛЮЧЕНО: CSS-анимации вызывают раздвоение canvas на iOS
-        // Фон теперь рисуется в canvas
+        const container = document.getElementById('game-container');
+        
+        // Создаём звёздное небо - слой 1 (медленные звёзды)
+        const stars1 = document.createElement('div');
+        stars1.className = 'stars-bg';
+        container.insertBefore(stars1, container.firstChild);
+        
+        // Создаём звёздное небо - слой 2 (быстрые звёзды)
+        const stars2 = document.createElement('div');
+        stars2.className = 'stars-bg-2';
+        container.insertBefore(stars2, container.firstChild);
+        
+        // Создаём мерцающие звёзды
+        const twinkle = document.createElement('div');
+        twinkle.className = 'stars-twinkle';
+        container.insertBefore(twinkle, container.firstChild);
+        
+        // Создаём планеты
+        const planet1 = document.createElement('div');
+        planet1.className = 'planet-bg';
+        container.insertBefore(planet1, container.firstChild);
+        
+        const planet2 = document.createElement('div');
+        planet2.className = 'planet-bg-2';
+        container.insertBefore(planet2, container.firstChild);
+        
+        // Создаём метеоры (только 3 для производительности)
+        for (let i = 0; i < 3; i++) {
+            const meteor = document.createElement('div');
+            meteor.className = 'meteor';
+            container.insertBefore(meteor, container.firstChild);
+        }
     }
     
     regenerateLayersAfterLoad() {
@@ -364,7 +390,7 @@ class Game {
         console.log('Modal scroll fix initialized');
     }
 
-    handleResize() {
+        handleResize() {
         // CSS адаптация, Canvas остаётся фиксированным
         const aspect = this.width / this.height;
         // Используем document.documentElement.clientHeight для корректной высоты на iOS
@@ -376,19 +402,26 @@ class Game {
         this.canvas.style.width = '';
         this.canvas.style.height = '';
 
+        // Максимальная ширина игры (для ПК - ограничиваем как на телефоне)
+        const maxWidth = Math.min(clientHeight * aspect, 600); // макс 600px или по пропорции
+        
         if (windowAspect > aspect) {
-            // Широкий экран (ПК) — полосы по бокам
+            // Широкий экран (ПК) — ограничиваем ширину, центрируем
             this.canvas.style.height = `${clientHeight}px`;
-            this.canvas.style.width = `${clientHeight * aspect}px`;
+            this.canvas.style.width = `${Math.min(clientHeight * aspect, maxWidth)}px`;
         } else {
             // Узкий экран (телефон) — полный экран
             this.canvas.style.width = `${clientWidth}px`;
             this.canvas.style.height = `${clientWidth / aspect}px`;
         }
         
-        // Принудительно центрируем canvas
-        this.canvas.style.margin = 'auto';
-        this.canvas.style.position = 'relative';
+        // Центрируем canvas
+        this.canvas.style.position = 'absolute';
+        this.canvas.style.top = '0';
+        this.canvas.style.left = '50%';
+        this.canvas.style.transform = 'translateX(-50%)';
+        this.canvas.style.webkitTransform = 'translateX(-50%)';
+        this.canvas.style.margin = '0';
         
         // Адаптация для очень коротких экранов
         this.adaptToShortScreen();
@@ -495,10 +528,6 @@ class Game {
 
             this.update(deltaTime);
             this.render();
-            
-            // КРИТИЧНО: Микро-сдвиг для принудительного обновления Safari
-            this.canvas.style.transform = `translateZ(${this.frameCount % 2}px)`;
-            this.frameCount++;
         } catch (e) {
             console.error('Ошибка в game loop:', e);
         }
@@ -690,14 +719,12 @@ class Game {
         }
     }
 
-    render() {
+        render() {
         // КРИТИЧНО: Полная очистка canvas для предотвращения артефактов на iOS
-        // КРИТИЧНО: Полный сброс canvas для Safari
-        // Сначала заливаем чёрным (непрозрачно!)
-        this.ctx.fillStyle = '#000000';
-        this.ctx.fillRect(0, 0, this.width, this.height);
+        // Сначала очищаем весь canvas
+        this.ctx.clearRect(0, 0, this.width * this.dpr, this.height * this.dpr);
         
-        // Рисуем градиентный фон
+        // Рисуем градиентный фон вместо сплошного цвета
         const bgGradient = this.ctx.createLinearGradient(0, 0, 0, this.height);
         bgGradient.addColorStop(0, '#0a0a1a');
         bgGradient.addColorStop(0.3, '#1a1a3a');

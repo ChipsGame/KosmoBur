@@ -28,39 +28,48 @@ html, body {
     top: 0;
     left: 0;
     width: 100vw;
+    /* Используем --vh для корректной высоты на мобильных */
     height: 100vh;
     height: calc(var(--vh, 1vh) * 100);
     display: flex;
     justify-content: center;
-    align-items: center;
-    /* Убираем CSS-градиент - фон рисуется в canvas */
-    background: #000;
+    align-items: flex-start;
+    /* Фон теперь задаётся в index.html */
     overflow: hidden;
+    /* Убираем translateZ(0) - он может вызывать артефакты на iOS */
 }
 
 #gameCanvas {
     display: block;
-    width: auto;
-    height: auto;
-    position: relative;
+    /* КРИТИЧНО: absolute позиционирование для предотвращения раздвоения */
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    -webkit-transform: translateX(-50%);
     z-index: 1;
-    /* КРИТИЧНО для iOS: принудительное обновление */
-    will-change: transform;
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
-    /* Запрещаем сглаживание */
+    /* Включаем backface-visibility для стабильности */
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    /* Предотвращаем сглаживание для четких пикселей */
     image-rendering: pixelated;
-    -webkit-image-rendering: pixelated;
-    /* Непрозрачный фон */
-    background-color: #000;
+    image-rendering: crisp-edges;
+    /* ВАЖНО: Canvas должен быть непрозрачным! */
+    background-color: #0a0a1a;
+    /* Убираем любые отступы и границы */
+    margin: 0;
+    padding: 0;
+    border: none;
 }
 
 /* ===== UI СЛОЙ ===== */
 #ui-layer {
     position: fixed;
     top: 0;
-    left: 0;
-    width: 100vw;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 600px;
     height: 100vh;
     pointer-events: none;
     z-index: 10;
@@ -82,7 +91,7 @@ html, body {
     background: rgba(0,0,0,0.6);
     padding: 6px 10px;
     border-radius: 12px;
-    /* backdrop-filter отключен - вызывает артефакты на iOS */
+    backdrop-filter: blur(5px);
     z-index: 20;
     min-height: 44px;
 }
@@ -148,7 +157,12 @@ html, body {
 
 .menu-btn.ad-btn {
     background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    /* animation отключена - вызывает артефакты на iOS */
+    animation: pulse-ad 2s infinite;
+}
+
+@keyframes pulse-ad {
+    0%, 100% { box-shadow: 0 0 5px rgba(240, 147, 251, 0.5); }
+    50% { box-shadow: 0 0 15px rgba(240, 147, 251, 0.8); }
 }
 
 /* Панель статуса (клики, автоклик) - без фона */
@@ -178,7 +192,7 @@ html, body {
 /* Пауза панель */
 #pause-panel {
     position: absolute;
-    top: 58px;
+    top: 75px;
     right: 10px;
     z-index: 20;
 }
@@ -275,6 +289,13 @@ html, body {
     -webkit-overflow-scrolling: touch !important;
     /* Предотвращаем pull-to-refresh */
     overscroll-behavior: contain;
+    /* Стандартные свойства для 3D трансформаций */
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    perspective: 1000px;
+    -webkit-perspective: 1000px;
+    transform-style: flat;
+    -webkit-transform-style: flat;
     width: 420px;
     animation: modalSlideIn 0.3s ease;
     /* Для Android - плавный скролл */
@@ -524,7 +545,7 @@ html, body {
     }
     
     #pause-panel {
-        top: 52px;
+        top: 70px;
     }
     
     .pause-btn {
@@ -582,7 +603,7 @@ html, body {
     }
     
     #pause-panel {
-        top: 44px;
+        top: 65px;
         right: 8px;
     }
     
@@ -658,7 +679,7 @@ html, body {
     }
     
     #pause-panel {
-        top: 46px;
+        top: 68px;
     }
     
     .pause-btn {
@@ -928,7 +949,12 @@ html, body {
 .prestige-available-modal .prestige-icon {
     font-size: 64px;
     margin-bottom: 15px;
-    /* animation отключена - вызывает артефакты на iOS */
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
 }
 
 .prestige-available-modal p {
