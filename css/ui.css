@@ -10,67 +10,44 @@
     -webkit-tap-highlight-color: rgba(0,0,0,0) !important;
 }
 
-html, body {
+body {
     background: #0a0a0a;
     overflow: hidden;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    /* Фиксируем body для предотвращения скролла и прыжков */
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    overscroll-behavior: none;
 }
 
 #game-container {
-    position: fixed;
-    top: 0;
-    left: 0;
+    position: relative;
     width: 100vw;
-    /* Используем --vh для корректной высоты на мобильных */
     height: 100vh;
-    height: calc(var(--vh, 1vh) * 100);
     display: flex;
     justify-content: center;
-    align-items: flex-start;
+    align-items: center;
     /* Фон теперь задаётся в index.html */
     overflow: hidden;
-    /* Убираем translateZ(0) - он может вызывать артефакты на iOS */
 }
 
 #gameCanvas {
     display: block;
-    /* КРИТИЧНО: absolute позиционирование для предотвращения раздвоения */
+    width: 100vw;
+    height: 100vh;
     position: absolute;
     top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    -webkit-transform: translateX(-50%);
+    left: 0;
     z-index: 1;
-    /* Включаем backface-visibility для стабильности */
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-    /* Предотвращаем сглаживание для четких пикселей */
-    image-rendering: pixelated;
-    image-rendering: crisp-edges;
-    /* ВАЖНО: Canvas должен быть непрозрачным! */
-    background-color: #0a0a1a;
-    /* Убираем любые отступы и границы */
-    margin: 0;
-    padding: 0;
-    border: none;
+    
+    /* Полный экран без полос */
+    object-fit: cover;
 }
 
 /* ===== UI СЛОЙ ===== */
 #ui-layer {
-    position: fixed;
+    position: absolute;
     top: 0;
-    left: 50%;
-    transform: translateX(-50%);
+    left: 0;
     width: 100%;
-    max-width: 600px;
-    height: 100vh;
+    height: auto;
+    min-height: 200px;
     pointer-events: none;
     z-index: 10;
 }
@@ -192,7 +169,7 @@ html, body {
 /* Пауза панель */
 #pause-panel {
     position: absolute;
-    top: 75px;
+    top: 85px;
     right: 10px;
     z-index: 20;
 }
@@ -213,11 +190,11 @@ html, body {
 
 /* Экран паузы */
 #pause-screen {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    height: 100%;
     background: rgba(0,0,0,0.8);
     display: none;
     justify-content: center;
@@ -245,11 +222,11 @@ html, body {
 
 /* Модальные окна - CRITICAL: position:absolute для iPhone 7 */
 .modal {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
-    width: 100vw;
-    height: 100vh;
+    width: 100%;
+    height: 100%;
     background: rgba(0,0,0,0.85);
     display: flex;
     justify-content: center;
@@ -289,13 +266,6 @@ html, body {
     -webkit-overflow-scrolling: touch !important;
     /* Предотвращаем pull-to-refresh */
     overscroll-behavior: contain;
-    /* Стандартные свойства для 3D трансформаций */
-    backface-visibility: hidden;
-    -webkit-backface-visibility: hidden;
-    perspective: 1000px;
-    -webkit-perspective: 1000px;
-    transform-style: flat;
-    -webkit-transform-style: flat;
     width: 420px;
     animation: modalSlideIn 0.3s ease;
     /* Для Android - плавный скролл */
@@ -545,7 +515,7 @@ html, body {
     }
     
     #pause-panel {
-        top: 70px;
+        top: 80px;
     }
     
     .pause-btn {
@@ -603,7 +573,7 @@ html, body {
     }
     
     #pause-panel {
-        top: 65px;
+        top: 75px;
         right: 8px;
     }
     
@@ -679,7 +649,7 @@ html, body {
     }
     
     #pause-panel {
-        top: 68px;
+        top: 78px;
     }
     
     .pause-btn {
@@ -1815,3 +1785,172 @@ html, body {
     font-size: 12px;
     margin-top: 10px;
 }
+
+
+/* ===== ����������� ===== */
+.game-notification {
+    position: fixed;
+    top: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    border: 2px solid;
+    border-radius: 12px;
+    padding: 15px 25px;
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
+    z-index: 9999;
+    animation: notificationSlide 0.3s ease, notificationFade 0.3s ease 2.7s forwards;
+    pointer-events: none;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+}
+
+@keyframes notificationSlide {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+@keyframes notificationFade {
+    to {
+        opacity: 0;
+    }
+}
+
+/* ===== ���� ���� UI ===== */
+#tap-boost-ui {
+    position: fixed;
+    top: 120px;
+    right: 10px;
+    z-index: 100;
+}
+
+.tap-boost-badge {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-weight: bold;
+    font-size: 14px;
+    box-shadow: 0 4px 15px rgba(240, 147, 251, 0.4);
+    animation: pulse 1s infinite;
+}
+
+.tap-boost-timer {
+    margin-left: 5px;
+    opacity: 0.9;
+}
+
+/* ===== ���������� ===== */
+#achievements-list {
+    max-height: 60vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    padding-right: 5px;
+}
+
+.achievement-item {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+.achievement-icon {
+    font-size: 32px;
+}
+
+.achievement-info {
+    flex: 1;
+}
+
+.achievement-name {
+    font-weight: bold;
+    color: #fff;
+    margin-bottom: 5px;
+}
+
+.achievement-desc {
+    font-size: 12px;
+    color: #aaa;
+}
+
+/* ===== ������� ����� ===== */
+.offline-modal {
+    width: 400px;
+    text-align: center;
+}
+
+.offline-icon {
+    font-size: 64px;
+    margin-bottom: 15px;
+}
+
+.offline-time {
+    font-size: 24px;
+    color: #ffd700;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.offline-earnings {
+    background: rgba(0,0,0,0.2);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.offline-earnings h3 {
+    margin-bottom: 15px;
+    color: #6bcf7f;
+}
+
+.offline-resource {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    font-size: 18px;
+}
+
+.resource-icon {
+    font-size: 24px;
+}
+
+.resource-value {
+    font-weight: bold;
+    color: #ffd700;
+}
+
+.offline-claim-btn {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #6bcf7f 0%, #4ade80 100%);
+    color: white;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.offline-claim-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(107, 207, 127, 0.4);
+}
+

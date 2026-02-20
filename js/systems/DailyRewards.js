@@ -248,8 +248,10 @@ class DailyRewards {
                 const result = this.claim();
                 if (result) {
                     this.showClaimAnimation(result.reward);
-                    // Закрываем модалку сразу после получения награды
-                    modal.remove();
+                    setTimeout(() => {
+                        modal.remove();
+                        this.showModal(); // Переоткрываем с обновлённым статусом
+                    }, 1500);
                 }
             });
         }

@@ -15,6 +15,9 @@
     
     /* Фикс для Canvas на iOS */
     #gameCanvas {
+        /* Полный экран */
+        width: 100vw !important;
+        height: 100vh !important;
         /* Убираем все трансформации */
         transform: none !important;
         -webkit-transform: none !important;

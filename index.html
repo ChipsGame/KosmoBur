@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, shrink-to-fit=no, minimum-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-content">
     <meta name="yandex-games" content="true">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -57,7 +57,11 @@
         /* ===== КРАСИВЫЙ ФОН - ЗВЁЗДНОЕ НЕБО ===== */
         #game-container {
             background: linear-gradient(180deg, #0a0a1a 0%, #1a1a3a 30%, #0d1b2a 60%, #1b263b 100%);
-            position: relative;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
             overflow: hidden;
         }
         
@@ -239,63 +243,36 @@
             50% { transform: translateY(-20px) rotate(5deg); }
         }
         
-        /* Canvas поверх фона - КРИТИЧНО: absolute для предотвращения раздвоения */
+        /* Canvas поверх фона */
         #gameCanvas {
-            position: absolute;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            -webkit-transform: translateX(-50%);
+            position: relative;
             z-index: 1;
-            display: block;
-            /* Предотвращаем сглаживание для четких пикселей */
-            image-rendering: pixelated;
-            image-rendering: crisp-edges;
-            /* Убираем прозрачность для стабильности */
-            background-color: #0a0a1a;
         }
         
         /* UI поверх всего */
         #ui-layer {
-            position: absolute;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100%;
-            max-width: 600px;
-            height: 100%;
+            position: relative;
             z-index: 10;
-            pointer-events: none;
         }
         
-                /* Фикс для iOS - предотвращаем pull-to-refresh и раздвоение */
+        /* Фикс для iOS - предотвращаем pull-to-refresh */
         @supports (-webkit-touch-callout: none) {
-            /* УБИРАЕМ translateZ(0) - он вызывает раздвоение на iOS! */
             .modal-content {
-                /* Без трансформаций для стабильности */
-                backface-visibility: hidden;
-                perspective: 1000px;
-                transform-style: flat;
+                /* Дополнительные фиксы для iOS Safari */
+                -webkit-transform: translateZ(0);
+                transform: translateZ(0);
             }
-            /* Фикс для раздвоения canvas на iOS - отключаем ВСЕ анимации фона */
-            .stars-bg, .stars-bg-2, .stars-twinkle, .planet-bg, .planet-bg-2, .meteor {
-                animation: none !important;
-                display: none !important;
-            }
-            /* Упрощаем фон до одного градиента */
-            #game-container {
-                background: linear-gradient(180deg, #0a0a1a 0%, #1a1a3a 100%) !important;
-            }
-            /* Дополнительные фиксы для iOS Safari */
-            #gameCanvas {
-                -webkit-backface-visibility: hidden;
-                backface-visibility: hidden;
-                -webkit-perspective: 1000;
-                perspective: 1000px;
-                /* Сохраняем центрирование! */
-                transform: translateX(-50%);
-                -webkit-transform: translateX(-50%);
-            }
+        }
+        html, body {
+            overscroll-behavior: none;
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            touch-action: manipulation;
+            background: #0a0a0a;
         }
         
         /* Когда модалка открыта - разрешаем скролл на body */
@@ -304,9 +281,9 @@
         }
     </style>
     <title>Космический Бур</title>
-        <link rel="stylesheet" href="css/ui.css?v=3">
-    <link rel="stylesheet" href="css/mobile-fixes.css?v=3">
-    <link rel="stylesheet" href="css/touch-optimizations.css?v=3">
+    <link rel="stylesheet" href="css/ui.css">
+    <link rel="stylesheet" href="css/mobile-fixes.css">
+    <link rel="stylesheet" href="css/touch-optimizations.css">
     <script src="https://yandex.ru/games/sdk/v2"></script>
 </head>
 <body>
@@ -378,33 +355,9 @@
         <div class="pause-hint">Нажмите ▶️ чтобы продолжить</div>
     </div>
 
-    <!-- Фикс для корректного viewport на мобильных -->
-    <script>
-        // Принудительно обновляем viewport при загрузке
-        (function() {
-            function updateViewport() {
-                // Используем documentElement.clientHeight для iOS (без адресной строки)
-                const vh = document.documentElement.clientHeight * 0.01;
-                document.documentElement.style.setProperty('--vh', `${vh}px`);
-                
-                // Принудительно скрываем адресную строку на iOS
-                if (window.scrollY === 0) {
-                    window.scrollTo(0, 1);
-                }
-            }
-            updateViewport();
-            window.addEventListener('resize', updateViewport);
-            window.addEventListener('orientationchange', () => {
-                setTimeout(updateViewport, 300);
-            });
-            // Обновляем при скролле для iOS
-            window.addEventListener('scroll', updateViewport);
-        })();
-    </script>
-    
     <!-- Скрипты -->
-    <script src="js/utils/MobileFixes.js?v=3"></script>
     <script src="js/utils/Utils.js"></script>
+    <script src="js/utils/MobileFixes.js"></script>
     <script src="js/systems/YandexSDK.js"></script>
     <script src="js/core/Renderer.js"></script>
     <script src="js/core/Input.js"></script>
@@ -421,6 +374,6 @@
     <script src="js/systems/Skins.js"></script>
     <script src="js/systems/BossSystem.js"></script>
     <script src="js/systems/SaveManager.js"></script>
-    <script src="js/core/Game.js?v=3"></script>
+    <script src="js/core/Game.js"></script>
 </body>
 </html>

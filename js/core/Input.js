@@ -42,10 +42,11 @@ class Input {
                     return;
                 }
                 e.stopPropagation();
-                // Сохраняем позицию клика относительно canvas
+                // Сохраняем позицию клика относительно canvas (в CSS пикселях)
                 const rect = canvas.getBoundingClientRect();
-                this.lastClickX = (e.clientX - rect.left) * (canvas.width / rect.width);
-                this.lastClickY = (e.clientY - rect.top) * (canvas.height / rect.height);
+                const dpr = window.devicePixelRatio || 1;
+                this.lastClickX = (e.clientX - rect.left);
+                this.lastClickY = (e.clientY - rect.top);
                 this.onClick();
             }
         });
@@ -64,11 +65,11 @@ class Input {
             }
             e.preventDefault();
             e.stopPropagation();
-            // Сохраняем позицию тача относительно canvas
+            // Сохраняем позицию тача относительно canvas (в CSS пикселях)
             const rect = canvas.getBoundingClientRect();
             const touch = e.touches[0];
-            this.lastClickX = (touch.clientX - rect.left) * (canvas.width / rect.width);
-            this.lastClickY = (touch.clientY - rect.top) * (canvas.height / rect.height);
+            this.lastClickX = (touch.clientX - rect.left);
+            this.lastClickY = (touch.clientY - rect.top);
             this.onClick();
         }, { passive: false });
 

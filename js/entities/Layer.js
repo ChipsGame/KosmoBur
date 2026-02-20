@@ -3,9 +3,9 @@ class Layer {
         this.game = game;
         this.index = index;
 
-        // Позиция
-        this.width = game.width - 40;
-        this.height = 80;
+        // Позиция (адаптивная ширина для любого экрана)
+        this.width = Math.min(game.width - 40, 1000); // Макс ширина 1000px
+        this.height = Math.min(80, game.height * 0.08); // Адаптивная высота
         this.x = game.width / 2;
         
         // ИСПРАВЛЕНО: Правильное позиционирование слоев относительно бура
@@ -35,6 +35,15 @@ class Layer {
         // Для эффекта разрушения
         this.destroyProgress = 0;
         this.destroyParticles = [];
+    }
+    
+    /**
+     * Обновить позицию при изменении размера экрана
+     */
+    onResize() {
+        // Обновляем X по центру и ширину
+        this.x = this.game.width / 2;
+        this.width = Math.min(this.game.width - 40, 1000);
     }
 
     generateColor() {
@@ -194,12 +203,24 @@ class Layer {
     }
 
     render(ctx, camera) {
-        if (this.isDestroyed) return;
-
         const screenY = this.y - camera.y;
 
         // Оптимизация: пропускаем рендеринг если слой далеко за экраном
-        if (screenY < -200 || screenY > ctx.canvas.height + 200) return;
+        if (screenY < -200 || screenY > ctx.canvas.height + 200) {
+            // Но всё равно рендерим осколки если они есть
+            if (this.isDestroyed && this.destroyParticles.length > 0) {
+                this.renderFragments(ctx, camera);
+            }
+            return;
+        }
+
+        // Если слой разрушен - рендерим только осколки
+        if (this.isDestroyed) {
+            if (this.destroyParticles.length > 0) {
+                this.renderFragments(ctx, camera);
+            }
+            return;
+        }
 
         ctx.save();
 
@@ -260,11 +281,6 @@ class Layer {
         ctx.shadowOffsetY = 0;
 
         ctx.restore();
-        
-        // Рендерим осколки разрушения
-        if (this.isDestroyed && this.destroyParticles.length > 0) {
-            this.renderFragments(ctx, camera);
-        }
     }
     
     renderFragments(ctx, camera) {

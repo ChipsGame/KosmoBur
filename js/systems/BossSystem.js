@@ -248,7 +248,13 @@ class BossSystem {
     updateBuffsDisplay() {
         const buffsContainer = document.getElementById('boss-buffs');
         const buffsWrapper = document.getElementById('boss-buffs-container');
-        if (!buffsContainer || !buffsWrapper) return;
+        if (!buffsContainer || !buffsWrapper) {
+            // Если контейнеров нет, но есть активные бонусы - создаём UI
+            if (this.hasActiveBonuses()) {
+                this.showBuffsUI();
+            }
+            return;
+        }
         
         const now = Date.now();
         let buffsHTML = '';
@@ -372,6 +378,16 @@ class BossSystem {
         
         // Обновляем отображение баффов (всегда, не только во время боя)
         this.updateBuffsDisplay();
+    }
+    
+    /**
+     * Проверить есть ли активные бонусы
+     */
+    hasActiveBonuses() {
+        const now = Date.now();
+        return now < this.activeBonuses.coins || 
+               now < this.activeBonuses.speed || 
+               now < this.activeBonuses.power;
     }
     
     /**

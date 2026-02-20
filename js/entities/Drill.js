@@ -6,19 +6,19 @@ class Drill {
         // Оптимизированная начальная позиция: бур должен быть сразу над первым слоем
         const screenHeight = window.innerHeight;
         
-        // Адаптация под разные экраны
-        if (screenHeight < 500) {
+        // Адаптация под разные экраны (пропорционально высоте)
+        if (screenHeight < 600) {
             // Очень короткие экраны (iPhone SE и подобные)
-            this.y = 120;
+            this.y = Math.floor(screenHeight * 0.15);
             this.height = 140;
-        } else if (screenHeight < 700) {
-            // Средние экраны
-            this.y = 180;
+        } else if (screenHeight < 900) {
+            // Средние экраны (обычные телефоны)
+            this.y = Math.floor(screenHeight * 0.12);
             this.height = 170;
         } else {
-            // Большие экраны
-            this.y = 200;
-            this.height = 200;
+            // Длинные экраны (современные телефоны)
+            this.y = Math.floor(screenHeight * 0.10);
+            this.height = 180;
         }
         
         this.width = 120;
@@ -50,6 +50,10 @@ class Drill {
         // Ярость (Rampage)
         this.rampageMultiplier = 1; // Множитель урона от скорости кликов
         this.lastClickTime = 0; // Время последнего клика
+        
+        // Временные множители (от бонусов)
+        this.tempPowerMultiplier = 1;
+        this.tempSpeedMultiplier = 1;
 
         // Состояние
         this.isDrilling = false;
@@ -74,6 +78,27 @@ class Drill {
             height: this.height,
             screenHeight: screenHeight
         });
+    }
+    
+    /**
+     * Обновить позицию при изменении размера экрана
+     */
+    onResize() {
+        // Обновляем X по центру
+        this.x = this.game.width / 2;
+        
+        // Если бур ещё не начал движение (в начале игры), обновляем Y
+        if (this.depth < 10) {
+            const screenHeight = window.innerHeight;
+            if (screenHeight < 600) {
+                this.y = Math.floor(screenHeight * 0.15);
+            } else if (screenHeight < 900) {
+                this.y = Math.floor(screenHeight * 0.12);
+            } else {
+                this.y = Math.floor(screenHeight * 0.10);
+            }
+            this.targetY = this.y;
+        }
     }
 
     update(dt) {
@@ -128,11 +153,12 @@ class Drill {
             // === КРИТИЧЕСКИЙ УДАР: шанс пробить слой мгновенно ===
             const isCrit = Math.random() < this.critChance;
             
-            // Итоговый множитель урона
-            const totalMult = driftMult * rampageBonus * superStrikeBonus;
+            // Итоговый множитель урона (с учётом временных бонусов)
+            const totalMult = driftMult * rampageBonus * superStrikeBonus * (this.tempPowerMultiplier || 1);
             
-            // Импульс от клика
-            const clickPower = this.speed * 0.05 * totalMult;
+            // Импульс от клика (с учётом временного бонуса скорости)
+            const effectiveSpeed = this.speed * (this.tempSpeedMultiplier || 1);
+            const clickPower = effectiveSpeed * 0.05 * totalMult;
             this.targetY += clickPower;
 
             // Вращение

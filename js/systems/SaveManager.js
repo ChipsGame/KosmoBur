@@ -15,9 +15,10 @@ class SaveManager {
     
     async init() {
         // Проверяем доступность Yandex SDK
-        if (typeof YaGames !== 'undefined' && window.ysdk) {
+        // Используем window.yandexSDK который создается в YandexSDK.js
+        if (window.yandexSDK && window.yandexSDK.isReady) {
             try {
-                this.player = await window.ysdk.getPlayer();
+                this.player = window.yandexSDK.player;
                 this.isYandex = true;
                 console.log('Yandex Player инициализирован');
             } catch (e) {
@@ -78,7 +79,6 @@ class SaveManager {
         } else {
             // Fallback на localStorage
             localStorage.setItem('drillGame_save', jsonData);
-            console.log('Игра сохранена в localStorage');
         }
     }
 
@@ -101,9 +101,6 @@ class SaveManager {
         // Fallback на localStorage
         if (!saved) {
             saved = localStorage.getItem('drillGame_save');
-            if (saved) {
-                console.log('Игра загружена из localStorage');
-            }
         }
 
         if (!saved) return;

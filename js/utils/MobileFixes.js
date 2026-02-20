@@ -138,16 +138,21 @@ class MobileFixes {
     
     static fixIOSCanvas() {
         // КРИТИЧНО: Фиксы для Canvas на iOS
-        // НЕ меняем позиционирование - оно настраивается в Game.js
-        // Только включаем аппаратное ускорение для стабильности
+        // Центрирование через margin (стабильнее чем transform на старых iOS)
         const canvas = document.getElementById('gameCanvas');
         if (!canvas) return;
         
-        // Только backface-visibility для стабильности
+        canvas.style.position = 'absolute';
+        canvas.style.top = '0';
+        canvas.style.left = '0';
+        canvas.style.right = '0';
+        canvas.style.margin = '0 auto';
+        canvas.style.transform = 'none';
+        canvas.style.webkitTransform = 'none';
         canvas.style.webkitBackfaceVisibility = 'hidden';
         canvas.style.backfaceVisibility = 'hidden';
         
-        console.log('iOS Canvas фиксы применены (только backface-visibility)');
+        console.log('iOS Canvas фиксы применены (центрирование через margin)');
     }
     
     static disableComplexAnimations() {

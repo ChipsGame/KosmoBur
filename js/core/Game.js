@@ -5,27 +5,19 @@
  */
 
 class Game {
-        constructor() {
+    constructor() {
         this.canvas = document.getElementById('gameCanvas');
-        // alpha: false - отключаем прозрачность canvas для стабильности на iOS
-        this.ctx = this.canvas.getContext('2d', { alpha: false });
+        this.ctx = this.canvas.getContext('2d');
 
-        // Фиксированное логическое разрешение для Canvas
-        this.width = 1080;
-        this.height = 1920;
-        
-        // Учитываем DPR для чёткости на мобильных
-        this.dpr = window.devicePixelRatio || 1;
-        
-        // КРИТИЧНО: Устанавливаем разрешение canvas с учетом DPR для четкости
-        this.canvas.width = this.width * this.dpr;
-        this.canvas.height = this.height * this.dpr;
-        
-        // Масштабируем контекст для правильного отображения
-        this.ctx.scale(this.dpr, this.dpr);
-        
-        // Отключаем сглаживание для чётких пикселей
-        this.ctx.imageSmoothingEnabled = false;
+        // Размеры Canvas = размеры окна (полный экран для Яндекс Игр)
+        const dpr = window.devicePixelRatio || 1;
+        // Масштаб игры (0.8 = отдалить на 20%, как было раньше)
+        this.gameScale = 0.8;
+        this.width = window.innerWidth / this.gameScale;
+        this.height = window.innerHeight / this.gameScale;
+        this.canvas.width = window.innerWidth * dpr;
+        this.canvas.height = window.innerHeight * dpr;
+        this.ctx.scale(dpr * this.gameScale, dpr * this.gameScale);
 
         // Инициализация систем
         this.renderer = new Renderer(this);
@@ -330,7 +322,7 @@ class Game {
 
         document.getElementById('btn-achievements').addEventListener('click', () => {
             this.openModal('modal-achievements');
-            this.renderAchievements();
+            this.renderAchievementsList();
         });
 
         document.getElementById('btn-settings').addEventListener('click', () => {
@@ -354,7 +346,7 @@ class Game {
         const btnAd = document.getElementById('btn-ad');
         if (btnAd) {
             btnAd.addEventListener('click', () => {
-                this.showAdRewardsMenu();
+                this.showSettingsMenu();
             });
         }
 
@@ -365,16 +357,8 @@ class Game {
             });
         });
 
-        // Ресайз с debounce для предотвращения циклов
-        let resizeTimeout;
-        window.addEventListener('resize', () => {
-            clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(() => this.handleResize(), 100);
-        });
-        // Также слушаем orientationchange для мобильных
-        window.addEventListener('orientationchange', () => {
-            setTimeout(() => this.handleResize(), 300);
-        });
+        // Ресайз
+        window.addEventListener('resize', () => this.handleResize());
         this.handleResize();
         
         // === ФИКС СКРОЛЛА ДЛЯ МОДАЛЬНЫХ ОКОН НА МОБИЛЬНЫХ ===
@@ -390,46 +374,38 @@ class Game {
         console.log('Modal scroll fix initialized');
     }
 
-        handleResize() {
-        // CSS адаптация, Canvas остаётся фиксированным
-        const aspect = this.width / this.height;
-        // Используем document.documentElement.clientHeight для корректной высоты на iOS
-        const clientWidth = document.documentElement.clientWidth;
-        const clientHeight = document.documentElement.clientHeight;
-        const windowAspect = clientWidth / clientHeight;
+    handleResize() {
+        // Canvas заполняет весь экран (важно для Яндекс Игр)
+        const container = document.getElementById('game-container');
         
-        // Сбрасываем стили перед пересчётом
-        this.canvas.style.width = '';
-        this.canvas.style.height = '';
-
-        // Максимальная ширина игры (для ПК - ограничиваем как на телефоне)
-        const maxWidth = Math.min(clientHeight * aspect, 600); // макс 600px или по пропорции
+        // Устанавливаем Canvas на полный размер окна
+        this.canvas.style.width = '100vw';
+        this.canvas.style.height = '100vh';
         
-        if (windowAspect > aspect) {
-            // Широкий экран (ПК) — ограничиваем ширину, центрируем
-            this.canvas.style.height = `${clientHeight}px`;
-            this.canvas.style.width = `${Math.min(clientHeight * aspect, maxWidth)}px`;
-        } else {
-            // Узкий экран (телефон) — полный экран
-            this.canvas.style.width = `${clientWidth}px`;
-            this.canvas.style.height = `${clientWidth / aspect}px`;
+        // Обновляем внутренние размеры Canvas для правильного масштабирования
+        const dpr = window.devicePixelRatio || 1;
+        this.canvas.width = window.innerWidth * dpr;
+        this.canvas.height = window.innerHeight * dpr;
+        
+        // Масштабируем контекст с учётом gameScale (0.8 = отдалить на 20%)
+        this.ctx.scale(dpr * this.gameScale, dpr * this.gameScale);
+        
+        // Обновляем размеры игры (логические, с учётом масштаба)
+        this.width = window.innerWidth / this.gameScale;
+        this.height = window.innerHeight / this.gameScale;
+        
+        // Пересчитываем позицию бура
+        if (this.drill) {
+            this.drill.onResize();
         }
         
-        // Центрируем canvas
-        this.canvas.style.position = 'absolute';
-        this.canvas.style.top = '0';
-        this.canvas.style.left = '50%';
-        this.canvas.style.transform = 'translateX(-50%)';
-        this.canvas.style.webkitTransform = 'translateX(-50%)';
-        this.canvas.style.margin = '0';
+        // Обновляем все слои
+        for (let layer of this.layers) {
+            layer.onResize();
+        }
         
-        // Адаптация для очень коротких экранов
+        // Адаптация для разных экранов
         this.adaptToShortScreen();
-        
-        // Принудительный ре-рендер
-        if (this.isRunning) {
-            this.render();
-        }
     }
     
     adaptToShortScreen() {
@@ -553,9 +529,6 @@ class Game {
         
         // Обновляем баффы босса (всегда)
         this.bossSystem.updateBonuses();
-        
-        // Обновляем буст тапа
-        this.updateTapBoost();
 
         // Обновляем бур (только если нет босса)
         if (!this.bossSystem.active) {
@@ -719,19 +692,13 @@ class Game {
         }
     }
 
-        render() {
-        // КРИТИЧНО: Полная очистка canvas для предотвращения артефактов на iOS
-        // Сначала очищаем весь canvas
-        this.ctx.clearRect(0, 0, this.width * this.dpr, this.height * this.dpr);
-        
-        // Рисуем градиентный фон вместо сплошного цвета
-        const bgGradient = this.ctx.createLinearGradient(0, 0, 0, this.height);
-        bgGradient.addColorStop(0, '#0a0a1a');
-        bgGradient.addColorStop(0.3, '#1a1a3a');
-        bgGradient.addColorStop(0.6, '#0d1b2a');
-        bgGradient.addColorStop(1, '#1b263b');
-        this.ctx.fillStyle = bgGradient;
-        this.ctx.fillRect(0, 0, this.width, this.height);
+    render() {
+        // Сбрасываем трансформацию для очистки
+        this.ctx.save();
+        this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+        // Очищаем весь Canvas (физические пиксели)
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.ctx.restore();
         
         // Отладка: проверяем что рендер работает
         if (this.firstFrame) {
@@ -938,7 +905,7 @@ class Game {
                         const randomSkin = unownedSkins[Math.floor(Math.random() * unownedSkins.length)];
                         this.skins.ownedSkins.push(randomSkin.id);
                         this.skins.select(randomSkin.id);
-                        this.game.saveManager.save();
+                        this.saveManager.save();
                         this.showNotification(`🎁 Получен скин: ${randomSkin.name}!`, '#ffd700', 4000);
                     }
                 });
@@ -1322,6 +1289,25 @@ class Game {
             </div>
         `;
         document.body.appendChild(ui);
+    }
+    
+    /**
+     * Отрисовать список достижений
+     */
+    renderAchievementsList() {
+        const container = document.getElementById('achievements-list');
+        if (!container) return;
+        
+        // Пока просто заглушка - можно расширить систему достижений
+        container.innerHTML = `
+            <div class="achievement-item">
+                <div class="achievement-icon">🏆</div>
+                <div class="achievement-info">
+                    <div class="achievement-name">Достижения скоро!</div>
+                    <div class="achievement-desc">Система достижений в разработке</div>
+                </div>
+            </div>
+        `;
     }
     
     /**
