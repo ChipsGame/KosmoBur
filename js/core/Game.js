@@ -24,7 +24,7 @@ class Game {
         if (isMobile) {
             this.baseWidth = 1080; // Мобильные - стандартный размер
         } else {
-            this.baseWidth = 4300; // Десктоп - "отдалённая камера" (элементы меньше)
+            this.baseWidth = 3800; // Десктоп - "отдалённая камера" (элементы меньше)
         }
         
         // Масштаб = сколько CSS пикселей в одном игровом пикселе
@@ -412,7 +412,7 @@ class Game {
         if (isMobile) {
             this.baseWidth = 1080;
         } else {
-            this.baseWidth = 4300; // Десктоп - отдалённая камера
+            this.baseWidth = 3800; // Десктоп - отдалённая камера
         }
         
         this.scale = window.innerWidth / this.baseWidth;
