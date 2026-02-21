@@ -3,9 +3,9 @@ class Layer {
         this.game = game;
         this.index = index;
 
-        // Позиция (адаптивная ширина для любого экрана)
-        this.width = Math.min(game.width - 40, 1000); // Макс ширина 1000px
-        this.height = Math.min(80, game.height * 0.08); // Адаптивная высота
+        // Позиция (фиксированные размеры - масштабирование делает Game через canvas transform)
+        this.width = 1040; // Фиксированная ширина слоя
+        this.height = 80;  // Фиксированная высота слоя
         this.x = game.width / 2;
         
         // ИСПРАВЛЕНО: Правильное позиционирование слоев относительно бура
@@ -41,9 +41,8 @@ class Layer {
      * Обновить позицию при изменении размера экрана
      */
     onResize() {
-        // Обновляем X по центру и ширину
+        // Обновляем X по центру
         this.x = this.game.width / 2;
-        this.width = Math.min(this.game.width - 40, 1000);
     }
 
     generateColor() {
@@ -206,7 +205,9 @@ class Layer {
         const screenY = this.y - camera.y;
 
         // Оптимизация: пропускаем рендеринг если слой далеко за экраном
-        if (screenY < -200 || screenY > ctx.canvas.height + 200) {
+        // Используем game.height (логические пиксели)
+        const gameHeight = this.game ? this.game.height : 1920;
+        if (screenY < -200 || screenY > gameHeight + 200) {
             // Но всё равно рендерим осколки если они есть
             if (this.isDestroyed && this.destroyParticles.length > 0) {
                 this.renderFragments(ctx, camera);

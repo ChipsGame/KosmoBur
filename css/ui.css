@@ -35,9 +35,6 @@ body {
     top: 0;
     left: 0;
     z-index: 1;
-    
-    /* Полный экран без полос */
-    object-fit: cover;
 }
 
 /* ===== UI СЛОЙ ===== */

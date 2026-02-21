@@ -9,15 +9,34 @@ class Game {
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
 
-        // Размеры Canvas = размеры окна (полный экран для Яндекс Игр)
+        // Фиксированное соотношение сторон 9:16 как раньше
         const dpr = window.devicePixelRatio || 1;
-        // Масштаб игры (0.8 = отдалить на 20%, как было раньше)
-        this.gameScale = 0.8;
-        this.width = window.innerWidth / this.gameScale;
-        this.height = window.innerHeight / this.gameScale;
+        this.baseHeight = 1920;
+        
+        // Canvas заполняет весь экран
         this.canvas.width = window.innerWidth * dpr;
         this.canvas.height = window.innerHeight * dpr;
-        this.ctx.scale(dpr * this.gameScale, dpr * this.gameScale);
+        
+        // Определяем базовую ширину в зависимости от устройства
+        // На десктопе увеличиваем baseWidth для "отдаления камеры"
+        const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        if (isMobile) {
+            this.baseWidth = 1080; // Мобильные - стандартный размер
+        } else {
+            this.baseWidth = 4300; // Десктоп - "отдалённая камера" (элементы меньше)
+        }
+        
+        // Масштаб = сколько CSS пикселей в одном игровом пикселе
+        this.scale = window.innerWidth / this.baseWidth;
+        
+        // Логические размеры игры
+        this.width = this.baseWidth;
+        this.height = window.innerHeight / this.scale;
+        
+        // Масштабируем контекст: сначала DPR, потом game scale
+        this.ctx.scale(dpr, dpr);
+        this.ctx.scale(this.scale, this.scale);
 
         // Инициализация систем
         this.renderer = new Renderer(this);
@@ -382,17 +401,26 @@ class Game {
         this.canvas.style.width = '100vw';
         this.canvas.style.height = '100vh';
         
-        // Обновляем внутренние размеры Canvas для правильного масштабирования
+        // Обновляем внутренние размеры Canvas
         const dpr = window.devicePixelRatio || 1;
         this.canvas.width = window.innerWidth * dpr;
         this.canvas.height = window.innerHeight * dpr;
         
-        // Масштабируем контекст с учётом gameScale (0.8 = отдалить на 20%)
-        this.ctx.scale(dpr * this.gameScale, dpr * this.gameScale);
+        // Пересчитываем baseWidth и масштаб
+        const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         
-        // Обновляем размеры игры (логические, с учётом масштаба)
-        this.width = window.innerWidth / this.gameScale;
-        this.height = window.innerHeight / this.gameScale;
+        if (isMobile) {
+            this.baseWidth = 1080;
+        } else {
+            this.baseWidth = 4300; // Десктоп - отдалённая камера
+        }
+        
+        this.scale = window.innerWidth / this.baseWidth;
+        this.width = this.baseWidth;
+        this.height = window.innerHeight / this.scale;
+        
+        // Сбрасываем и применяем новую трансформацию
+        this.ctx.setTransform(dpr * this.scale, 0, 0, dpr * this.scale, 0, 0);
         
         // Пересчитываем позицию бура
         if (this.drill) {
@@ -693,12 +721,12 @@ class Game {
     }
 
     render() {
-        // Сбрасываем трансформацию для очистки
-        this.ctx.save();
-        this.ctx.setTransform(1, 0, 0, 1, 0, 0);
-        // Очищаем весь Canvas (физические пиксели)
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        this.ctx.restore();
+        // Очищаем Canvas
+        this.ctx.clearRect(0, 0, this.width, this.height);
+        
+        // Рисуем фон (тёмный космос)
+        this.ctx.fillStyle = '#0a0a1a';
+        this.ctx.fillRect(0, 0, this.width, this.height);
         
         // Отладка: проверяем что рендер работает
         if (this.firstFrame) {

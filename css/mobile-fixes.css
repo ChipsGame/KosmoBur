@@ -18,9 +18,6 @@
         /* Полный экран */
         width: 100vw !important;
         height: 100vh !important;
-        /* Убираем все трансформации */
-        transform: none !important;
-        -webkit-transform: none !important;
         /* Фиксируем позиционирование */
         position: absolute !important;
         top: 0 !important;
@@ -32,16 +29,6 @@
         /* Предотвращаем сглаживание */
         image-rendering: pixelated;
         image-rendering: crisp-edges;
-        /* Стандартные свойства для 3D трансформаций */
-        backface-visibility: hidden;
-        -webkit-backface-visibility: hidden;
-        perspective: 1000px;
-        -webkit-perspective: 1000px;
-        transform-style: flat;
-        -webkit-transform-style: flat;
-        /* Убираем тени и эффекты */
-        box-shadow: none !important;
-        filter: none !important;
     }
     
     /* Фикс для предотвращения pull-to-refresh на iOS */

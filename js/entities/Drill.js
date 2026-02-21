@@ -4,23 +4,9 @@ class Drill {
         this.x = game.width / 2;
         
         // Оптимизированная начальная позиция: бур должен быть сразу над первым слоем
-        const screenHeight = window.innerHeight;
-        
-        // Адаптация под разные экраны (пропорционально высоте)
-        if (screenHeight < 600) {
-            // Очень короткие экраны (iPhone SE и подобные)
-            this.y = Math.floor(screenHeight * 0.15);
-            this.height = 140;
-        } else if (screenHeight < 900) {
-            // Средние экраны (обычные телефоны)
-            this.y = Math.floor(screenHeight * 0.12);
-            this.height = 170;
-        } else {
-            // Длинные экраны (современные телефоны)
-            this.y = Math.floor(screenHeight * 0.10);
-            this.height = 180;
-        }
-        
+        // Фиксированные размеры - масштабирование делает Game через canvas transform
+        this.y = 200;
+        this.height = 200;
         this.width = 120;
 
         // Базовые характеристики
@@ -75,8 +61,7 @@ class Drill {
             x: this.x, 
             y: this.y, 
             width: this.width, 
-            height: this.height,
-            screenHeight: screenHeight
+            height: this.height
         });
     }
     
@@ -86,19 +71,6 @@ class Drill {
     onResize() {
         // Обновляем X по центру
         this.x = this.game.width / 2;
-        
-        // Если бур ещё не начал движение (в начале игры), обновляем Y
-        if (this.depth < 10) {
-            const screenHeight = window.innerHeight;
-            if (screenHeight < 600) {
-                this.y = Math.floor(screenHeight * 0.15);
-            } else if (screenHeight < 900) {
-                this.y = Math.floor(screenHeight * 0.12);
-            } else {
-                this.y = Math.floor(screenHeight * 0.10);
-            }
-            this.targetY = this.y;
-        }
     }
 
     update(dt) {
