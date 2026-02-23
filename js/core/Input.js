@@ -111,6 +111,11 @@ class Input {
         // Статистика
         this.totalClicks++;
         
+        // Отправляем в систему достижений
+        if (this.game.achievements) {
+            this.game.achievements.onClick();
+        }
+        
         // Добавляем в историю для CPS
         this.clickHistory.push(now);
         

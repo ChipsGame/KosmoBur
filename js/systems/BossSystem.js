@@ -307,6 +307,11 @@ class BossSystem {
         // Даём бонусы
         this.giveRewards();
         
+        // Отправляем в систему достижений
+        if (this.game.achievements) {
+            this.game.achievements.onBossDefeated(this.timeLeft, this.bossTime);
+        }
+        
         // Показываем победный экран
         this.showVictoryModal();
     }

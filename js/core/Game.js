@@ -51,6 +51,7 @@ class Game {
         this.dailyRewards = new DailyRewards(this);
         this.skins = new Skins(this);
         this.bossSystem = new BossSystem(this);
+        this.achievements = new Achievements(this);
 
         this.saveManager = new SaveManager(this);
 
@@ -80,6 +81,9 @@ class Game {
         // Флаг показа уведомления о престиже
         this.prestigeNotificationShown = false;
 
+        // Делаем игру глобально доступной
+        window.game = this;
+
         this.init();
     }
 
@@ -93,6 +97,11 @@ class Game {
         
         // Применяем бонусы престижа
         this.prestige.applyBonuses();
+        
+        // Проверяем достижения после полной загрузки (с небольшой задержкой)
+        setTimeout(() => {
+            this.achievements.checkAchievements();
+        }, 100);
         
         // Проверяем оффлайн-прогресс и ежедневные награды
         this.checkOfflineAndDaily();
@@ -596,6 +605,9 @@ class Game {
         if (window.yandexSDK) {
             window.yandexSDK.update(dt);
         }
+        
+        // Обновление достижений
+        this.achievements.update(dt);
     }
     
     /**
@@ -823,6 +835,83 @@ class Game {
 
     createParticle(x, y, type, color, size = null) {
         this.particles.push(new Particle(x, y, type, color, size));
+    }
+    
+    /**
+     * Отрисовать список достижений
+     */
+    renderAchievementsList() {
+        const container = document.getElementById('achievements-list');
+        if (!container) return;
+        
+        const categories = this.achievements.getCategories();
+        const stats = this.achievements.getStats();
+        
+        let html = `
+            <div class="achievements-stats">
+                <div class="achievements-progress">
+                    <div class="achievements-progress-bar">
+                        <div class="achievements-progress-fill" style="width: ${stats.percentage}%"></div>
+                    </div>
+                    <div class="achievements-progress-text">${stats.unlocked} / ${stats.total} (${stats.percentage}%)</div>
+                </div>
+            </div>
+            <div class="achievements-categories">
+        `;
+        
+        categories.forEach(category => {
+            const unlockedCount = category.achievements.filter(a => this.achievements.hasAchievement(a.id)).length;
+            const totalCount = category.achievements.length;
+            
+            html += `
+                <div class="achievement-category">
+                    <div class="achievement-category-header">
+                        <span class="achievement-category-name">${category.name}</span>
+                        <span class="achievement-category-count">${unlockedCount}/${totalCount}</span>
+                    </div>
+                    <div class="achievement-category-items">
+            `;
+            
+            category.achievements.forEach(ach => {
+                const isUnlocked = this.achievements.hasAchievement(ach.id);
+                const progress = this.achievements.getProgress(ach);
+                const isSecret = category.id === 'secret' && !isUnlocked;
+                
+                if (isSecret) {
+                    // Секретные достижения скрыты пока не получены
+                    html += `
+                        <div class="achievement-item achievement-locked achievement-secret">
+                            <div class="achievement-icon">🔒</div>
+                            <div class="achievement-content">
+                                <div class="achievement-name">???</div>
+                                <div class="achievement-desc">Секретное достижение</div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    const rewardText = this.achievements.formatReward(ach.reward);
+                    const progressText = progress < 100 && !isUnlocked ? `${Math.round(progress)}%` : '';
+                    
+                    html += `
+                        <div class="achievement-item ${isUnlocked ? 'achievement-unlocked' : 'achievement-locked'}">
+                            <div class="achievement-icon">${isUnlocked ? '🏆' : '🔒'}</div>
+                            <div class="achievement-content">
+                                <div class="achievement-name">${ach.name}</div>
+                                <div class="achievement-desc">${ach.description}</div>
+                                ${rewardText ? `<div class="achievement-reward">${rewardText}</div>` : ''}
+                                ${progressText ? `<div class="achievement-progress-bar"><div class="achievement-progress-fill" style="width: ${progress}%"></div></div>` : ''}
+                            </div>
+                            ${isUnlocked ? '<div class="achievement-check">✓</div>' : ''}
+                        </div>
+                    `;
+                }
+            });
+            
+            html += '</div></div>';
+        });
+        
+        html += '</div>';
+        container.innerHTML = html;
     }
     
     /**
@@ -1314,25 +1403,6 @@ class Game {
             </div>
         `;
         document.body.appendChild(ui);
-    }
-    
-    /**
-     * Отрисовать список достижений
-     */
-    renderAchievementsList() {
-        const container = document.getElementById('achievements-list');
-        if (!container) return;
-        
-        // Пока просто заглушка - можно расширить систему достижений
-        container.innerHTML = `
-            <div class="achievement-item">
-                <div class="achievement-icon">🏆</div>
-                <div class="achievement-info">
-                    <div class="achievement-name">Достижения скоро!</div>
-                    <div class="achievement-desc">Система достижений в разработке</div>
-                </div>
-            </div>
-        `;
     }
     
     /**

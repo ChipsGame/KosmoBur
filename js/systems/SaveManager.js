@@ -59,7 +59,8 @@ class SaveManager {
             prestige: this.game.prestige.save(),
             dailyRewards: this.game.dailyRewards.save(),
             skins: this.game.skins.save(),
-            bossSystem: this.game.bossSystem.save()
+            bossSystem: this.game.bossSystem.save(),
+            achievements: this.game.achievements.save()
         };
 
         const jsonData = JSON.stringify(data);
@@ -148,6 +149,9 @@ class SaveManager {
             }
             if (data.bossSystem) {
                 this.game.bossSystem.load(data.bossSystem);
+            }
+            if (data.achievements) {
+                this.game.achievements.load(data.achievements);
             }
 
             console.log('Игра загружена');

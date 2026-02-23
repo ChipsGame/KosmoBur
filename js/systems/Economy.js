@@ -13,6 +13,11 @@ class Economy {
     addCoins(amount) {
         this.coins += amount;
         this.totalEarned += amount;
+        
+        // Отправляем в систему достижений
+        if (window.game && window.game.achievements) {
+            window.game.achievements.onCoinsEarned(amount);
+        }
     }
 
     spendCoins(amount) {
@@ -25,6 +30,11 @@ class Economy {
 
     addOre(amount) {
         this.ore += amount;
+        
+        // Отправляем в систему достижений
+        if (window.game && window.game.achievements) {
+            window.game.achievements.onOreCollected(amount);
+        }
     }
 
     spendOre(amount) {

@@ -112,6 +112,11 @@ class Prestige {
         this.tokens += tokensToGain;
         this.count++;
         
+        // Отправляем в систему достижений ДО сброса
+        if (this.game.achievements) {
+            this.game.achievements.onPrestige();
+        }
+        
         // Обновляем бонусы
         this.bonuses = this.getActiveBonuses();
         
