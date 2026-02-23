@@ -37,6 +37,43 @@ body {
     z-index: 1;
 }
 
+/* ===== РИПЛ-ЭФФЕКТ ПРИ ТАПЕ ===== */
+.tap-ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.2) 50%, transparent 70%);
+    pointer-events: none;
+    transform: translate(-50%, -50%) scale(0);
+    animation: rippleExpand 0.5s ease-out forwards;
+    z-index: 5;
+}
+
+@keyframes rippleExpand {
+    0% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0.8;
+    }
+    50% {
+        opacity: 0.4;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(3);
+        opacity: 0;
+    }
+}
+
+/* Критический удар - красный рипл */
+.tap-ripple.crit {
+    background: radial-gradient(circle, rgba(255,100,100,0.8) 0%, rgba(255,50,50,0.3) 50%, transparent 70%);
+    animation: rippleExpand 0.6s ease-out forwards;
+}
+
+/* Супер удар - голубой рипл */
+.tap-ripple.super {
+    background: radial-gradient(circle, rgba(100,255,255,0.8) 0%, rgba(50,200,255,0.3) 50%, transparent 70%);
+    animation: rippleExpand 0.6s ease-out forwards;
+}
+
 /* ===== UI СЛОЙ ===== */
 #ui-layer {
     position: absolute;

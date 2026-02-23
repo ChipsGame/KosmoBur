@@ -225,17 +225,36 @@ class Layer {
 
         ctx.save();
 
-        // Основной цвет
-        ctx.fillStyle = this.color;
-        ctx.fillRect(
-            this.x - this.width / 2,
-            screenY - this.height / 2,
-            this.width,
-            this.height
-        );
+        const left = this.x - this.width / 2;
+        const top = screenY - this.height / 2;
+
+        // === ГРАДИЕНТНЫЙ ФОН ===
+        // Вертикальный градиент для объёма
+        const bgGradient = ctx.createLinearGradient(left, top, left, top + this.height);
+        bgGradient.addColorStop(0, this.lightenColor(this.color, 20));
+        bgGradient.addColorStop(0.5, this.color);
+        bgGradient.addColorStop(1, this.darkenColor(this.color, 20));
+        
+        ctx.fillStyle = bgGradient;
+        ctx.fillRect(left, top, this.width, this.height);
+        
+        // === БОКОВЫЕ ГРАНИ (3D эффект) ===
+        // Левая грань
+        const sideGradient = ctx.createLinearGradient(left, top, left + 8, top);
+        sideGradient.addColorStop(0, this.darkenColor(this.color, 30));
+        sideGradient.addColorStop(1, 'transparent');
+        ctx.fillStyle = sideGradient;
+        ctx.fillRect(left, top, 8, this.height);
+        
+        // Правая грань
+        const rightGradient = ctx.createLinearGradient(left + this.width, top, left + this.width - 8, top);
+        rightGradient.addColorStop(0, this.darkenColor(this.color, 30));
+        rightGradient.addColorStop(1, 'transparent');
+        ctx.fillStyle = rightGradient;
+        ctx.fillRect(left + this.width - 8, top, 8, this.height);
 
         // Текстура
-        this.renderTexture(ctx, screenY);
+        this.renderTexture(ctx, left, top);
 
         // Полоска здоровья (всегда показываем)
         const healthPercent = this.health / this.maxHealth;
@@ -259,7 +278,7 @@ class Layer {
         
         // СЧЁТЧИК КЛИКОВ - сколько осталось
         const drill = this.game.drill;
-        const damagePerClick = drill ? (drill.power * this.game.driftSystem.multiplier) : 1;
+        const damagePerClick = drill ? drill.power : 1;
         const clicksLeft = Math.ceil(this.health / damagePerClick);
         
         ctx.fillStyle = '#fff';
@@ -317,28 +336,71 @@ class Layer {
         ctx.restore();
     }
 
-    renderTexture(ctx, screenY) {
-        const left = this.x - this.width / 2;
-        const top = screenY - this.height / 2;
+    renderTexture(ctx, left, top) {
 
-        // Текстура - точки/зерна (не буквы!)
-        ctx.fillStyle = 'rgba(0,0,0,0.15)';
-        for (let i = 0; i < 20; i++) {
-            const px = left + 20 + (i * 47) % (this.width - 40);
-            const py = top + 15 + (i * 23) % (this.height - 30);
+        // === УЛУЧШЕННАЯ ТЕКСТУРА ===
+        // Тёмные зерна/пятна
+        ctx.fillStyle = 'rgba(0,0,0,0.12)';
+        for (let i = 0; i < 15; i++) {
+            const px = left + 30 + (i * 67) % (this.width - 60);
+            const py = top + 10 + (i * 31) % (this.height - 20);
+            const size = 2 + (i % 3);
             ctx.beginPath();
-            ctx.arc(px, py, 2, 0, Math.PI * 2);
+            ctx.arc(px, py, size, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // Светлые вкрапления
+        ctx.fillStyle = 'rgba(255,255,255,0.08)';
+        for (let i = 0; i < 10; i++) {
+            const px = left + 40 + (i * 89) % (this.width - 80);
+            const py = top + 20 + (i * 17) % (this.height - 40);
+            ctx.beginPath();
+            ctx.arc(px, py, 1.5, 0, Math.PI * 2);
             ctx.fill();
         }
 
-        // Граница слоя
-        ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+        // === ГРАНИЦЫ ===
+        // Внешняя тёмная граница
+        ctx.strokeStyle = 'rgba(0,0,0,0.4)';
         ctx.lineWidth = 2;
         ctx.strokeRect(left, top, this.width, this.height);
         
-        // Внутренняя рамка для объёма
-        ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+        // Внутренняя светлая рамка (верх и лево)
+        ctx.strokeStyle = 'rgba(255,255,255,0.15)';
         ctx.lineWidth = 1;
-        ctx.strokeRect(left + 3, top + 3, this.width - 6, this.height - 6);
+        ctx.beginPath();
+        ctx.moveTo(left + 2, top + this.height - 2);
+        ctx.lineTo(left + 2, top + 2);
+        ctx.lineTo(left + this.width - 2, top + 2);
+        ctx.stroke();
+        
+        // Внутренняя тёмная рамка (низ и право)
+        ctx.strokeStyle = 'rgba(0,0,0,0.2)';
+        ctx.beginPath();
+        ctx.moveTo(left + this.width - 2, top + 2);
+        ctx.lineTo(left + this.width - 2, top + this.height - 2);
+        ctx.lineTo(left + 2, top + this.height - 2);
+        ctx.stroke();
+    }
+    
+    // === ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ ДЛЯ ЦВЕТОВ ===
+    
+    darkenColor(color, percent) {
+        const num = parseInt(color.replace('#', ''), 16);
+        const amt = Math.round(2.55 * percent);
+        const R = Math.max((num >> 16) - amt, 0);
+        const G = Math.max((num >> 8 & 0x00FF) - amt, 0);
+        const B = Math.max((num & 0x0000FF) - amt, 0);
+        return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
+    }
+    
+    lightenColor(color, percent) {
+        const num = parseInt(color.replace('#', ''), 16);
+        const amt = Math.round(2.55 * percent);
+        const R = Math.min((num >> 16) + amt, 255);
+        const G = Math.min((num >> 8 & 0x00FF) + amt, 255);
+        const B = Math.min((num & 0x0000FF) + amt, 255);
+        return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
     }
 }

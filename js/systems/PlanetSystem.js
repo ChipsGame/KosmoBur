@@ -73,18 +73,11 @@ class PlanetSystem {
         const special = this.currentPlanetData.special;
 
         switch(special) {
-            case 'low_gravity':
-                this.game.driftSystem.decayRate = 1; // Медленнее тратится
-                break;
-            case 'dust_storms':
-                this.game.drill.maxTemperature = 80; // Быстрее перегрев
-                break;
             case 'ice_crust':
                 this.game.layers.forEach(l => l.hardness *= 1.5);
                 break;
             default:
-                this.game.driftSystem.decayRate = 2;
-                this.game.drill.maxTemperature = 100;
+                // Ничего не делаем
         }
     }
 

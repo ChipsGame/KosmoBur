@@ -6,9 +6,8 @@ class Economy {
         this.coinMultiplier = 1; // Начальный множитель монет
         this.oreChance = 0.1;    // Начальный шанс руды (10%)
         
-        // Новые свойства для улучшений
-        this.doubleRewardChance = 0; // Шанс двойной награды
-        this.depthMultiplier = 1;    // Множитель наград от глубины
+        // Шанс двойной награды
+        this.doubleRewardChance = 0;
     }
 
     addCoins(amount) {

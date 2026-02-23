@@ -1,13 +1,12 @@
 /**
  * СИСТЕМА УЛУЧШЕНИЙ - КЛИКЕР ВЕРСИЯ
- * Улучшения не уменьшают HP слоёв напрямую!
  */
 class Upgrades {
     constructor(game) {
         this.game = game;
 
         this.upgrades = [
-            // === АВТОБУР (оставляем как есть) ===
+            // === АВТОБУР ===
             {
                 id: 'auto_drill_unlock',
                 name: 'Автобур',
@@ -45,7 +44,7 @@ class Upgrades {
                 requires: 'auto_drill_unlock'
             },
             
-            // === БАЗОВЫЕ УЛУЧШЕНИЯ (новые) ===
+            // === БАЗОВЫЕ УЛУЧШЕНИЯ ===
             {
                 id: 'crit_chance',
                 name: 'Критический Удар',
@@ -53,30 +52,8 @@ class Upgrades {
                 baseCost: 100,
                 costMultiplier: 1.4,
                 maxLevel: 20,
-                effect: (level) => Math.min(level * 0.02, 0.3), // Макс 30%
+                effect: (level) => Math.min(level * 0.02, 0.3),
                 icon: '💥',
-                category: 'basic'
-            },
-            {
-                id: 'combo_boost',
-                name: 'Комбо Буст',
-                description: 'Дрифт растёт быстрее на +10%',
-                baseCost: 150,
-                costMultiplier: 1.35,
-                maxLevel: 15,
-                effect: (level) => 1 + level * 0.1,
-                icon: '🔥',
-                category: 'basic'
-            },
-            {
-                id: 'cooling_system',
-                name: 'Охлаждение',
-                description: 'Перегрев на -10%',
-                baseCost: 200,
-                costMultiplier: 1.4,
-                maxLevel: 10,
-                effect: (level) => 1 - level * 0.1,
-                icon: '❄️',
                 category: 'basic'
             },
             {
@@ -110,7 +87,7 @@ class Upgrades {
                 baseCost: 1000,
                 costMultiplier: 1.5,
                 maxLevel: 10,
-                effect: (level) => Math.min(level * 0.03, 0.25), // Макс 25%
+                effect: (level) => Math.min(level * 0.03, 0.25),
                 icon: '💰',
                 category: 'advanced',
                 unlocksAt: 100
@@ -121,56 +98,17 @@ class Upgrades {
                 description: 'Каждый 10й клик = x2 урона',
                 baseCost: 1500,
                 costMultiplier: 1.6,
-                maxLevel: 5,
-                effect: (level) => level > 0 ? (11 - level) : 0, // Уровень 1 = каждый 10й, Уровень 5 = каждый 6й
+                maxLevel: 1,
+                effect: (level) => level > 0,
                 icon: '⚡',
                 category: 'advanced',
                 unlocksAt: 100
-            },
-            {
-                id: 'heat_shield',
-                name: 'Тепловой Щит',
-                description: 'Макс. перегрев +20%',
-                baseCost: 2000,
-                costMultiplier: 1.7,
-                maxLevel: 5,
-                effect: (level) => level * 0.2,
-                icon: '🛡️',
-                category: 'advanced',
-                unlocksAt: 100
-            },
-            
-            // === ЭКСПЕРТНЫЕ (с 300м) ===
-            {
-                id: 'rampage',
-                name: 'Ярость',
-                description: 'Быстрые клики = сильнее удары',
-                baseCost: 5000,
-                costMultiplier: 2,
-                maxLevel: 5,
-                effect: (level) => 1 + level * 0.1,
-                icon: '😤',
-                category: 'expert',
-                unlocksAt: 300
-            },
-            {
-                id: 'deep_diver',
-                name: 'Глубоководник',
-                description: 'Награды растут с глубиной быстрее',
-                baseCost: 8000,
-                costMultiplier: 2,
-                maxLevel: 5,
-                effect: (level) => 1 + level * 0.2,
-                icon: '🌊',
-                category: 'expert',
-                unlocksAt: 300
             }
         ];
 
         this.levels = {};
         this.upgrades.forEach(u => this.levels[u.id] = 0);
         
-        // Текущая вкладка
         this.currentCategory = 'basic';
     }
 
@@ -201,7 +139,6 @@ class Upgrades {
         const level = this.levels[upgradeId];
 
         switch(upgradeId) {
-            // === АВТОБУР ===
             case 'auto_drill_unlock':
                 if (level > 0) {
                     this.game.autoDrill.setBaseSpeed(0.5);
@@ -215,17 +152,8 @@ class Upgrades {
             case 'auto_drill_power':
                 this.game.autoDrill.setEfficiency(upg.effect(level));
                 break;
-                
-            // === БАЗОВЫЕ ===
             case 'crit_chance':
                 this.game.drill.critChance = upg.effect(level);
-                break;
-            case 'combo_boost':
-                // Применяется в driftSystem
-                this.game.driftSystem.comboMultiplier = upg.effect(level);
-                break;
-            case 'cooling_system':
-                this.game.drill.heatMultiplier = upg.effect(level);
                 break;
             case 'coin_magnet':
                 this.game.economy.coinMultiplier = upg.effect(level);
@@ -233,46 +161,25 @@ class Upgrades {
             case 'luck':
                 this.game.economy.oreChance = 0.1 + upg.effect(level);
                 break;
-                
-            // === ПРОДВИНУТЫЕ ===
             case 'double_reward':
                 this.game.economy.doubleRewardChance = upg.effect(level);
                 break;
             case 'super_strike':
-                this.game.drill.superStrikeInterval = upg.effect(level);
-                break;
-            case 'heat_shield':
-                this.game.drill.maxTemperature = 100 * (1 + upg.effect(level));
-                break;
-                
-            // === ЭКСПЕРТНЫЕ ===
-            case 'rampage':
-                this.game.drill.rampageMultiplier = upg.effect(level);
-                break;
-            case 'deep_diver':
-                this.game.economy.depthMultiplier = upg.effect(level);
+                this.game.drill.superStrikeEnabled = level > 0;
                 break;
         }
     }
     
-    /**
-     * Проверить, доступно ли улучшение
-     */
     isAvailable(upgrade) {
-        // Проверка глубины
         if (upgrade.unlocksAt && this.game.drill.depth < upgrade.unlocksAt) {
             return false;
         }
-        // Проверка зависимостей
         if (upgrade.requires && this.levels[upgrade.requires] === 0) {
             return false;
         }
         return true;
     }
     
-    /**
-     * Получить текст блокировки
-     */
     getLockText(upgrade) {
         if (upgrade.unlocksAt && this.game.drill.depth < upgrade.unlocksAt) {
             return `🔒 ${upgrade.unlocksAt}м`;
@@ -284,9 +191,6 @@ class Upgrades {
         return '';
     }
 
-    /**
-     * Получить описание эффекта улучшения
-     */
     getEffectDescription(upg, level) {
         const currentEffect = upg.effect(level);
         const nextEffect = upg.effect(level + 1);
@@ -300,10 +204,6 @@ class Upgrades {
                 return `+${Math.round((nextEffect - currentEffect) * 100)}% урона`;
             case 'crit_chance':
                 return `+${Math.round((nextEffect - currentEffect) * 100)}% шанс`;
-            case 'combo_boost':
-                return `+${Math.round((nextEffect - 1) * 100)}% дрифта`;
-            case 'cooling_system':
-                return `-${Math.round((1 - nextEffect) * 100)}% нагрева`;
             case 'coin_magnet':
                 return `+${Math.round((nextEffect - 1) * 100)}% монет`;
             case 'luck':
@@ -311,13 +211,7 @@ class Upgrades {
             case 'double_reward':
                 return `+${Math.round((nextEffect - currentEffect) * 100)}% шанс 2x`;
             case 'super_strike':
-                return level === 0 ? 'Каждый 10й клик x2' : `Каждый ${11 - level}й клик x2`;
-            case 'heat_shield':
-                return `+${Math.round((nextEffect - currentEffect) * 100)}% перегрева`;
-            case 'rampage':
-                return `+${Math.round((nextEffect - 1) * 100)}% от скорости`;
-            case 'deep_diver':
-                return `+${Math.round((nextEffect - 1) * 100)}% награды`;
+                return 'Каждый 10й клик = x2 урона';
             default:
                 return upg.description;
         }
@@ -327,15 +221,11 @@ class Upgrades {
         const container = document.querySelector('.upgrades-grid');
         container.innerHTML = '';
         
-        // Фикс для мобильного скролла - разрешаем скролл на контейнере
         container.style.touchAction = 'pan-y';
         container.style.webkitOverflowScrolling = 'touch';
         
-        // Фильтруем улучшения по категории и доступности
         const availableUpgrades = this.upgrades.filter(upg => {
-            // Всегда показываем базовые и авто
             if (upg.category === 'basic' || upg.category === 'auto') return true;
-            // Для других категорий - только если разблокированы
             return this.isAvailable(upg) || this.levels[upg.id] > 0;
         });
 
@@ -346,19 +236,13 @@ class Upgrades {
             const canAfford = this.canAfford(upg.id);
             const isLocked = !this.isAvailable(upg) && level === 0;
             
-            // Получаем описание эффекта
             const effectDesc = maxed ? '✅ МАКС' : this.getEffectDescription(upg, level);
 
             const card = document.createElement('div');
             card.className = `upgrade-card ${maxed ? 'maxed' : ''} ${isLocked ? 'locked' : ''}`;
-            // Фикс для мобильного скролла
             card.style.touchAction = 'pan-y';
-            card.addEventListener('touchstart', (e) => {
-                // Разрешаем скролл, не блокируем событие
-            }, { passive: true });
-            card.addEventListener('touchmove', (e) => {
-                // Разрешаем скролл, не блокируем событие
-            }, { passive: true });
+            card.addEventListener('touchstart', (e) => {}, { passive: true });
+            card.addEventListener('touchmove', (e) => {}, { passive: true });
             
             if (isLocked) {
                 const lockText = this.getLockText(upg);
@@ -381,13 +265,11 @@ class Upgrades {
                 
                 if (!maxed) {
                     const btn = card.querySelector('button');
-                    // Фикс для мобильных - используем touchend вместо click для быстрого отклика
-                    // но не блокируем скролл
                     let touchStarted = false;
                     
                     btn.addEventListener('touchstart', (e) => {
                         touchStarted = true;
-                        e.stopPropagation(); // Но не предотвращаем скролл
+                        e.stopPropagation();
                     }, { passive: true });
                     
                     btn.addEventListener('touchend', (e) => {
@@ -400,7 +282,6 @@ class Upgrades {
                         }
                     }, { passive: true });
                     
-                    // Fallback для десктопа
                     btn.addEventListener('click', (e) => {
                         e.preventDefault();
                         if (this.buy(upg.id)) {

@@ -16,6 +16,7 @@ class Input {
         this.totalClicks = 0;
         this.clicksPerSecond = 0;
         this.clickHistory = [];      // История кликов для расчёта CPS
+        this.cpsHistory = [];        // История CPS для сглаживания
         
         // Для клавиатуры - отслеживаем зажатие
         this.keyPressed = false;
@@ -117,32 +118,93 @@ class Input {
         this.clickHistory = this.clickHistory.filter(time => now - time < 1000);
         this.clicksPerSecond = this.clickHistory.length;
         
-        // Добавляем визуальный эффект клика
-        this.addClickEffect();
+        // Добавляем визуальный эффект клика (базовый)
+        // Крит/супер будут добавлены отдельно через triggerCritEffect
+        this.addClickEffect(false, false);
     }
     
     /**
-     * Добавить эффект клика в Canvas
+     * Триггер критического эффекта (вызывается из Drill)
      */
-    addClickEffect() {
+    triggerCritEffect(isCrit, isSuper) {
+        // Обновляем последний эффект или добавляем новый
+        if (this.clickEffects.length > 0) {
+            const lastEffect = this.clickEffects[this.clickEffects.length - 1];
+            lastEffect.isCrit = isCrit;
+            lastEffect.isSuper = isSuper;
+            lastEffect.maxRadius = isCrit ? 100 : (isSuper ? 80 : 60);
+            lastEffect.maxLife = isCrit ? 0.5 : 0.4;
+        }
+        
+        // Добавляем рипл-эффект
+        const x = this.lastClickX !== null ? this.lastClickX : this.game.width / 2;
+        const y = this.lastClickY !== null ? this.lastClickY : this.game.height / 2;
+        this.createRippleEffect(x, y, isCrit, isSuper);
+    }
+    
+    /**
+     * Добавить эффект клика в Canvas и DOM (рипл)
+     */
+    addClickEffect(isCrit = false, isSuper = false) {
         // Если есть позиция клика - создаём эффект там
         // Иначе - в центре экрана (для клавиатуры)
         const x = this.lastClickX !== null ? this.lastClickX : this.game.width / 2;
         const y = this.lastClickY !== null ? this.lastClickY : this.game.height / 2;
         
+        // Canvas эффект
         this.clickEffects.push({
             x: x,
             y: y,
             radius: 10,
-            maxRadius: 60,
+            maxRadius: isCrit ? 100 : (isSuper ? 80 : 60),
             alpha: 1,
-            life: 0.4, // секунды
-            maxLife: 0.4
+            life: isCrit ? 0.5 : 0.4,
+            maxLife: isCrit ? 0.5 : 0.4,
+            isCrit: isCrit,
+            isSuper: isSuper
         });
+        
+        // DOM рипл-эффект (для мобильных выглядит круче)
+        this.createRippleEffect(x, y, isCrit, isSuper);
         
         // НЕ сбрасываем позицию здесь - она сбросится при следующем клике
         // this.lastClickX = null;
         // this.lastClickY = null;
+    }
+    
+    /**
+     * Создать CSS рипл-эффект при тапе
+     */
+    createRippleEffect(gameX, gameY, isCrit = false, isSuper = false) {
+        const container = document.getElementById('game-container');
+        if (!container) return;
+        
+        // Конвертируем игровые координаты в экранные
+        const scale = this.game ? this.game.scale : 1;
+        const screenX = gameX * scale;
+        const screenY = gameY * scale;
+        
+        // Создаём элемент рипла
+        const ripple = document.createElement('div');
+        ripple.className = 'tap-ripple';
+        if (isCrit) ripple.classList.add('crit');
+        if (isSuper) ripple.classList.add('super');
+        
+        // Размер рипла
+        const size = isCrit ? 100 : (isSuper ? 80 : 60);
+        ripple.style.width = size + 'px';
+        ripple.style.height = size + 'px';
+        ripple.style.left = screenX + 'px';
+        ripple.style.top = screenY + 'px';
+        
+        container.appendChild(ripple);
+        
+        // Удаляем после анимации
+        setTimeout(() => {
+            if (ripple.parentNode) {
+                ripple.parentNode.removeChild(ripple);
+            }
+        }, 600);
     }
     
     /**
@@ -180,25 +242,50 @@ class Input {
         for (const effect of this.clickEffects) {
             ctx.save();
             
+            // Цвета в зависимости от типа удара
+            let color1, color2, color3;
+            if (effect.isCrit) {
+                color1 = `rgba(255, 80, 80, ${effect.alpha * 0.9})`;
+                color2 = `rgba(255, 120, 120, ${effect.alpha * 0.6})`;
+                color3 = `rgba(255, 200, 200, ${effect.alpha})`;
+            } else if (effect.isSuper) {
+                color1 = `rgba(80, 255, 255, ${effect.alpha * 0.9})`;
+                color2 = `rgba(120, 255, 255, ${effect.alpha * 0.6})`;
+                color3 = `rgba(200, 255, 255, ${effect.alpha})`;
+            } else {
+                color1 = `rgba(100, 200, 255, ${effect.alpha * 0.8})`;
+                color2 = `rgba(150, 220, 255, ${effect.alpha * 0.5})`;
+                color3 = `rgba(200, 240, 255, ${effect.alpha})`;
+            }
+            
             // Внешнее свечение
             ctx.beginPath();
             ctx.arc(effect.x, effect.y, effect.radius, 0, Math.PI * 2);
-            ctx.strokeStyle = `rgba(100, 200, 255, ${effect.alpha * 0.8})`;
-            ctx.lineWidth = 3;
+            ctx.strokeStyle = color1;
+            ctx.lineWidth = effect.isCrit ? 5 : 3;
             ctx.stroke();
             
             // Внутреннее свечение
             ctx.beginPath();
             ctx.arc(effect.x, effect.y, effect.radius * 0.7, 0, Math.PI * 2);
-            ctx.strokeStyle = `rgba(150, 220, 255, ${effect.alpha * 0.5})`;
-            ctx.lineWidth = 2;
+            ctx.strokeStyle = color2;
+            ctx.lineWidth = effect.isCrit ? 4 : 2;
             ctx.stroke();
             
             // Центральная точка
             ctx.beginPath();
-            ctx.arc(effect.x, effect.y, 5, 0, Math.PI * 2);
-            ctx.fillStyle = `rgba(200, 240, 255, ${effect.alpha})`;
+            ctx.arc(effect.x, effect.y, effect.isCrit ? 8 : 5, 0, Math.PI * 2);
+            ctx.fillStyle = color3;
             ctx.fill();
+            
+            // Дополнительные кольца для крита
+            if (effect.isCrit) {
+                ctx.beginPath();
+                ctx.arc(effect.x, effect.y, effect.radius * 1.3, 0, Math.PI * 2);
+                ctx.strokeStyle = `rgba(255, 100, 100, ${effect.alpha * 0.3})`;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
             
             ctx.restore();
         }
@@ -221,7 +308,19 @@ class Input {
         // Обновляем CPS
         const now = Date.now();
         this.clickHistory = this.clickHistory.filter(time => now - time < 1000);
-        this.clicksPerSecond = this.clickHistory.length;
+        const instantCPS = this.clickHistory.length;
+        
+        // Добавляем в историю для сглаживания
+        this.cpsHistory.push({ time: now, cps: instantCPS });
+        this.cpsHistory = this.cpsHistory.filter(item => now - item.time < 2000);
+        
+        // Считаем среднее CPS за последние 2 секунды
+        if (this.cpsHistory.length > 0) {
+            const totalCPS = this.cpsHistory.reduce((sum, item) => sum + item.cps, 0);
+            this.clicksPerSecond = Math.round(totalCPS / this.cpsHistory.length);
+        } else {
+            this.clicksPerSecond = 0;
+        }
     }
     
     /**

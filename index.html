@@ -288,6 +288,16 @@
 </head>
 <body>
     <div id="game-container">
+        <!-- Фоновые слои -->
+        <div class="stars-bg"></div>
+        <div class="stars-bg-2"></div>
+        <div class="stars-twinkle"></div>
+        <div class="planet-bg"></div>
+        <div class="planet-bg-2"></div>
+        <div class="meteor"></div>
+        <div class="meteor"></div>
+        <div class="meteor"></div>
+        
         <canvas id="gameCanvas"></canvas>
 
         <!-- UI Overlay -->
@@ -362,11 +372,12 @@
     <script src="js/core/Renderer.js"></script>
     <script src="js/core/Input.js"></script>
     <script src="js/entities/Particle.js"></script>
+    <script src="js/entities/FloatingText.js"></script>
     <script src="js/entities/Layer.js"></script>
     <script src="js/entities/Drill.js"></script>
     <script src="js/systems/Economy.js"></script>
     <script src="js/systems/Upgrades.js"></script>
-    <script src="js/systems/DriftSystem.js"></script>
+
     <script src="js/systems/AutoDrill.js"></script>
     <script src="js/systems/Prestige.js"></script>
     <script src="js/systems/OfflineProgress.js"></script>

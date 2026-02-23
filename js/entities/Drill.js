@@ -22,24 +22,13 @@ class Drill {
         this.depth = 0;
         this.coolingEfficiency = 1;
         
-        // === НОВЫЕ СВОЙСТВА ДЛЯ УЛУЧШЕНИЙ ===
+        // === СВОЙСТВА ДЛЯ УЛУЧШЕНИЙ ===
         // Критический удар
-        this.critChance = 0; // Шанс пробить слой с 1 клика
+        this.critChance = 0;
         
-        // Супер удар
-        this.superStrikeInterval = 0; // Каждый N-ный клик (0 = выключено)
-        this.clickCounter = 0; // Счётчик кликов для суперудара
-        
-        // Охлаждение
-        this.heatMultiplier = 1; // Множитель нагрева (<1 = меньше нагрев)
-        
-        // Ярость (Rampage)
-        this.rampageMultiplier = 1; // Множитель урона от скорости кликов
-        this.lastClickTime = 0; // Время последнего клика
-        
-        // Временные множители (от бонусов)
-        this.tempPowerMultiplier = 1;
-        this.tempSpeedMultiplier = 1;
+        // Супер удар - каждый 10й клик = x2 урон
+        this.superStrikeEnabled = false;
+        this.clickCounter = 0;
 
         // Состояние
         this.isDrilling = false;
@@ -51,6 +40,11 @@ class Drill {
         this.shakeOffsetX = 0;
         this.shakeOffsetY = 0;
         this.shakeTime = 0;
+        
+        // === АНИМАЦИЯ СВЕРЛА ===
+        this.drillBitRotation = 0;      // Угол вращения сверла
+        this.drillBitSpeed = 15;        // Скорость вращения (радиан/сек)
+        this.drillGlowPhase = 0;        // Фаза для пульсации свечения
 
         // Визуал
         this.color = '#888';
@@ -78,14 +72,23 @@ class Drill {
         const justClicked = this.game.input.isPressed && !this.isDrilling;
         this.isDrilling = this.game.input.isPressed;
 
+        // === АНИМАЦИЯ СВЕРЛА (постоянное вращение ПРОТИВ часовой стрелки) ===
+        // Ускоряем вращение при клике, замедляем когда не кликают
+        const targetSpeed = this.isDrilling ? 25 : 8;
+        this.drillBitSpeed += (targetSpeed - this.drillBitSpeed) * 0.1;
+        // Минус для вращения ПРОТИВ часовой стрелки (как настоящее сверло)
+        this.drillBitRotation -= this.drillBitSpeed * dt;
+        
+        // Обновляем фазу свечения
+        this.drillGlowPhase += dt * 3;
+
         // Обновляем эффект дрожания
         if (this.isDrilling) {
-            // Интенсивность дрожания зависит от множителя дрифта
-            const driftMult = this.game.driftSystem.multiplier;
-            this.shakeIntensity = Math.min(0.5 + (driftMult - 1) * 0.3, 2.0);
+            // Интенсивность дрожания
+            this.shakeIntensity = Math.min(0.5, 2.0);
             
             // Увеличиваем время для анимации дрожания
-            this.shakeTime += dt * 20 * driftMult;
+            this.shakeTime += dt * 20;
             
             // Вычисляем смещение с использованием синуса и косинуса для естественного дрожания
             this.shakeOffsetX = Math.sin(this.shakeTime * 1.7) * this.shakeIntensity * 3;
@@ -101,60 +104,32 @@ class Drill {
         if (justClicked) {
             this.clickCounter++;
             
-            // Рассчитываем множители
-            const driftMult = this.game.driftSystem.multiplier;
-            
-            // === ЯРОСТЬ (Rampage): бонус за быстрые клики ===
-            const now = Date.now();
-            const timeSinceLastClick = now - this.lastClickTime;
-            this.lastClickTime = now;
-            
-            let rampageBonus = 1;
-            if (timeSinceLastClick < 200) { // Менее 200мс между кликами = быстро
-                rampageBonus = this.rampageMultiplier;
-            }
-            
-            // === СУПЕР УДАР: каждый N-ный клик ===
-            let superStrikeBonus = 1;
+            // === СУПЕР УДАР: каждый 10й клик = x2 урон ===
             let isSuperStrike = false;
-            if (this.superStrikeInterval > 0 && this.clickCounter % this.superStrikeInterval === 0) {
-                superStrikeBonus = 2;
+            if (this.superStrikeEnabled && this.clickCounter % 10 === 0) {
                 isSuperStrike = true;
             }
             
             // === КРИТИЧЕСКИЙ УДАР: шанс пробить слой мгновенно ===
             const isCrit = Math.random() < this.critChance;
             
-            // Итоговый множитель урона (с учётом временных бонусов)
-            const totalMult = driftMult * rampageBonus * superStrikeBonus * (this.tempPowerMultiplier || 1);
-            
-            // Импульс от клика (с учётом временного бонуса скорости)
-            const effectiveSpeed = this.speed * (this.tempSpeedMultiplier || 1);
-            const clickPower = effectiveSpeed * 0.05 * totalMult;
+            // Импульс от клика
+            const clickPower = this.speed * 0.05;
             this.targetY += clickPower;
 
             // Вращение
-            this.rotation += 0.5 * totalMult;
-
-            // Нагрев от клика (с учётом охлаждения)
-            const baseHeat = 3 * (driftMult > 2 ? 1.5 : 1);
-            const heatPerClick = baseHeat * this.heatMultiplier;
-            this.temperature = Math.min(this.temperature + heatPerClick, this.maxTemperature);
+            this.rotation += 0.5;
 
             // Проверка столкновения со слоями
-            this.checkCollisions(dt, isCrit);
-
-            // Обновляем дрифт
-            this.game.driftSystem.onDrilling(0.016 * totalMult);
+            this.checkCollisions(dt, isCrit, isSuperStrike);
             
             // Эффект удара (с особым для крита/суперудара)
             this.onClickEffect(isCrit, isSuperStrike);
-        }
-        
-        // Остывание когда не кликаем
-        if (!this.isDrilling) {
-            this.temperature = Math.max(this.temperature - (10 * this.coolingEfficiency) * dt, 0);
-            this.game.driftSystem.onStop();
+            
+            // Обновляем визуальный эффект клика для крита/супера
+            if (isCrit || isSuperStrike) {
+                this.game.input.triggerCritEffect(isCrit, isSuperStrike);
+            }
         }
 
         // Плавное движение
@@ -177,7 +152,7 @@ class Drill {
         }
     }
 
-    checkCollisions(dt, isCrit = false) {
+    checkCollisions(dt, isCrit = false, isSuperStrike = false) {
         const drillBottom = this.y + this.height / 2;
         
         // Оптимизация: проверяем только видимые слои
@@ -215,7 +190,11 @@ class Drill {
                 }
                 
                 // Наносим урон слою
-                const damage = this.power * this.game.driftSystem.multiplier;
+                // Супер удар = x2 урон
+                let damage = this.power;
+                if (isSuperStrike) {
+                    damage *= 2;
+                }
                 const destroyed = targetLayer.takeDamage(damage, dt);
 
                 if (destroyed) {
@@ -256,9 +235,6 @@ class Drill {
         // Рассчитываем награду
         let reward = layer.reward * this.game.economy.coinMultiplier;
         
-        // Множитель от глубины (улучшение Deep Diver)
-        reward *= this.game.economy.depthMultiplier;
-        
         // Шанс двойной награды
         if (Math.random() < this.game.economy.doubleRewardChance) {
             reward *= 2;
@@ -275,11 +251,20 @@ class Drill {
         }
         
         // Начисляем монеты
-        this.game.economy.addCoins(Math.floor(reward));
+        const finalReward = Math.floor(reward);
+        this.game.economy.addCoins(finalReward);
+        
+        // Всплывающий текст с наградой
+        if (this.game.floatingText) {
+            this.game.floatingText.addCoins(layer.x, layer.y, finalReward);
+        }
         
         // Шанс руды (с учетом oreChance)
         if (Math.random() < this.game.economy.oreChance) {
             this.game.economy.addOre(1);
+            if (this.game.floatingText) {
+                this.game.floatingText.addOre(layer.x, layer.y - 30, 1);
+            }
         }
 
         // Частицы
@@ -315,10 +300,18 @@ class Drill {
             particleCount = 15;
             sparkCount = 10;
             sparkColor = '#ff0000'; // Красные искры для крита
+            // Всплывающий текст для крита
+            if (this.game.floatingText) {
+                this.game.floatingText.addCrit(this.x, this.y - 50);
+            }
         } else if (isSuperStrike) {
             particleCount = 8;
             sparkCount = 8;
             sparkColor = '#00ffff'; // Голубые искры для суперудара
+            // Всплывающий текст для супер-удара
+            if (this.game.floatingText) {
+                this.game.floatingText.addSuper(this.x, this.y - 50);
+            }
         }
         
         // Создаём частицы при клике
@@ -397,97 +390,161 @@ class Drill {
         // 5. УНИКАЛЬНЫЕ ДЕТАЛИ СКИНА
         this.renderSkinDetails(ctx, skinId, colors, bodyWidth, bodyHeight);
         
-        // 6. ИНДИКАТОР ТЕМПЕРАТУРЫ
-        const tempPercent = this.temperature / this.maxTemperature;
-        const tempColor = tempPercent > 0.7 ? '#e53e3e' : (tempPercent > 0.4 ? '#ecc94b' : '#48bb78');
-        
-        ctx.fillStyle = '#1a202c';
-        ctx.fillRect(bodyWidth/2 + 5, -25, 6, 50);
-        
-        ctx.fillStyle = tempColor;
-        const fillHeight = 46 * tempPercent;
-        ctx.fillRect(bodyWidth/2 + 7, 23 - fillHeight, 2, fillHeight);
-        
-        // 7. ИНДИКАЦИЯ ПЕРЕГРЕВА
-        if (this.temperature > 70) {
-            const pulseAlpha = 0.5 + 0.5 * Math.sin(Date.now() / 200);
-            ctx.strokeStyle = `rgba(229, 62, 62, ${pulseAlpha})`;
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.roundRect(-bodyWidth/2 - 2, -bodyHeight/2 - 2, bodyWidth + 4, bodyHeight + 4, 14);
-            ctx.stroke();
-        }
-        
-        // 8. ТЕНЬ
+        // 6. ТЕНЬ
         ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
         ctx.beginPath();
         ctx.ellipse(0, bodyHeight/2 + 35, 35, 8, 0, 0, Math.PI * 2);
         ctx.fill();
         
         ctx.restore();
-        
-        // Эффект дрифта
-        if (this.game.driftSystem.multiplier > 1.5) {
-            this.renderDriftEffect(ctx, screenY);
-        }
     }
     
     // === ОТДЕЛЬНЫЕ ЧАСТИ БУРА ===
     
     renderDrillBit(ctx, skinId, colors, bodyHeight, drillLength) {
-        const drillGrad = ctx.createLinearGradient(0, bodyHeight/2, 0, bodyHeight/2 + drillLength);
-        drillGrad.addColorStop(0, colors.drill);
-        drillGrad.addColorStop(1, this.darkenColor(colors.drill, 30));
+        ctx.save();
         
-        ctx.fillStyle = drillGrad;
+        // Перемещаемся к точке крепления сверла
+        ctx.translate(0, bodyHeight/2 + 10);
         
         if (skinId === 'lava') {
-            // Лавовый - пламя вместо сверла
+            // Лавовый - пламя вместо сверла (пульсирует)
+            const pulse = 1 + Math.sin(this.drillGlowPhase) * 0.1;
             ctx.fillStyle = '#ff6b6b';
             ctx.beginPath();
-            ctx.moveTo(-15, bodyHeight/2);
-            ctx.quadraticCurveTo(-20, bodyHeight/2 + 30, 0, bodyHeight/2 + 60);
-            ctx.quadraticCurveTo(20, bodyHeight/2 + 30, 15, bodyHeight/2);
+            ctx.moveTo(-15 * pulse, 0);
+            ctx.quadraticCurveTo(-20 * pulse, 30, 0, 60 * pulse);
+            ctx.quadraticCurveTo(20 * pulse, 30, 15 * pulse, 0);
             ctx.fill();
             // Внутреннее пламя
             ctx.fillStyle = '#ffd93d';
             ctx.beginPath();
-            ctx.moveTo(-8, bodyHeight/2);
-            ctx.quadraticCurveTo(-10, bodyHeight/2 + 20, 0, bodyHeight/2 + 40);
-            ctx.quadraticCurveTo(10, bodyHeight/2 + 20, 8, bodyHeight/2);
+            ctx.moveTo(-8 * pulse, 0);
+            ctx.quadraticCurveTo(-10 * pulse, 20, 0, 40 * pulse);
+            ctx.quadraticCurveTo(10 * pulse, 20, 8 * pulse, 0);
             ctx.fill();
         } else if (skinId === 'diamond') {
-            // Алмазный - кристалл
-            ctx.fillStyle = colors.drill;
-            ctx.beginPath();
-            ctx.moveTo(0, bodyHeight/2 - 10);
-            ctx.lineTo(18, bodyHeight/2 + 20);
-            ctx.lineTo(0, bodyHeight/2 + 55);
-            ctx.lineTo(-18, bodyHeight/2 + 20);
-            ctx.closePath();
-            ctx.fill();
-            // Грани
-            ctx.strokeStyle = '#ffffff';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(0, bodyHeight/2 - 10);
-            ctx.lineTo(0, bodyHeight/2 + 55);
-            ctx.moveTo(-18, bodyHeight/2 + 20);
-            ctx.lineTo(18, bodyHeight/2 + 20);
-            ctx.stroke();
+            // Алмазный - кристалл с 3D вращением
+            this.renderRotatingDiamond(ctx, colors);
         } else {
-            // Стандартное сверло
-            ctx.beginPath();
-            ctx.moveTo(-20, bodyHeight/2);
-            ctx.lineTo(0, bodyHeight/2 + drillLength + 15);
-            ctx.lineTo(20, bodyHeight/2);
-            ctx.closePath();
-            ctx.fill();
+            // === СТАНДАРТНОЕ СВЕРЛО С 3D ВРАЩЕНИЕМ ===
+            this.renderRotatingDrillBit(ctx, colors, drillLength);
+        }
+        
+        ctx.restore();
+    }
+    
+    /**
+     * Рендер сверла с имитацией вращения (без реального поворота)
+     */
+    renderRotatingDrillBit(ctx, colors, drillLength) {
+        const bitLength = drillLength + 15;
+        
+        // Фаза для анимации "вращения"
+        const phase = this.drillBitRotation % (Math.PI * 2);
+        const sinPhase = Math.sin(phase);
+        
+        // === ОСНОВНОЕ ТЕЛО СВЕРЛА (неподвижный конус) ===
+        ctx.fillStyle = colors.drill;
+        ctx.beginPath();
+        ctx.moveTo(-16, -5);
+        ctx.lineTo(0, bitLength);
+        ctx.lineTo(16, -5);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Контур
+        ctx.strokeStyle = this.darkenColor(colors.drill, 40);
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // === АНИМАЦИЯ ВРАЩЕНИЯ - движущиеся линии ===
+        const lineCount = 4;
+        const lineOffset = (phase / (Math.PI * 2)) * (bitLength / lineCount);
+        
+        ctx.strokeStyle = this.darkenColor(colors.drill, 30);
+        ctx.lineWidth = 2;
+        
+        for (let i = 0; i < lineCount; i++) {
+            const y = 10 + ((i * bitLength / lineCount + lineOffset) % bitLength) * 0.8;
+            const width = 12 * (1 - y / bitLength); // Узкая к основанию
             
-            ctx.strokeStyle = this.darkenColor(colors.drill, 50);
-            ctx.lineWidth = 2;
+            // Левая линия
+            ctx.beginPath();
+            ctx.moveTo(-width * 0.7, y);
+            ctx.lineTo(-width * 0.3, y + 8);
+            ctx.stroke();
+            
+            // Правая линия
+            ctx.beginPath();
+            ctx.moveTo(width * 0.7, y);
+            ctx.lineTo(width * 0.3, y + 8);
             ctx.stroke();
         }
+        
+        // === Центральная линия (статичная) ===
+        ctx.strokeStyle = this.darkenColor(colors.drill, 50);
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(0, -2);
+        ctx.lineTo(0, bitLength - 3);
+        ctx.stroke();
+        
+        // === БЛИК (движется вверх-вниз) ===
+        const highlightY = 15 + Math.abs(sinPhase) * (bitLength - 25);
+        ctx.fillStyle = `rgba(255,255,255,${0.2 + Math.abs(sinPhase) * 0.2})`;
+        ctx.beginPath();
+        ctx.ellipse(-4, highlightY, 2, 4, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // === ОСТРИЕ (мигает при вращении) ===
+        const tipGlow = 0.3 + Math.abs(sinPhase) * 0.4;
+        ctx.fillStyle = `rgba(255,255,255,${tipGlow})`;
+        ctx.beginPath();
+        ctx.moveTo(-3, bitLength - 6);
+        ctx.lineTo(0, bitLength);
+        ctx.lineTo(3, bitLength - 6);
+        ctx.closePath();
+        ctx.fill();
+    }
+    
+    /**
+     * Рендер алмазного кристалла с имитацией вращения
+     */
+    renderRotatingDiamond(ctx, colors) {
+        const phase = this.drillBitRotation % (Math.PI * 2);
+        const sinPhase = Math.sin(phase);
+        
+        // Основной кристалл (неподвижный)
+        ctx.fillStyle = colors.drill;
+        ctx.beginPath();
+        ctx.moveTo(0, -10);
+        ctx.lineTo(18, 20);
+        ctx.lineTo(0, 55);
+        ctx.lineTo(-18, 20);
+        ctx.closePath();
+        ctx.fill();
+        
+        // Грани
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, -10);
+        ctx.lineTo(0, 55);
+        ctx.moveTo(-18, 20);
+        ctx.lineTo(18, 20);
+        ctx.stroke();
+        
+        // Имитация вращения - блик движется
+        const highlightY = 5 + Math.abs(sinPhase) * 15;
+        ctx.fillStyle = `rgba(255,255,255,${0.3 + Math.abs(sinPhase) * 0.3})`;
+        ctx.beginPath();
+        ctx.moveTo(0, highlightY);
+        ctx.lineTo(6, highlightY + 12);
+        ctx.lineTo(0, highlightY + 18);
+        ctx.lineTo(-6, highlightY + 12);
+        ctx.closePath();
+        ctx.fill();
     }
     
     renderBody(ctx, skinId, colors, bodyWidth, bodyHeight) {
@@ -548,7 +605,30 @@ class Drill {
     }
     
     renderWindow(ctx, skinId, colors, bodyHeight) {
-        const windowGlow = this.isDrilling ? 0.8 + 0.2 * Math.sin(Date.now() / 100) : 0.4;
+        // Улучшенное пульсирующее свечение иллюминатора
+        const baseGlow = this.isDrilling ? 0.9 : 0.5;
+        const pulseGlow = Math.sin(this.drillGlowPhase * 1.5) * 0.15;
+        const windowGlow = Math.max(0.3, Math.min(1, baseGlow + pulseGlow));
+        
+        // Свечение вокруг иллюминатора
+        const glowRadius = 20 + Math.sin(this.drillGlowPhase * 2) * 3;
+        const glowGradient = ctx.createRadialGradient(
+            0, -bodyHeight/2 + 25, 5,
+            0, -bodyHeight/2 + 25, glowRadius
+        );
+        // Конвертируем hex в rgba для градиента
+        const r = parseInt(colors.window.slice(1, 3), 16);
+        const g = parseInt(colors.window.slice(3, 5), 16);
+        const b = parseInt(colors.window.slice(5, 7), 16);
+        glowGradient.addColorStop(0, `rgba(${r}, ${g}, ${b}, ${windowGlow})`);
+        glowGradient.addColorStop(1, 'transparent');
+        
+        ctx.fillStyle = glowGradient;
+        ctx.globalAlpha = 0.4;
+        ctx.beginPath();
+        ctx.arc(0, -bodyHeight/2 + 25, glowRadius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
         
         if (skinId === 'alien') {
             // Инопланетный - вертикальный глаз
@@ -722,25 +802,7 @@ class Drill {
     }
 
     renderDriftEffect(ctx, screenY) {
-        const intensity = (this.game.driftSystem.multiplier - 1.5) / 1.5;
-
-        ctx.save();
-        ctx.globalAlpha = intensity * 0.5;
-        ctx.fillStyle = '#ff6b6b';
-
-        for (let i = 0; i < 5; i++) {
-            const offset = (Date.now() / 100 + i * 20) % 100;
-            ctx.beginPath();
-            ctx.arc(
-                this.x + (Math.random() - 0.5) * 80,
-                screenY + this.height/2 + offset,
-                10 + Math.random() * 20,
-                0,
-                Math.PI * 2
-            );
-            ctx.fill();
-        }
-
-        ctx.restore();
+        // Метод оставлен для совместимости, но эффект дрифта удалён
+        return;
     }
 }

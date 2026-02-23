@@ -163,9 +163,7 @@ class Prestige {
         
         // Бонусы уже применены в applyBonuses(), здесь только сброс позиции и слоёв
         
-        // Сброс дрифта
-        this.game.driftSystem.charge = 0;
-        this.game.driftSystem.multiplier = 1;
+        // Дрифт-система удалена, сброс не нужен
         
         // Сброс автобура
         this.game.autoDrill.reset();

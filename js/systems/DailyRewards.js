@@ -12,15 +12,15 @@ class DailyRewards {
         // Последний день получения награды
         this.lastClaimDate = null;
         
-        // Награды за дни (7-дневный цикл) - УВЕЛИЧЕНЫ!
+        // Награды за дни (7-дневный цикл)
         this.rewards = [
-            { day: 1, coins: 500,   ore: 1,  boost: null, name: 'День 1' },
-            { day: 2, coins: 1000,  ore: 2,  boost: null, name: 'День 2' },
-            { day: 3, coins: 2000,  ore: 3,  boost: 'power', name: 'День 3' },
-            { day: 4, coins: 3500,  ore: 5,  boost: null, name: 'День 4' },
-            { day: 5, coins: 6000,  ore: 8,  boost: 'speed', name: 'День 5' },
-            { day: 6, coins: 10000, ore: 12, boost: null, name: 'День 6' },
-            { day: 7, coins: 20000, ore: 20, boost: 'legendary', name: 'ДЕНЬ 7! 🎁' }
+            { day: 1, coins: 2000,   ore: 2,  boost: null, name: 'День 1' },
+            { day: 2, coins: 5000,   ore: 3,  boost: null, name: 'День 2' },
+            { day: 3, coins: 10000,  ore: 5,  boost: 'power', name: 'День 3' },
+            { day: 4, coins: 20000,  ore: 8,  boost: null, name: 'День 4' },
+            { day: 5, coins: 35000,  ore: 12, boost: 'speed', name: 'День 5' },
+            { day: 6, coins: 60000,  ore: 18, boost: null, name: 'День 6' },
+            { day: 7, coins: 100000, ore: 30, boost: 'legendary', name: 'ДЕНЬ 7! 🎁' }
         ];
         
         // Проверка доступности

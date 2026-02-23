@@ -43,7 +43,6 @@ class Game {
         this.input = new Input(this);
         this.economy = new Economy();
         this.upgrades = new Upgrades(this);
-        this.driftSystem = new DriftSystem(this);
         
         // Новые системы для удержания игроков
         this.autoDrill = new AutoDrill(this);
@@ -59,6 +58,7 @@ class Game {
         this.drill = new Drill(this);
         this.layers = [];
         this.particles = [];
+        this.floatingText = new FloatingTextManager(this);
         
         // Флаг видимости плит (скрываем во время боя с боссом)
         this.layersVisible = true;
@@ -549,9 +549,6 @@ class Game {
         // Обновляем эффекты кликов
         this.input.updateClickEffects(dt);
         
-        // Обновляем дрифт
-        this.driftSystem.update(dt);
-        
         // Обновляем босса
         this.bossSystem.update(dt);
         
@@ -576,6 +573,9 @@ class Game {
             p.update(dt);
             return p.life > 0;
         });
+        
+        // Обновляем всплывающий текст
+        this.floatingText.update(dt);
 
         // Генерация новых слоёв (только если нужно)
         this.generateNewLayersIfNeeded();
@@ -721,12 +721,8 @@ class Game {
     }
 
     render() {
-        // Очищаем Canvas
+        // Очищаем Canvas (прозрачный - фон рисуется в CSS)
         this.ctx.clearRect(0, 0, this.width, this.height);
-        
-        // Рисуем фон (тёмный космос)
-        this.ctx.fillStyle = '#0a0a1a';
-        this.ctx.fillRect(0, 0, this.width, this.height);
         
         // Отладка: проверяем что рендер работает
         if (this.firstFrame) {
@@ -758,10 +754,10 @@ class Game {
 
         // Частицы
         this.particles.forEach(p => p.render(this.ctx, this.camera));
-
-        // Эффекты дрифта
-        this.driftSystem.renderEffects(this.ctx);
         
+        // Всплывающий текст
+        this.floatingText.render(this.ctx, this.camera);
+
         // Босс
         this.bossSystem.render(this.ctx, this.camera);
         
@@ -803,12 +799,13 @@ class Game {
         document.getElementById('depth-meter').textContent = 
             Math.floor(this.drill.depth) + 'м';
 
-        // Дрифт множитель убран из UI
-        
-        // Обновляем CPS
+        // Обновляем CPS (ручные + автоклики)
         const cpsElement = document.getElementById('cps-display');
         if (cpsElement) {
-            cpsElement.textContent = this.input.clicksPerSecond + ' клик/с';
+            const manualCPS = this.input.clicksPerSecond;
+            const autoCPS = Math.round(this.autoDrill.getEffectiveSpeed());
+            const totalCPS = manualCPS + autoCPS;
+            cpsElement.textContent = totalCPS + ' клик/с';
         }
         
         // Обновляем автоклик

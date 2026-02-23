@@ -114,25 +114,15 @@ class AutoDrill {
         // Эмулируем клик - активируем бурение
         drill.isDrilling = true;
         
-        // Применяем эффекты дрифта (частично)
-        const driftMult = Math.min(this.game.driftSystem.multiplier, 1.5);
-        
         // Движение вниз
-        const autoSpeed = drill.speed * 0.5 * driftMult; // Автобур медленнее ручного
+        const autoSpeed = drill.speed * 0.5; // Автобур медленнее ручного
         drill.targetY += autoSpeed * dt * 2; // Умножаем dt т.к. это "один клик"
         
         // Вращение
-        drill.rotation += 5 * driftMult;
-        
-        // Нагрев (меньше чем при ручном)
-        const heatRate = 2 * (driftMult > 2 ? 1.5 : 1);
-        drill.temperature = Math.min(drill.temperature + heatRate * dt * 2, drill.maxTemperature);
+        drill.rotation += 5;
         
         // Проверка столкновений
         this.checkAutoCollisions(dt);
-        
-        // Обновляем дрифт (меньше чем при ручном)
-        this.game.driftSystem.onDrilling(dt * 0.5);
         
         // Создаём частицы
         if (Math.random() < 0.3) {
@@ -170,7 +160,7 @@ class AutoDrill {
             
             if (drillBottom > layerTop && drillBottom < layerBottom + 20) {
                 // Наносим урон (с учётом эффективности автобура)
-                const damage = this.getEffectivePower() * this.game.driftSystem.multiplier * 0.7;
+                const damage = this.getEffectivePower() * 0.7;
                 const destroyed = layer.takeDamage(damage, dt);
                 
                 if (destroyed) {
