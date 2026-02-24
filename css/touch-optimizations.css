@@ -223,3 +223,112 @@ input, textarea {
         overflow-y: auto !important;
     }
 }
+
+/* ===== ОПТИМИЗАЦИЯ БОССА ДЛЯ МОБИЛЬНЫХ ===== */
+
+/* Увеличиваем область тапа для боя с боссом */
+@media screen and (max-width: 768px) {
+    /* Увеличиваем UI босса */
+    #boss-ui {
+        width: 90vw !important;
+        max-width: 350px !important;
+        bottom: 30px !important;
+    }
+    
+    .boss-bars-container {
+        gap: 12px !important;
+    }
+    
+    .boss-bar-wrapper {
+        padding: 12px 15px !important;
+    }
+    
+    .boss-bar {
+        height: 20px !important;
+    }
+    
+    .boss-bar-label {
+        font-size: 12px !important;
+    }
+    
+    .boss-bar-text {
+        font-size: 14px !important;
+    }
+    
+    /* Увеличиваем кнопки в модалках босса */
+    .boss-start-btn,
+    .boss-continue-btn,
+    .boss-ad-btn,
+    .boss-skip-btn {
+        min-height: 50px !important;
+        font-size: 16px !important;
+    }
+    
+    /* Улучшаем читаемость текста */
+    .boss-info p {
+        font-size: 14px !important;
+    }
+    
+    .boss-value {
+        font-size: 28px !important;
+    }
+    
+    /* Увеличиваем иконки */
+    .boss-victory-modal .boss-icon,
+    .boss-defeat-modal .boss-icon {
+        font-size: 72px !important;
+    }
+    
+    /* Баффы больше и заметнее */
+    .boss-buff {
+        font-size: 14px !important;
+        padding: 8px 15px !important;
+    }
+    
+    /* Модалки босса адаптивнее */
+    .boss-modal,
+    .boss-victory-modal,
+    .boss-defeat-modal {
+        width: 90vw !important;
+        max-width: 380px !important;
+    }
+}
+
+/* Для очень маленьких экранов */
+@media screen and (max-width: 380px) {
+    #boss-ui {
+        width: 95vw !important;
+        bottom: 20px !important;
+    }
+    
+    .boss-bar-wrapper {
+        padding: 10px 12px !important;
+    }
+    
+    .boss-bar {
+        height: 18px !important;
+    }
+    
+    .boss-modal h2,
+    .boss-victory-modal h2,
+    .boss-defeat-modal h2 {
+        font-size: 22px !important;
+    }
+}
+
+/* Для ландшафтной ориентации во время боя с боссом */
+@media screen and (orientation: landscape) and (max-height: 500px) {
+    #boss-ui {
+        bottom: 10px !important;
+        width: 70vw !important;
+    }
+    
+    .boss-bars-container {
+        flex-direction: row !important;
+        gap: 10px !important;
+    }
+    
+    .boss-bar-wrapper {
+        flex: 1;
+    }
+}

@@ -163,13 +163,33 @@ class BossSystem {
         // Показываем UI баффов
         this.showBuffsUI();
         
-        // Добавляем обработчик тапов
+        // Добавляем обработчик тапов (и click, и touchstart для мобильных)
         this.bossClickHandler = (e) => {
             if (!this.active) return;
             this.onBossTap(e);
         };
         
-        document.getElementById('game-container').addEventListener('click', this.bossClickHandler);
+        // touchstart для мобильных (click может не сработать из-за preventDefault в Input.js)
+        this.bossTouchHandler = (e) => {
+            if (!this.active) return;
+            // Не обрабатываем тачи по UI элементам
+            if (e.target.closest('#ui-layer') || e.target.closest('.modal')) return;
+            // Берем координаты первого тача
+            const touch = e.touches[0];
+            // Отладка: логируем тап на мобильных
+            if (window.location.hash === '#debug') {
+                console.log('Boss touch:', touch.clientX, touch.clientY);
+            }
+            this.onBossTap({
+                clientX: touch.clientX,
+                clientY: touch.clientY,
+                target: e.target
+            });
+        };
+        
+        const gameContainer = document.getElementById('game-container');
+        gameContainer.addEventListener('click', this.bossClickHandler);
+        gameContainer.addEventListener('touchstart', this.bossTouchHandler, { passive: true });
     }
     
     showBossUI() {
@@ -312,8 +332,12 @@ class BossSystem {
             this.game.audio.playBossWin();
         }
         
-        // Убираем обработчик
-        document.getElementById('game-container').removeEventListener('click', this.bossClickHandler);
+        // Убираем обработчики
+        const gameContainer = document.getElementById('game-container');
+        if (gameContainer) {
+            gameContainer.removeEventListener('click', this.bossClickHandler);
+            gameContainer.removeEventListener('touchstart', this.bossTouchHandler);
+        }
         
         // Убираем UI босса (но не баффы!)
         const ui = document.getElementById('boss-ui');
@@ -340,8 +364,12 @@ class BossSystem {
     onDefeat() {
         this.active = false;
         
-        // Убираем обработчик
-        document.getElementById('game-container').removeEventListener('click', this.bossClickHandler);
+        // Убираем обработчики
+        const gameContainer = document.getElementById('game-container');
+        if (gameContainer) {
+            gameContainer.removeEventListener('click', this.bossClickHandler);
+            gameContainer.removeEventListener('touchstart', this.bossTouchHandler);
+        }
         
         // Убираем UI
         const ui = document.getElementById('boss-ui');
@@ -518,7 +546,9 @@ class BossSystem {
         this.game.pause();
         this.showBossUI();
         
-        document.getElementById('game-container').addEventListener('click', this.bossClickHandler);
+        const gameContainer = document.getElementById('game-container');
+        gameContainer.addEventListener('click', this.bossClickHandler);
+        gameContainer.addEventListener('touchstart', this.bossTouchHandler, { passive: true });
     }
     
     render(ctx, camera) {
