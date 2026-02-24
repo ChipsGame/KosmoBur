@@ -9,34 +9,44 @@ class Game {
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
 
-        // Фиксированное соотношение сторон 9:16 как раньше
+        // === УПРОЩЁННАЯ СИСТЕМА МАСШТАБИРОВАНИЯ ===
         const dpr = window.devicePixelRatio || 1;
-        this.baseHeight = 1920;
         
-        // Canvas заполняет весь экран
-        this.canvas.width = window.innerWidth * dpr;
-        this.canvas.height = window.innerHeight * dpr;
+        // Получаем реальные размеры viewport
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
         
-        // Определяем базовую ширину в зависимости от устройства
-        // На десктопе увеличиваем baseWidth для "отдаления камеры"
-        const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        // Устанавливаем canvas размеры с учётом DPR
+        this.canvas.width = Math.floor(viewportWidth * dpr);
+        this.canvas.height = Math.floor(viewportHeight * dpr);
+        
+        // CSS размеры canvas = viewport
+        this.canvas.style.width = viewportWidth + 'px';
+        this.canvas.style.height = viewportHeight + 'px';
+        
+        // Определяем базовую ширину игрового мира
+        const isMobile = viewportWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         
         if (isMobile) {
-            this.baseWidth = 1080; // Мобильные - стандартный размер
+            // Для мобильных: логическая ширина = CSS ширина * 3 (для удобства расчётов)
+            this.baseWidth = viewportWidth * 3;
         } else {
-            this.baseWidth = 3800; // Десктоп - "отдалённая камера" (элементы меньше)
+            // Для десктопа: большая логическая ширина для "отдалённой камеры"
+            this.baseWidth = viewportWidth * 6;
         }
         
-        // Масштаб = сколько CSS пикселей в одном игровом пикселе
-        this.scale = window.innerWidth / this.baseWidth;
+        // scale = сколько игровых пикселей в одном CSS пикселе
+        this.scale = this.baseWidth / viewportWidth;
         
-        // Логические размеры игры
+        // Логические размеры игрового мира
         this.width = this.baseWidth;
-        this.height = window.innerHeight / this.scale;
+        this.height = viewportHeight * this.scale;
         
-        // Масштабируем контекст: сначала DPR, потом game scale
-        this.ctx.scale(dpr, dpr);
-        this.ctx.scale(this.scale, this.scale);
+        // === МАСШТАБИРОВАНИЕ: Приводим игровые координаты к пикселям canvas ===
+        // canvas пиксель = игровой пиксель * (dpr / scale)
+        this.renderScale = dpr / this.scale;
+        this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+        this.ctx.scale(this.renderScale, this.renderScale);
 
         // Инициализация систем
         this.renderer = new Renderer(this);
@@ -85,7 +95,39 @@ class Game {
         // Делаем игру глобально доступной
         window.game = this;
 
+        // === iOS ФИКС: Принудительное обновление размеров для iPhone 7 ===
+        this.fixiOSViewport();
+
         this.init();
+    }
+
+    /**
+     * iOS специфичный фикс для viewport
+     * iPhone 7 и старые устройства иногда неправильно сообщают размеры
+     */
+    fixiOSViewport() {
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        if (!isIOS) return;
+        
+        // Принудительно устанавливаем размеры canvas
+        const fixViewport = () => {
+            const dpr = window.devicePixelRatio || 1;
+            const w = window.innerWidth;
+            const h = window.innerHeight;
+            
+            this.canvas.style.width = w + 'px';
+            this.canvas.style.height = h + 'px';
+            this.canvas.width = Math.floor(w * dpr);
+            this.canvas.height = Math.floor(h * dpr);
+            
+            // Обновляем матрицу трансформации
+            this.ctx.setTransform(this.renderScale, 0, 0, this.renderScale, 0, 0);
+        };
+        
+        // Применяем сразу и с задержкой (iOS иногда меняет размеры после загрузки)
+        fixViewport();
+        setTimeout(fixViewport, 100);
+        setTimeout(fixViewport, 500);
     }
 
     async init() {
@@ -420,6 +462,11 @@ class Game {
         window.addEventListener('resize', () => this.handleResize());
         this.handleResize();
         
+        // === iOS: Обработка смены ориентации ===
+        window.addEventListener('orientationchange', () => {
+            setTimeout(() => this.handleResize(), 300);
+        });
+        
         // === ЗВУКИ HOVER ДЛЯ КНОПОК ===
         this.setupButtonHoverSounds();
         
@@ -454,33 +501,35 @@ class Game {
     }
 
     handleResize() {
-        // Canvas заполняет весь экран (важно для Яндекс Игр)
-        const container = document.getElementById('game-container');
-        
-        // Устанавливаем Canvas на полный размер окна
-        this.canvas.style.width = '100vw';
-        this.canvas.style.height = '100vh';
-        
-        // Обновляем внутренние размеры Canvas
+        // === УПРОЩЁННОЕ МАСШТАБИРОВАНИЕ ===
         const dpr = window.devicePixelRatio || 1;
-        this.canvas.width = window.innerWidth * dpr;
-        this.canvas.height = window.innerHeight * dpr;
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
         
-        // Пересчитываем baseWidth и масштаб
-        const isMobile = window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        // Устанавливаем Canvas размеры
+        this.canvas.width = Math.floor(viewportWidth * dpr);
+        this.canvas.height = Math.floor(viewportHeight * dpr);
+        this.canvas.style.width = viewportWidth + 'px';
+        this.canvas.style.height = viewportHeight + 'px';
+        
+        // Пересчитываем базовую ширину
+        const isMobile = viewportWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         
         if (isMobile) {
-            this.baseWidth = 1080;
+            this.baseWidth = viewportWidth * 3;
         } else {
-            this.baseWidth = 3800; // Десктоп - отдалённая камера
+            // Для десктопа: ширина = CSS ширина * 2 (для отдалённой камеры, но не слишком)
+            this.baseWidth = viewportWidth * 2;
         }
         
-        this.scale = window.innerWidth / this.baseWidth;
+        this.scale = this.baseWidth / viewportWidth;
         this.width = this.baseWidth;
-        this.height = window.innerHeight / this.scale;
+        this.height = viewportHeight * this.scale;
         
-        // Сбрасываем и применяем новую трансформацию
-        this.ctx.setTransform(dpr * this.scale, 0, 0, dpr * this.scale, 0, 0);
+        // Масштабирование матрицы
+        this.renderScale = dpr / this.scale;
+        this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+        this.ctx.scale(this.renderScale, this.renderScale);
         
         // Пересчитываем позицию бура
         if (this.drill) {
@@ -825,32 +874,8 @@ class Game {
         // Эффекты кликов
         this.input.renderClickEffects(this.ctx);
         
-        // Дебаг информация (только для разработки)
-        if (this.firstFrame) {
-            this.renderDebugInfo();
-        }
-        
         // Сбрасываем флаг первого кадра ПОСЛЕ рендера
         this.firstFrame = false;
-    }
-    
-    renderDebugInfo() {
-        this.ctx.save();
-        this.ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-        this.ctx.font = '16px Arial';
-        this.ctx.textAlign = 'left';
-        this.ctx.fillText(`Слои: ${this.layers.length}`, 20, 30);
-        this.ctx.fillText(`Бур Y: ${Math.floor(this.drill.y)}`, 20, 50);
-        this.ctx.fillText(`Камера Y: ${Math.floor(this.camera.y)}`, 20, 70);
-        this.ctx.fillText(`Экран: ${window.innerWidth}x${window.innerHeight}`, 20, 90);
-        
-        // Показываем позицию первого слоя
-        if (this.layers.length > 0) {
-            const firstLayer = this.layers[0];
-            this.ctx.fillText(`Первый слой Y: ${Math.floor(firstLayer.y)}`, 20, 110);
-        }
-        
-        this.ctx.restore();
     }
 
     updateUI() {

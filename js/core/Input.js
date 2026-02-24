@@ -45,9 +45,13 @@ class Input {
                 e.stopPropagation();
                 // Сохраняем позицию клика в игровых координатах
                 const rect = canvas.getBoundingClientRect();
-                const scale = this.game ? this.game.scale : 1;
-                this.lastClickX = (e.clientX - rect.left) / scale;
-                this.lastClickY = (e.clientY - rect.top) / scale;
+                // === ИСПРАВЛЕННОЕ ПРЕОБРАЗОВАНИЕ КООРДИНАТ ===
+                // CSS пиксели -> игровые координаты
+                const dpr = window.devicePixelRatio || 1;
+                const scaleX = this.game.width / rect.width;
+                const scaleY = this.game.height / rect.height;
+                this.lastClickX = (e.clientX - rect.left) * scaleX;
+                this.lastClickY = (e.clientY - rect.top) * scaleY;
                 this.onClick();
             }
         });
@@ -68,10 +72,12 @@ class Input {
             e.stopPropagation();
             // Сохраняем позицию тача в игровых координатах
             const rect = canvas.getBoundingClientRect();
-            const scale = this.game ? this.game.scale : 1;
+            // === ИСПРАВЛЕННОЕ ПРЕОБРАЗОВАНИЕ КООРДИНАТ ===
+            const scaleX = this.game.width / rect.width;
+            const scaleY = this.game.height / rect.height;
             const touch = e.touches[0];
-            this.lastClickX = (touch.clientX - rect.left) / scale;
-            this.lastClickY = (touch.clientY - rect.top) / scale;
+            this.lastClickX = (touch.clientX - rect.left) * scaleX;
+            this.lastClickY = (touch.clientY - rect.top) * scaleY;
             this.onClick();
         }, { passive: false });
 
@@ -189,10 +195,13 @@ class Input {
         const container = document.getElementById('game-container');
         if (!container) return;
         
-        // Конвертируем игровые координаты в экранные
-        const scale = this.game ? this.game.scale : 1;
-        const screenX = gameX * scale;
-        const screenY = gameY * scale;
+        // Конвертируем игровые координаты в CSS-пиксели
+        // === ИСПРАВЛЕННОЕ ПРЕОБРАЗОВАНИЕ ===
+        const rect = this.game.canvas.getBoundingClientRect();
+        const scaleX = rect.width / this.game.width;
+        const scaleY = rect.height / this.game.height;
+        const screenX = gameX * scaleX;
+        const screenY = gameY * scaleY;
         
         // Создаём элемент рипла
         const ripple = document.createElement('div');

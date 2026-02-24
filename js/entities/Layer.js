@@ -3,9 +3,10 @@ class Layer {
         this.game = game;
         this.index = index;
 
-        // Позиция (фиксированные размеры - масштабирование делает Game через canvas transform)
-        this.width = 1040; // Фиксированная ширина слоя
-        this.height = 80;  // Фиксированная высота слоя
+        // Позиция (адаптивные размеры)
+        // Ширина слоя = 90% от ширины игрового мира, но не более 1200 и не менее 300
+        this.width = Math.max(300, Math.min(1200, game.width * 0.9));
+        this.height = 80;
         this.x = game.width / 2;
         
         // ИСПРАВЛЕНО: Правильное позиционирование слоев относительно бура
@@ -43,6 +44,8 @@ class Layer {
     onResize() {
         // Обновляем X по центру
         this.x = this.game.width / 2;
+        // Обновляем ширину слоя (90% от ширины игрового мира)
+        this.width = Math.max(300, Math.min(1200, this.game.width * 0.9));
     }
 
     generateColor() {
