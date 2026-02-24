@@ -141,7 +141,7 @@ class MobileFixes {
         // Центрирование через margin (стабильнее чем transform на старых iOS)
         const canvas = document.getElementById('gameCanvas');
         if (!canvas) return;
-        
+
         canvas.style.position = 'absolute';
         canvas.style.top = '0';
         canvas.style.left = '0';
@@ -151,8 +151,24 @@ class MobileFixes {
         canvas.style.webkitTransform = 'none';
         canvas.style.webkitBackfaceVisibility = 'hidden';
         canvas.style.backfaceVisibility = 'hidden';
-        
-        console.log('iOS Canvas фиксы применены (центрирование через margin)');
+
+        // ДОПОЛНИТЕЛЬНЫЙ ФИКС ДЛЯ iPhone 7 и iOS 15
+        // Принудительное обновление размеров canvas
+        const forceCanvasUpdate = () => {
+            const ctx = canvas.getContext('2d');
+            if (ctx && window.game) {
+                const currentTransform = ctx.getTransform();
+                ctx.setTransform(1, 0, 0, 1, 0, 0);
+                ctx.setTransform(currentTransform);
+            }
+        };
+
+        // Вызываем обновление с задержками для iOS
+        setTimeout(forceCanvasUpdate, 100);
+        setTimeout(forceCanvasUpdate, 300);
+        setTimeout(forceCanvasUpdate, 1000);
+
+        console.log('iOS Canvas фиксы применены (центрирование через margin + принудительное обновление)');
     }
     
     static disableComplexAnimations() {

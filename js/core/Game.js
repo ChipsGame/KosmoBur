@@ -108,22 +108,29 @@ class Game {
     fixiOSViewport() {
         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
         if (!isIOS) return;
-        
+
         // Принудительно устанавливаем размеры canvas
         const fixViewport = () => {
             const dpr = window.devicePixelRatio || 1;
             const w = window.innerWidth;
             const h = window.innerHeight;
-            
+
             this.canvas.style.width = w + 'px';
             this.canvas.style.height = h + 'px';
             this.canvas.width = Math.floor(w * dpr);
             this.canvas.height = Math.floor(h * dpr);
-            
-            // Обновляем матрицу трансформации
-            this.ctx.setTransform(this.renderScale, 0, 0, this.renderScale, 0, 0);
+
+            // КРИТИЧНО: Пересчитываем renderScale с новыми размерами
+            const isMobile = w <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            const baseWidth = isMobile ? w * 3 : w * 6;
+            const scale = baseWidth / w;
+            const renderScale = dpr / scale;
+
+            // Обновляем матрицу трансформации с пересчитанным renderScale
+            this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+            this.ctx.scale(renderScale, renderScale);
         };
-        
+
         // Применяем сразу и с задержкой (iOS иногда меняет размеры после загрузки)
         fixViewport();
         setTimeout(fixViewport, 100);
@@ -505,42 +512,51 @@ class Game {
         const dpr = window.devicePixelRatio || 1;
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
-        
+
         // Устанавливаем Canvas размеры
         this.canvas.width = Math.floor(viewportWidth * dpr);
         this.canvas.height = Math.floor(viewportHeight * dpr);
         this.canvas.style.width = viewportWidth + 'px';
         this.canvas.style.height = viewportHeight + 'px';
-        
+
         // Пересчитываем базовую ширину
         const isMobile = viewportWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        
+
         if (isMobile) {
             this.baseWidth = viewportWidth * 3;
         } else {
             // Для десктопа: ширина = CSS ширина * 2 (для отдалённой камеры, но не слишком)
             this.baseWidth = viewportWidth * 2;
         }
-        
+
         this.scale = this.baseWidth / viewportWidth;
         this.width = this.baseWidth;
         this.height = viewportHeight * this.scale;
-        
+
         // Масштабирование матрицы
         this.renderScale = dpr / this.scale;
         this.ctx.setTransform(1, 0, 0, 1, 0, 0);
         this.ctx.scale(this.renderScale, this.renderScale);
-        
+
+        // iOS ФИКС: Принудительное обновление canvas для старых устройств
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        if (isIOS) {
+            this.canvas.style.transform = 'translateZ(0)';
+            setTimeout(() => {
+                this.canvas.style.transform = 'none';
+            }, 0);
+        }
+
         // Пересчитываем позицию бура
         if (this.drill) {
             this.drill.onResize();
         }
-        
+
         // Обновляем все слои
         for (let layer of this.layers) {
             layer.onResize();
         }
-        
+
         // Адаптация для разных экранов
         this.adaptToShortScreen();
     }
