@@ -116,6 +116,11 @@ class Input {
             this.game.achievements.onClick();
         }
         
+        // Звук клика
+        if (this.game.audio) {
+            this.game.audio.playClick();
+        }
+        
         // Добавляем в историю для CPS
         this.clickHistory.push(now);
         

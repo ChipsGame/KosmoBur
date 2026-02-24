@@ -173,6 +173,9 @@ class Prestige {
         // Сброс автобура
         this.game.autoDrill.reset();
         
+        // Сброс босса (чтобы первый босс был на 400м, а не на старой глубине)
+        this.game.bossSystem.lastBossDepth = 0;
+        
         // Перегенерация слоёв
         this.game.layers = [];
         this.game.currentLayer = 0;

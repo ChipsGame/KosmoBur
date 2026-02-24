@@ -113,6 +113,15 @@ class Drill {
             // === КРИТИЧЕСКИЙ УДАР: шанс пробить слой мгновенно ===
             const isCrit = Math.random() < this.critChance;
             
+            // Звук крита или супер-удара
+            if (this.game.audio) {
+                if (isCrit) {
+                    this.game.audio.playCrit();
+                } else if (isSuperStrike) {
+                    this.game.audio.playSuper();
+                }
+            }
+            
             // Импульс от клика
             const clickPower = this.speed * 0.05;
             this.targetY += clickPower;
@@ -232,6 +241,11 @@ class Drill {
     }
 
     onLayerDestroyed(layer) {
+        // Звук разрушения слоя
+        if (this.game.audio) {
+            this.game.audio.playLayerBreak();
+        }
+        
         // Рассчитываем награду
         let reward = layer.reward * this.game.economy.coinMultiplier;
         
@@ -254,6 +268,11 @@ class Drill {
         const finalReward = Math.floor(reward);
         this.game.economy.addCoins(finalReward);
         
+        // Звук монет
+        if (this.game.audio && finalReward > 0) {
+            this.game.audio.playCoin();
+        }
+        
         // Всплывающий текст с наградой
         if (this.game.floatingText) {
             this.game.floatingText.addCoins(layer.x, layer.y, finalReward);
@@ -262,6 +281,10 @@ class Drill {
         // Шанс руды (с учетом oreChance)
         if (Math.random() < this.game.economy.oreChance) {
             this.game.economy.addOre(1);
+            // Звук руды
+            if (this.game.audio) {
+                this.game.audio.playOre();
+            }
             if (this.game.floatingText) {
                 this.game.floatingText.addOre(layer.x, layer.y - 30, 1);
             }

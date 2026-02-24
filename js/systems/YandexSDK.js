@@ -16,7 +16,7 @@ class YandexSDK {
     
     async init() {
         if (typeof YaGames === 'undefined') {
-            console.warn('YaGames SDK не доступен');
+            // YaGames SDK не доступен
             return false;
         }
         
@@ -25,7 +25,7 @@ class YandexSDK {
             this.player = await this.ysdk.getPlayer();
             this.isReady = true;
             
-            console.log('Yandex SDK инициализирован');
+            // Yandex SDK инициализирован
             
             // Настраиваем обработчики жизненного цикла для мобильных
             this.setupLifecycleHandlers();
@@ -35,7 +35,7 @@ class YandexSDK {
             
             return true;
         } catch (e) {
-            console.error('Ошибка инициализации Yandex SDK:', e);
+            // Ошибка инициализации Yandex SDK
             return false;
         }
     }
@@ -43,18 +43,25 @@ class YandexSDK {
     /**
      * Настроить обработчики жизненного цикла приложения
      * Важно для правильной работы паузы на мобильных
+     * ТРЕБОВАНИЯ ЯНДЕКС ИГР: Музыка на паузе при сворачивании
      */
     setupLifecycleHandlers() {
         if (!this.ysdk) return;
         
         // Обработчик событий жизненного цикла приложения
         this.ysdk.on('game_api_pause', () => {
-            console.log('Yandex SDK: игра приостановлена');
-            if (window.game) window.game.pause();
+            // Yandex SDK: игра приостановлена
+            if (window.game) {
+                window.game.pause();
+                // Ставим музыку на паузу (требование Яндекс Игр)
+                if (window.game.audio) {
+                    window.game.audio.pauseForAd();
+                }
+            }
         });
         
         this.ysdk.on('game_api_resume', () => {
-            console.log('Yandex SDK: игра возобновлена');
+            // Yandex SDK: игра возобновлена
             // НЕ снимаем паузу автоматически - игрок сам нажмёт ▶️
             // Но проверяем оффлайн-прогресс
             if (window.game && window.game.offlineProgress) {
@@ -62,11 +69,13 @@ class YandexSDK {
                     window.game.offlineProgress.checkOnStart();
                 }, 500);
             }
+            // Музыка возобновится когда игрок сам снимет паузу
         });
     }
     
     /**
      * Показать полноэкранную рекламу
+     * ТРЕБОВАНИЯ ЯНДЕКС ИГР: Музыка на паузе во время рекламы
      */
     async showFullscreenAd() {
         if (!this.isReady || this.isAdShowing) return;
@@ -80,33 +89,54 @@ class YandexSDK {
             await this.ysdk.adv.showFullscreenAdv({
                 callbacks: {
                     onOpen: () => {
-                        console.log('Реклама открыта');
-                        // Ставим игру на паузу
-                        if (window.game) window.game.pause();
+                        // Реклама открыта
+                        // Ставим игру на паузу и музыку на паузу (требование Яндекс Игр)
+                        if (window.game) {
+                            window.game.pause();
+                            if (window.game.audio) {
+                                window.game.audio.pauseForAd();
+                            }
+                        }
                     },
                     onClose: (wasShown) => {
-                        console.log('Реклама закрыта, показана:', wasShown);
+                        // Реклама закрыта
                         this.isAdShowing = false;
                         this.adTimer = 0;
-                        // Возобновляем игру
-                        if (window.game) window.game.resume();
+                        // Возобновляем игру и звук
+                        if (window.game) {
+                            window.game.resume();
+                            if (window.game.audio) {
+                                window.game.audio.resumeAfterAd();
+                            }
+                        }
                     },
                     onError: (error) => {
-                        console.error('Ошибка рекламы:', error);
+                        // Ошибка рекламы
                         this.isAdShowing = false;
-                        if (window.game) window.game.resume();
+                        if (window.game) {
+                            window.game.resume();
+                            if (window.game.audio) {
+                                window.game.audio.resumeAfterAd();
+                            }
+                        }
                     }
                 }
             });
         } catch (e) {
-            console.error('Ошибка показа рекламы:', e);
+            // Ошибка показа рекламы
             this.isAdShowing = false;
-            if (window.game) window.game.resume();
+            if (window.game) {
+                window.game.resume();
+                if (window.game.audio) {
+                    window.game.audio.resumeAfterAd();
+                }
+            }
         }
     }
     
     /**
      * Показать рекламу с наградой
+     * ТРЕБОВАНИЯ ЯНДЕКС ИГР: Музыка на паузе во время рекламы
      */
     async showRewardedAd(onReward) {
         if (!this.isReady || this.isAdShowing) return false;
@@ -118,16 +148,22 @@ class YandexSDK {
             this.ysdk.adv.showRewardedVideo({
                 callbacks: {
                     onOpen: () => {
-                        console.log('Rewarded реклама открыта');
-                        if (window.game) window.game.pause();
+                        // Rewarded реклама открыта
+                        // Ставим игру и музыку на паузу (требование Яндекс Игр)
+                        if (window.game) {
+                            window.game.pause();
+                            if (window.game.audio) {
+                                window.game.audio.pauseForAd();
+                            }
+                        }
                     },
                     onRewarded: () => {
-                        console.log('Награда получена!');
+                        // Награда получена!
                         rewardReceived = true;
                         if (onReward) onReward();
                     },
                     onClose: () => {
-                        console.log('Rewarded реклама закрыта, награда:', rewardReceived);
+                        // Rewarded реклама закрыта
                         this.isAdShowing = false;
                         // Возобновляем игру только если награда была получена
                         // или если игрок закрыл без награды - тогда он сам нажмёт ▶️
@@ -135,14 +171,21 @@ class YandexSDK {
                             if (rewardReceived) {
                                 window.game.resume();
                             }
+                            // В любом случае возобновляем музыку
+                            if (window.game.audio) {
+                                window.game.audio.resumeAfterAd();
+                            }
                             // Если награды не было - игра остаётся на паузе
                         }
                         resolve(rewardReceived);
                     },
                     onError: (error) => {
-                        console.error('Ошибка rewarded рекламы:', error);
+                        // Ошибка rewarded рекламы
                         this.isAdShowing = false;
-                        // При ошибке тоже не снимаем паузу автоматически
+                        // При ошибке возобновляем музыку но не снимаем паузу
+                        if (window.game && window.game.audio) {
+                            window.game.audio.resumeAfterAd();
+                        }
                         resolve(false);
                     }
                 }
@@ -162,7 +205,7 @@ class YandexSDK {
                 await document.documentElement.requestFullscreen();
             }
         } catch (e) {
-            console.warn('Не удалось войти в полноэкранный режим:', e);
+            // Не удалось войти в полноэкранный режим
         }
     }
     
@@ -195,9 +238,9 @@ class YandexSDK {
         try {
             const lb = await this.ysdk.getLeaderboards();
             await lb.setLeaderboardScore('depth', Math.floor(score));
-            console.log('Очки отправлены в лидерборд:', score);
+            // Очки отправлены в лидерборд
         } catch (e) {
-            console.error('Ошибка отправки в лидерборд:', e);
+            // Ошибка отправки в лидерборд
         }
     }
     

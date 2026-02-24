@@ -78,8 +78,16 @@ class DailyRewards {
      * Разница в днях между датами
      */
     getDaysDifference(date1, date2) {
+        // Убедимся что оба аргумента - объекты Date
+        const d1 = date1 instanceof Date ? date1 : new Date(date1);
+        const d2 = date2 instanceof Date ? date2 : new Date(date2);
+        
+        // Сбрасываем время для точного сравнения дней
+        const utc1 = Date.UTC(d1.getFullYear(), d1.getMonth(), d1.getDate());
+        const utc2 = Date.UTC(d2.getFullYear(), d2.getMonth(), d2.getDate());
+        
         const oneDay = 24 * 60 * 60 * 1000;
-        const diff = Math.floor((date2 - date1) / oneDay);
+        const diff = Math.floor((utc2 - utc1) / oneDay);
         return diff;
     }
     
@@ -87,9 +95,13 @@ class DailyRewards {
      * Получить награду
      */
     claim() {
-        if (!this.canClaim) return null;
-        
+        // Двойная проверка - может ли игрок получить награду
         const status = this.checkStatus();
+        if (!status.canClaim) {
+            this.canClaim = false;
+            return null;
+        }
+        
         const reward = status.nextReward;
         
         // Начисляем награду
@@ -154,7 +166,7 @@ class DailyRewards {
     /**
      * Получить прогресс недели
      */
-    getWeekProgress() {
+    getWeekProgress(canClaim = this.canClaim) {
         const progress = [];
         const currentDay = this.currentStreak % 7;
         
@@ -165,7 +177,7 @@ class DailyRewards {
             progress.push({
                 day: i + 1,
                 reward: reward,
-                status: i < currentDay ? 'claimed' : (i === currentDay && this.canClaim ? 'available' : 'locked')
+                status: i < currentDay ? 'claimed' : (i === currentDay && canClaim ? 'available' : 'locked')
             });
         }
         
@@ -177,7 +189,7 @@ class DailyRewards {
      */
     showModal() {
         const status = this.checkStatus();
-        const weekProgress = this.getWeekProgress();
+        const weekProgress = this.getWeekProgress(status.canClaim);
         
         // Удаляем старое окно
         const oldModal = document.getElementById('modal-daily');
@@ -186,6 +198,7 @@ class DailyRewards {
         const modal = document.createElement('div');
         modal.id = 'modal-daily';
         modal.className = 'modal';
+        modal.style.zIndex = '3000';
         
         // Генерируем HTML для дней
         const daysHTML = weekProgress.map((day, index) => {
@@ -245,6 +258,7 @@ class DailyRewards {
         // Обработчики
         if (status.canClaim) {
             modal.querySelector('#daily-claim').addEventListener('click', () => {
+                if (this.game.audio) this.game.audio.playSuccess();
                 const result = this.claim();
                 if (result) {
                     this.showClaimAnimation(result.reward);
@@ -257,6 +271,7 @@ class DailyRewards {
         }
         
         modal.querySelector('#daily-close').addEventListener('click', () => {
+            if (this.game.audio) this.game.audio.playMenuClose();
             modal.remove();
         });
     }

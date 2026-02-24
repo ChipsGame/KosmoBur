@@ -20,9 +20,9 @@ class SaveManager {
             try {
                 this.player = window.yandexSDK.player;
                 this.isYandex = true;
-                console.log('Yandex Player инициализирован');
+                // Yandex Player инициализирован
             } catch (e) {
-                console.warn('Не удалось инициализировать Yandex Player:', e);
+                // Не удалось инициализировать Yandex Player
                 this.isYandex = false;
             }
         }
@@ -60,7 +60,8 @@ class SaveManager {
             dailyRewards: this.game.dailyRewards.save(),
             skins: this.game.skins.save(),
             bossSystem: this.game.bossSystem.save(),
-            achievements: this.game.achievements.save()
+            achievements: this.game.achievements.save(),
+            audio: this.game.audio.save()
         };
 
         const jsonData = JSON.stringify(data);
@@ -71,9 +72,9 @@ class SaveManager {
                 await this.player.setData({
                     drillGameSave: jsonData
                 });
-                console.log('Игра сохранена в Yandex');
+                // Игра сохранена в Yandex
             } catch (e) {
-                console.error('Ошибка сохранения в Yandex:', e);
+                // Ошибка сохранения в Yandex
                 // Fallback на localStorage
                 localStorage.setItem('drillGame_save', jsonData);
             }
@@ -92,10 +93,10 @@ class SaveManager {
                 const data = await this.player.getData();
                 if (data && data.drillGameSave) {
                     saved = data.drillGameSave;
-                    console.log('Игра загружена из Yandex');
+                    // Игра загружена из Yandex
                 }
             } catch (e) {
-                console.error('Ошибка загрузки из Yandex:', e);
+                // Ошибка загрузки из Yandex
             }
         }
 
@@ -153,10 +154,13 @@ class SaveManager {
             if (data.achievements) {
                 this.game.achievements.load(data.achievements);
             }
+            if (data.audio) {
+                this.game.audio.load(data.audio);
+            }
 
-            console.log('Игра загружена');
+            // Игра загружена
         } catch (e) {
-            console.error('Ошибка загрузки:', e);
+            // Ошибка загрузки
         }
     }
 }

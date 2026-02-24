@@ -52,6 +52,7 @@ class Game {
         this.skins = new Skins(this);
         this.bossSystem = new BossSystem(this);
         this.achievements = new Achievements(this);
+        this.audio = new AudioSystem(this);
 
         this.saveManager = new SaveManager(this);
 
@@ -226,10 +227,16 @@ class Game {
         const btnPause = document.getElementById('btn-pause');
         if (btnPause) btnPause.textContent = '▶️';
         
-        // Останавливаем все аудио (если есть)
-        this.stopAllAudio();
+        // Останавливаем аудио контекст (SFX)
+        if (this.audio && this.audio.audioContext) {
+            this.audio.audioContext.suspend();
+        }
+        // Ставим музыку на паузу (без сброса позиции)
+        if (this.audio) {
+            this.audio.pauseMusic();
+        }
         
-        console.log('Игра на паузе');
+        // Игра на паузе
     }
     
     /**
@@ -243,22 +250,26 @@ class Game {
         document.getElementById('pause-screen').classList.remove('active');
         const btnPause = document.getElementById('btn-pause');
         if (btnPause) btnPause.textContent = '⏸️';
-        console.log('Игра возобновлена');
+        
+        // Возобновляем аудио
+        if (this.audio) {
+            this.audio.resume();
+        }
+        
+        // Игра возобновлена
     }
     
     /**
      * Остановить все аудио (для паузы)
      */
     stopAllAudio() {
-        // Останавливаем все HTML5 audio элементы
-        const audios = document.querySelectorAll('audio');
-        audios.forEach(audio => {
-            audio.pause();
-        });
-        
-        // Останавливаем Web Audio API контекст если есть
-        if (this.audioContext) {
-            this.audioContext.suspend();
+        // Останавливаем аудио контекст (SFX)
+        if (this.audio && this.audio.audioContext) {
+            this.audio.audioContext.suspend();
+        }
+        // Ставим музыку на паузу
+        if (this.audio) {
+            this.audio.pauseMusic();
         }
     }
     
@@ -330,8 +341,30 @@ class Game {
     }
 
     setupEventListeners() {
+        // Активация аудио при первом взаимодействии (требование браузеров)
+        const activateAudio = () => {
+            if (this.audio) {
+                this.audio.resume();
+            }
+        };
+        
+        // Несколько событий для гарантии (разные браузеры/устройства)
+        const events = ['click', 'touchstart', 'touchend', 'mousedown', 'keydown'];
+        const activateOnce = () => {
+            activateAudio();
+            // Удаляем все обработчики после первого срабатывания
+            events.forEach(evt => {
+                document.removeEventListener(evt, activateOnce, true);
+            });
+        };
+        
+        events.forEach(evt => {
+            document.addEventListener(evt, activateOnce, true);
+        });
+        
         // Кнопки меню
         document.getElementById('btn-upgrades').addEventListener('click', () => {
+            if (this.audio) this.audio.playButtonClick();
             this.openModal('modal-upgrades');
             this.upgrades.renderUI();
             // Фикс скролла для мобильных - применяем стили после открытия
@@ -340,47 +373,45 @@ class Game {
                 modalContent.style.touchAction = 'pan-y';
                 modalContent.style.webkitOverflowScrolling = 'touch';
                 modalContent.style.overscrollBehavior = 'contain';
-                
-                // Отладка - проверяем нужен ли скролл
-                console.log('Modal content height:', modalContent.clientHeight);
-                console.log('Modal scroll height:', modalContent.scrollHeight);
-                console.log('Needs scroll:', modalContent.scrollHeight > modalContent.clientHeight);
             }
         });
 
         document.getElementById('btn-achievements').addEventListener('click', () => {
+            if (this.audio) this.audio.playButtonClick();
             this.openModal('modal-achievements');
             this.renderAchievementsList();
         });
 
         document.getElementById('btn-settings').addEventListener('click', () => {
+            if (this.audio) this.audio.playButtonClick();
             this.showSettingsMenu();
         });
         
         // Кнопка паузы
         document.getElementById('btn-pause').addEventListener('click', () => {
+            if (this.audio) this.audio.playButtonClick();
             this.togglePause();
         });
         
         // Клик на экран паузы для продолжения
         document.getElementById('pause-screen').addEventListener('click', () => {
+            if (this.audio) this.audio.playButtonClick();
             this.resume();
         });
         
-        // Кнопка престижа убрана - теперь только в настройках
-        // и уведомление при достижении 1000м
-        
-        // Кнопка рекламы - открывает меню выбора награды
+        // Кнопка рекламы - открывает меню выбора рекламы
         const btnAd = document.getElementById('btn-ad');
         if (btnAd) {
             btnAd.addEventListener('click', () => {
-                this.showSettingsMenu();
+                if (this.audio) this.audio.playButtonClick();
+                this.showAdRewardsMenu();
             });
         }
 
         // Закрытие модалок
         document.querySelectorAll('.close-modal').forEach(btn => {
             btn.addEventListener('click', (e) => {
+                if (this.audio) this.audio.playMenuClose();
                 e.target.closest('.modal').classList.add('hidden');
             });
         });
@@ -389,8 +420,28 @@ class Game {
         window.addEventListener('resize', () => this.handleResize());
         this.handleResize();
         
+        // === ЗВУКИ HOVER ДЛЯ КНОПОК ===
+        this.setupButtonHoverSounds();
+        
         // === ФИКС СКРОЛЛА ДЛЯ МОДАЛЬНЫХ ОКОН НА МОБИЛЬНЫХ ===
         this.setupModalScrollFix();
+    }
+    
+    /**
+     * Настройка звуков hover для кнопок
+     */
+    setupButtonHoverSounds() {
+        // Используем делегирование событий для всех кнопок
+        document.addEventListener('mouseover', (e) => {
+            if (e.target.tagName === 'BUTTON' || e.target.closest('button')) {
+                // Не играем звук слишком часто (не чаще чем раз в 100мс)
+                const now = Date.now();
+                if (!this._lastHoverSound || now - this._lastHoverSound > 100) {
+                    this._lastHoverSound = now;
+                    if (this.audio) this.audio.playButtonHover();
+                }
+            }
+        });
     }
     
     /**
@@ -399,7 +450,7 @@ class Game {
      */
     setupModalScrollFix() {
         // Ничего не делаем - все фиксы в CSS и в едином обработчике touchmove выше
-        console.log('Modal scroll fix initialized');
+        // Modal scroll fix initialized
     }
 
     handleResize() {
@@ -450,11 +501,11 @@ class Game {
         const screenWidth = window.innerWidth;
         
         // Логирование для отладки
-        console.log('Размер экрана:', screenWidth, 'x', screenHeight, 'px');
+        // Размер экрана
         
         // Если экран очень короткий (менее 500px)
         if (screenHeight < 500) {
-            console.log('Короткий экран обнаружен, применяем адаптацию');
+            // Короткий экран обнаружен
             document.body.classList.add('short-screen');
         } else {
             document.body.classList.remove('short-screen');
@@ -462,7 +513,7 @@ class Game {
         
         // Если экран очень узкий (менее 400px)
         if (screenWidth < 400) {
-            console.log('Узкий экран обнаружен');
+            // Узкий экран обнаружен
             document.body.classList.add('narrow-screen');
         } else {
             document.body.classList.remove('narrow-screen');
@@ -471,11 +522,11 @@ class Game {
 
     generateInitialLayers() {
         // Оптимизация: создаем только 10 слоев вместо 20 для быстрой загрузки
-        console.log('Создание начальных слоев...');
+        // Создание начальных слоев
         for (let i = 0; i < 10; i++) {
             this.addLayer(i);
         }
-        console.log('Начальные слои созданы:', this.layers.length);
+        // Начальные слои созданы
         
         // ВАЖНО: сразу обновляем видимые слои для первого рендера
         this.updateVisibleLayers();
@@ -492,7 +543,7 @@ class Game {
         
         // Также устанавливаем targetY для бура, чтобы он начал с правильной позиции
         this.drill.targetY = this.drill.y;
-        console.log('Начальная позиция бура:', this.drill.y, 'Позиция камеры:', this.camera.y);
+        // Начальная позиция бура
     }
 
     addLayer(index) {
@@ -534,7 +585,7 @@ class Game {
             
             // Оптимизация: пропускаем кадры если deltaTime слишком большая
             if (deltaTime > 0.1) {
-                console.warn('Пропущен кадр, deltaTime:', deltaTime);
+                // Пропущен кадр
                 requestAnimationFrame((t) => this.loop(t));
                 return;
             }
@@ -542,7 +593,7 @@ class Game {
             this.update(deltaTime);
             this.render();
         } catch (e) {
-            console.error('Ошибка в game loop:', e);
+            // Ошибка в game loop
         }
 
         requestAnimationFrame((t) => this.loop(t));
@@ -632,6 +683,7 @@ class Game {
         const modal = document.createElement('div');
         modal.id = 'modal-prestige-available';
         modal.className = 'modal';
+        modal.style.zIndex = '3000';
         
         const tokens = this.prestige.calculateTokens();
         
@@ -677,11 +729,13 @@ class Game {
         
         // Обработчики
         modal.querySelector('#prestige-do-now').addEventListener('click', () => {
+            this.audio.playButtonClick();
             modal.remove();
             this.showPrestigeModal();
         });
         
         modal.querySelector('#prestige-later').addEventListener('click', () => {
+            this.audio.playMenuClose();
             modal.remove();
         });
     }
@@ -736,14 +790,9 @@ class Game {
         // Очищаем Canvas (прозрачный - фон рисуется в CSS)
         this.ctx.clearRect(0, 0, this.width, this.height);
         
-        // Отладка: проверяем что рендер работает
+        // Первый кадр
         if (this.firstFrame) {
-            console.log('Рендер первого кадра:', {
-                width: this.width,
-                height: this.height,
-                layers: this.layers.length,
-                drill: this.drill ? 'есть' : 'нет'
-            });
+            // Инициализация рендера
         }
 
         // Фон (космос) - рисуется в CSS, тут можно добавить эффекты если нужно
@@ -925,13 +974,38 @@ class Game {
         const modal = document.createElement('div');
         modal.id = 'modal-settings';
         modal.className = 'modal';
+        modal.style.zIndex = '3000';
         
         // Проверяем доступность рекламы
         const canShowAd = window.yandexSDK && window.yandexSDK.isReady;
         
+        // Получаем текущие настройки звука
+        const sfxEnabled = this.audio ? this.audio.sfxEnabled : true;
+        const musicEnabled = this.audio ? this.audio.musicEnabled : true;
+        const sfxVolume = this.audio ? (this.audio.sfxVolume || 1) : 1;
+        const musicVolume = this.audio ? (this.audio.musicVolume || 0.3) : 0.3;
+        
         modal.innerHTML = `
             <div class="modal-content settings-modal">
                 <h2>⚙️ Настройки</h2>
+                
+                <div class="settings-section">
+                    <h3>🔊 Звук</h3>
+                    <button class="settings-btn" id="btn-toggle-sfx">
+                        🔊 Звуки: ${sfxEnabled ? 'ВКЛ' : 'ВЫКЛ'}
+                    </button>
+                    <div class="volume-control">
+                        <label>Громкость звуков: <span id="sfx-vol-value">${Math.round(sfxVolume * 100)}%</span></label>
+                        <input type="range" id="sfx-volume" min="0" max="100" value="${Math.round(sfxVolume * 100)}">
+                    </div>
+                    <button class="settings-btn" id="btn-toggle-music">
+                        🎵 Музыка: ${musicEnabled ? 'ВКЛ' : 'ВЫКЛ'}
+                    </button>
+                    <div class="volume-control">
+                        <label>Громкость музыки: <span id="music-vol-value">${Math.round(musicVolume * 100)}%</span></label>
+                        <input type="range" id="music-volume" min="0" max="100" value="${Math.round(musicVolume * 100)}">
+                    </div>
+                </div>
                 
                 <div class="settings-section">
                     <h3>🎮 Игра</h3>
@@ -981,18 +1055,54 @@ class Game {
         
         document.body.appendChild(modal);
         
-        // Обработчики
+        // Обработчики звука
+        modal.querySelector('#btn-toggle-sfx').addEventListener('click', (e) => {
+            this.audio.playToggle();
+            const newState = this.audio.toggleSfx();
+            e.target.textContent = `🔊 Звуки: ${newState ? 'ВКЛ' : 'ВЫКЛ'}`;
+            this.showNotification(newState ? '🔊 Звуки включены' : '🔇 Звуки выключены', '#6bcf7f', 2000);
+        });
+        
+        const sfxVolumeSlider = modal.querySelector('#sfx-volume');
+        const sfxVolValue = modal.querySelector('#sfx-vol-value');
+        sfxVolumeSlider.addEventListener('input', (e) => {
+            this.audio.playSlider();
+            const vol = e.target.value / 100;
+            this.audio.setSfxVolume(vol);
+            sfxVolValue.textContent = `${e.target.value}%`;
+        });
+        
+        modal.querySelector('#btn-toggle-music').addEventListener('click', (e) => {
+            this.audio.playToggle();
+            const newState = this.audio.toggleMusic();
+            e.target.textContent = `🎵 Музыка: ${newState ? 'ВКЛ' : 'ВЫКЛ'}`;
+            this.showNotification(newState ? '🎵 Музыка включена' : '🔇 Музыка выключена', '#6bcf7f', 2000);
+        });
+        
+        const musicVolumeSlider = modal.querySelector('#music-volume');
+        const musicVolValue = modal.querySelector('#music-vol-value');
+        musicVolumeSlider.addEventListener('input', (e) => {
+            this.audio.playSlider();
+            const vol = e.target.value / 100;
+            this.audio.setMusicVolume(vol);
+            musicVolValue.textContent = `${e.target.value}%`;
+        });
+        
+        // Обработчики кнопок меню
         modal.querySelector('#btn-daily').addEventListener('click', () => {
+            this.audio.playButtonClick();
             modal.remove();
             this.dailyRewards.showModal();
         });
         
         modal.querySelector('#btn-skins').addEventListener('click', () => {
+            this.audio.playButtonClick();
             modal.remove();
             this.skins.showShop();
         });
         
         modal.querySelector('#btn-prestige-menu').addEventListener('click', () => {
+            this.audio.playButtonClick();
             modal.remove();
             this.showPrestigeModal();
         });
@@ -1001,6 +1111,7 @@ class Game {
         const btnAdSkin = modal.querySelector('#btn-ad-skin');
         if (btnAdSkin) {
             btnAdSkin.addEventListener('click', async () => {
+                this.audio.playButtonClick();
                 if (!window.yandexSDK || !window.yandexSDK.isReady) {
                     this.showNotification('Реклама ещё загружается...', '#ff6b6b', 3000);
                     return;
@@ -1013,6 +1124,7 @@ class Game {
                     if (unownedSkins.length === 0) {
                         // Все скины куплены - даём монеты вместо
                         this.economy.addCoins(10000);
+                        this.audio.playSuccess();
                         this.showNotification('🎁 У вас все скины! +10000 🪙', '#ffd700', 4000);
                     } else {
                         // Случайный скин
@@ -1020,6 +1132,7 @@ class Game {
                         this.skins.ownedSkins.push(randomSkin.id);
                         this.skins.select(randomSkin.id);
                         this.saveManager.save();
+                        this.audio.playSuccess();
                         this.showNotification(`🎁 Получен скин: ${randomSkin.name}!`, '#ffd700', 4000);
                     }
                 });
@@ -1034,6 +1147,7 @@ class Game {
         const btnAdTap = modal.querySelector('#btn-ad-tap');
         if (btnAdTap) {
             btnAdTap.addEventListener('click', async () => {
+                this.audio.playButtonClick();
                 if (!window.yandexSDK || !window.yandexSDK.isReady) {
                     this.showNotification('Реклама ещё загружается...', '#ff6b6b', 3000);
                     return;
@@ -1041,6 +1155,7 @@ class Game {
                 
                 const rewarded = await window.yandexSDK.showRewardedAd(() => {
                     // x5 тап на 1 минуту
+                    this.audio.playSuccess();
                     this.activateTapBoost();
                 });
                 
@@ -1053,7 +1168,8 @@ class Game {
         // === РЕКЛАМА ЗА 5000 МОНЕТ ===
         const btnAdMoney = modal.querySelector('#btn-ad-money');
         if (btnAdMoney) {
-            btnAdMoney.addEventListener('click', async () => {
+            btnAdTap.addEventListener('click', async () => {
+                this.audio.playButtonClick();
                 if (!window.yandexSDK || !window.yandexSDK.isReady) {
                     this.showNotification('Реклама ещё загружается...', '#ff6b6b', 3000);
                     return;
@@ -1061,6 +1177,7 @@ class Game {
                 
                 const rewarded = await window.yandexSDK.showRewardedAd(() => {
                     this.economy.addCoins(5000);
+                    this.audio.playSuccess();
                     this.showNotification('🎁 +5000 🪙', '#ffd700', 3000);
                 });
                 
@@ -1071,6 +1188,7 @@ class Game {
         }
         
         modal.querySelector('#settings-close').addEventListener('click', () => {
+            this.audio.playMenuClose();
             modal.remove();
         });
     }
@@ -1090,6 +1208,7 @@ class Game {
         const modal = document.createElement('div');
         modal.id = 'modal-prestige';
         modal.className = 'modal';
+        modal.style.zIndex = '3000';
         
         const canPrestige = this.drill.depth >= this.prestige.minDepth;
         
@@ -1162,12 +1281,14 @@ class Game {
         // Обработчики
         if (canPrestige) {
             modal.querySelector('#do-prestige').addEventListener('click', () => {
+                this.audio.playButtonClick();
                 modal.remove();
                 this.showPrestigeConfirmModal();
             });
         }
         
         modal.querySelector('#prestige-close').addEventListener('click', () => {
+            this.audio.playMenuClose();
             modal.remove();
         });
     }
@@ -1183,6 +1304,7 @@ class Game {
         const modal = document.createElement('div');
         modal.id = 'modal-prestige-confirm';
         modal.className = 'modal';
+        modal.style.zIndex = '3000';
         
         modal.innerHTML = `
             <div class="modal-content prestige-confirm-modal">
@@ -1203,14 +1325,18 @@ class Game {
         
         // Обработчики
         modal.querySelector('#prestige-confirm-yes').addEventListener('click', () => {
+            this.audio.playButtonClick();
             const result = this.prestige.doPrestige();
             if (result) {
                 modal.remove();
+                // Сбрасываем флаг уведомления о престиже чтобы показать снова при следующем достижении 1000м
+                this.prestigeNotificationShown = false;
                 this.showPrestigeSuccess(result);
             }
         });
         
         modal.querySelector('#prestige-confirm-no').addEventListener('click', () => {
+            this.audio.playMenuClose();
             modal.remove();
         });
     }
@@ -1219,6 +1345,11 @@ class Game {
      * Показать успешное выполнение престижа
      */
     showPrestigeSuccess(result) {
+        // Звук престижа
+        if (this.audio) {
+            this.audio.playPrestige();
+        }
+        
         // Используем игровое уведомление вместо модалки
         this.showNotification(
             `🎉 ПРЕСТИЖ ВЫПОЛНЕН! +${result.tokensGained} 💎`,
@@ -1245,33 +1376,40 @@ class Game {
         const modal = document.createElement('div');
         modal.id = 'modal-ad-rewards';
         modal.className = 'modal';
+        modal.style.zIndex = '3000';
         
         modal.innerHTML = `
             <div class="modal-content ad-rewards-modal">
                 <h2>📺 Реклама за награды</h2>
-                <p class="ad-rewards-desc">Выберите награду за просмотр рекламы:</p>
+                <p class="ad-rewards-desc">Смотри рекламу и получай крутые бонусы!</p>
                 
                 <div class="ad-rewards-grid">
                     <button class="ad-reward-btn ${!canShowAd ? 'disabled' : ''}" id="ad-reward-skin" ${!canShowAd ? 'disabled' : ''}>
                         <span class="ad-reward-icon">🎁</span>
-                        <span class="ad-reward-name">Случайный скин</span>
-                        <span class="ad-reward-desc">Получите случайный скин</span>
+                        <div class="ad-reward-info">
+                            <span class="ad-reward-name">Случайный скин</span>
+                            <span class="ad-reward-desc">Получи случайный скин для бура</span>
+                        </div>
                     </button>
                     
                     <button class="ad-reward-btn ${!canShowAd ? 'disabled' : ''}" id="ad-reward-tap" ${!canShowAd ? 'disabled' : ''}>
                         <span class="ad-reward-icon">👆</span>
-                        <span class="ad-reward-name">x5 Тап</span>
-                        <span class="ad-reward-desc">x5 урон на 1 минуту</span>
+                        <div class="ad-reward-info">
+                            <span class="ad-reward-name">x5 Тап</span>
+                            <span class="ad-reward-desc">Увеличь урон в 5 раз на 1 минуту</span>
+                        </div>
                     </button>
                     
                     <button class="ad-reward-btn ${!canShowAd ? 'disabled' : ''}" id="ad-reward-money" ${!canShowAd ? 'disabled' : ''}>
                         <span class="ad-reward-icon">💰</span>
-                        <span class="ad-reward-name">5000 монет</span>
-                        <span class="ad-reward-desc">+5000 🪙 сразу</span>
+                        <div class="ad-reward-info">
+                            <span class="ad-reward-name">5000 монет</span>
+                            <span class="ad-reward-desc">Мгновенно получи 5000 монет</span>
+                        </div>
                     </button>
                 </div>
                 
-                ${!canShowAd ? '<p class="ad-loading">Реклама загружается...</p>' : ''}
+                ${!canShowAd ? '<p class="ad-loading">⏳ Реклама загружается...</p>' : '<p class="ad-loading" style="color: #6bcf7f;">✅ Реклама готова!</p>'}
                 
                 <button class="close-modal" id="ad-rewards-close">✕</button>
             </div>
@@ -1281,11 +1419,13 @@ class Game {
         
         // Обработчики
         modal.querySelector('#ad-rewards-close').addEventListener('click', () => {
+            this.audio.playMenuClose();
             modal.remove();
         });
         
         // Случайный скин
         modal.querySelector('#ad-reward-skin').addEventListener('click', async () => {
+            this.audio.playButtonClick();
             if (!canShowAd) return;
             
             const rewarded = await window.yandexSDK.showRewardedAd(() => {
@@ -1293,12 +1433,14 @@ class Game {
                 
                 if (unownedSkins.length === 0) {
                     this.economy.addCoins(10000);
+                    this.audio.playSuccess();
                     this.showNotification('🎁 У вас все скины! +10000 🪙', '#ffd700', 4000);
                 } else {
                     const randomSkin = unownedSkins[Math.floor(Math.random() * unownedSkins.length)];
                     this.skins.ownedSkins.push(randomSkin.id);
                     this.skins.select(randomSkin.id);
                     this.saveManager.save();
+                    this.audio.playSuccess();
                     this.showNotification(`🎁 Получен скин: ${randomSkin.name}!`, '#ffd700', 4000);
                 }
             });
@@ -1312,9 +1454,11 @@ class Game {
         
         // x5 Тап
         modal.querySelector('#ad-reward-tap').addEventListener('click', async () => {
+            this.audio.playButtonClick();
             if (!canShowAd) return;
             
             const rewarded = await window.yandexSDK.showRewardedAd(() => {
+                this.audio.playSuccess();
                 this.activateTapBoost();
             });
             
@@ -1327,10 +1471,12 @@ class Game {
         
         // 5000 монет
         modal.querySelector('#ad-reward-money').addEventListener('click', async () => {
+            this.audio.playButtonClick();
             if (!canShowAd) return;
             
             const rewarded = await window.yandexSDK.showRewardedAd(() => {
                 this.economy.addCoins(5000);
+                this.audio.playSuccess();
                 this.showNotification('🎁 +5000 🪙', '#ffd700', 3000);
             });
             
@@ -1428,7 +1574,7 @@ class Game {
 
 // Запуск при загрузке
 window.addEventListener('load', async () => {
-    console.log('Загрузка игры Космический Бур...');
+    // Загрузка игры
     
     // Инициализация Яндекс SDK с таймаутом
     const sdkPromise = initYandexSDK();
@@ -1437,7 +1583,7 @@ window.addEventListener('load', async () => {
     await Promise.race([sdkPromise, timeoutPromise]);
     
     window.game = new Game();
-    console.log('Игра загружена!');
+    // Игра загружена
 });
 
 /**
@@ -1447,14 +1593,14 @@ async function initYandexSDK() {
     try {
         // Проверяем что SDK загружен
         if (typeof YaGames === 'undefined') {
-            console.warn('YaGames SDK не загружен');
+            // YaGames SDK не загружен
             window.gameLanguage = 'ru';
             return;
         }
         
         // Инициализируем SDK
         window.ysdk = await YaGames.init();
-        console.log('Yandex SDK инициализирован');
+        // Yandex SDK инициализирован
         
         // Инициализируем наш обертку
         if (window.yandexSDK) {
@@ -1463,16 +1609,10 @@ async function initYandexSDK() {
         
         // Получаем язык пользователя
         const playerLang = window.ysdk.environment.i18n.lang;
-        console.log('Язык пользователя:', playerLang);
+        // Язык пользователя
         
         // Сохраняем язык
         window.gameLanguage = playerLang || 'ru';
-        
-        // Отключаем медиа-сессию (чтобы не показывать плеер в уведомлениях)
-        if ('mediaSession' in navigator) {
-            navigator.mediaSession.metadata = null;
-            console.log('MediaSession отключена');
-        }
         
         // Входим в полноэкранный режим
         if (window.yandexSDK) {
@@ -1480,7 +1620,7 @@ async function initYandexSDK() {
         }
         
     } catch (e) {
-        console.error('Ошибка инициализации Yandex SDK:', e);
+        // Ошибка инициализации Yandex SDK
         window.gameLanguage = 'ru';
     }
 }

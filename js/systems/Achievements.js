@@ -39,6 +39,10 @@ class Achievements {
             lastClickTime: 0
         };
         
+        // Очередь уведомлений о достижениях
+        this.notificationQueue = [];
+        this.isShowingNotification = false;
+        
         // Инициализация достижений
         this.initAchievements();
     }
@@ -49,19 +53,15 @@ class Achievements {
     initAchievements() {
         // === ГЛУБИНА (использует maxDepthEver — не сбрасывается при престиже) ===
         this.depthAchievements = [
-            { id: 'depth_50', name: '🌍 Первые шаги', description: 'Достичь глубины 50м', condition: () => this.maxDepthEver >= 50, reward: { coins: 100 } },
             { id: 'depth_100', name: '⛏️ Шахтёр', description: 'Достичь глубины 100м', condition: () => this.maxDepthEver >= 100, reward: { coins: 500 } },
             { id: 'depth_500', name: '🕳️ Глубоко вниз', description: 'Достичь глубины 500м', condition: () => this.maxDepthEver >= 500, reward: { coins: 2000, ore: 5 } },
             { id: 'depth_1000', name: '🔥 Адские недра', description: 'Достичь глубины 1000м', condition: () => this.maxDepthEver >= 1000, reward: { coins: 5000, skin: 'lava' } },
-            { id: 'depth_2500', name: '💎 Алмазная шахта', description: 'Достичь глубины 2500м', condition: () => this.maxDepthEver >= 2500, reward: { coins: 15000, ore: 20 } },
             { id: 'depth_5000', name: '💎 Центр Земли', description: 'Достичь глубины 5000м', condition: () => this.maxDepthEver >= 5000, reward: { coins: 25000, skin: 'alien' } },
             { id: 'depth_10000', name: '🌌 Сквозь планету', description: 'Достичь глубины 10000м', condition: () => this.maxDepthEver >= 10000, reward: { coins: 100000, skin: 'shadow' } }
         ];
         
         // === КЛИКИ (за сессию) ===
         this.clickAchievements = [
-            { id: 'clicks_100', name: '👆 Новичок', description: 'Сделать 100 кликов за сессию', condition: () => this.sessionStats.clicks >= 100, reward: { coins: 50 } },
-            { id: 'clicks_500', name: '👆👆 Кликер', description: 'Сделать 500 кликов за сессию', condition: () => this.sessionStats.clicks >= 500, reward: { coins: 300 } },
             { id: 'clicks_1000', name: '🖱️ Энтузиаст', description: 'Сделать 1000 кликов за сессию', condition: () => this.sessionStats.clicks >= 1000, reward: { coins: 1000 } },
             { id: 'clicks_5000', name: '🖱️🖱️ Машина', description: 'Сделать 5000 кликов за сессию', condition: () => this.sessionStats.clicks >= 5000, reward: { coins: 5000 } },
             { id: 'clicks_10000', name: '👑 Король тапа', description: 'Сделать 10000 кликов за сессию', condition: () => this.sessionStats.clicks >= 10000, reward: { coins: 10000 } }
@@ -69,8 +69,6 @@ class Achievements {
         
         // === КЛИКИ (всего время) ===
         this.lifetimeClickAchievements = [
-            { id: 'lt_clicks_1000', name: '👆 Начало пути', description: 'Сделать 1000 кликов всего', condition: () => this.lifetimeStats.totalClicks >= 1000, reward: { coins: 200 } },
-            { id: 'lt_clicks_10000', name: '👆👆 Опытный', description: 'Сделать 10000 кликов всего', condition: () => this.lifetimeStats.totalClicks >= 10000, reward: { coins: 1000 } },
             { id: 'lt_clicks_100000', name: '🖱️ Мастер клика', description: 'Сделать 100000 кликов всего', condition: () => this.lifetimeStats.totalClicks >= 100000, reward: { coins: 10000 } },
             { id: 'lt_clicks_1000000', name: '🏆 Легенда клика', description: 'Сделать 1000000 кликов всего', condition: () => this.lifetimeStats.totalClicks >= 1000000, reward: { coins: 100000 } }
         ];
@@ -78,7 +76,6 @@ class Achievements {
         // === БОССЫ ===
         this.bossAchievements = [
             { id: 'boss_1', name: '☄️ Первый контакт', description: 'Победить 1-го босса', condition: () => this.lifetimeStats.bossesDefeated >= 1, reward: { coins: 1000 } },
-            { id: 'boss_5', name: '💥 Метеоритный охотник', description: 'Победить 5 боссов', condition: () => this.lifetimeStats.bossesDefeated >= 5, reward: { coins: 5000 } },
             { id: 'boss_10', name: '☄️☄️ Повелитель метеоритов', description: 'Победить 10 боссов', condition: () => this.lifetimeStats.bossesDefeated >= 10, reward: { coins: 15000 } },
             { id: 'boss_25', name: '🌠 Уничтожитель', description: 'Победить 25 боссов', condition: () => this.lifetimeStats.bossesDefeated >= 25, reward: { coins: 50000 } },
             { id: 'boss_close', name: '⏱️ На грани', description: 'Победить босса с менее чем 3 секундами остатка', condition: () => this.hasAchievement('boss_close'), reward: { coins: 2000 } },
@@ -87,12 +84,10 @@ class Achievements {
         
         // === ЭКОНОМИКА ===
         this.economyAchievements = [
-            { id: 'coins_1000', name: '💰 Первая тысяча', description: 'Заработать 1000 монет всего', condition: () => this.lifetimeStats.totalCoinsEarned >= 1000, reward: { coins: 100 } },
-            { id: 'coins_10000', name: '💰💰 Богач', description: 'Заработать 10000 монет всего', condition: () => this.lifetimeStats.totalCoinsEarned >= 10000, reward: { coins: 1000 } },
+            { id: 'coins_10000', name: '💰 Богач', description: 'Заработать 10000 монет всего', condition: () => this.lifetimeStats.totalCoinsEarned >= 10000, reward: { coins: 1000 } },
             { id: 'coins_100000', name: '🏦 Банкир', description: 'Заработать 100000 монет всего', condition: () => this.lifetimeStats.totalCoinsEarned >= 100000, reward: { coins: 5000 } },
             { id: 'coins_1m', name: '🤑 Миллионер', description: 'Заработать 1 миллион монет всего', condition: () => this.lifetimeStats.totalCoinsEarned >= 1000000, reward: { coins: 50000 } },
             { id: 'coins_10m', name: '💎 Мультимиллионер', description: 'Заработать 10 миллионов монет всего', condition: () => this.lifetimeStats.totalCoinsEarned >= 10000000, reward: { coins: 200000 } },
-            { id: 'ore_10', name: '⛏️ Собиратель', description: 'Накопить 10 руды', condition: () => this.lifetimeStats.totalOreCollected >= 10, reward: { coins: 500 } },
             { id: 'ore_50', name: '💎 Алмазная лихорадка', description: 'Накопить 50 руды', condition: () => this.lifetimeStats.totalOreCollected >= 50, reward: { coins: 5000 } },
             { id: 'ore_100', name: '👑 Магнат руды', description: 'Накопить 100 руды', condition: () => this.lifetimeStats.totalOreCollected >= 100, reward: { coins: 20000 } }
         ];
@@ -110,11 +105,8 @@ class Achievements {
         // === ПРЕСТИЖ ===
         this.prestigeAchievements = [
             { id: 'prestige_1', name: '🔄 Новая жизнь', description: 'Выполнить 1-й престиж', condition: () => this.lifetimeStats.prestigeCount >= 1, reward: { coins: 1000 } },
-            { id: 'prestige_5', name: '🌀 Вечный цикл', description: 'Выполнить 5 престижей', condition: () => this.lifetimeStats.prestigeCount >= 5, reward: { coins: 10000 } },
             { id: 'prestige_10', name: '🏆 Легенда', description: 'Выполнить 10 престижей', condition: () => this.lifetimeStats.prestigeCount >= 10, reward: { coins: 50000, skin: 'golden' } },
-            { id: 'prestige_25', name: '💫 Бессмертный', description: 'Выполнить 25 престижей', condition: () => this.lifetimeStats.prestigeCount >= 25, reward: { coins: 200000 } },
-            { id: 'tokens_50', name: '🎖️ Коллекционер', description: 'Накопить 50 токенов престижа', condition: () => this.game.prestige.tokens >= 50, reward: { coins: 25000 } },
-            { id: 'tokens_100', name: '🎖️🎖️ Магнат', description: 'Накопить 100 токенов престижа', condition: () => this.game.prestige.tokens >= 100, reward: { coins: 100000 } }
+            { id: 'prestige_25', name: '💫 Бессмертный', description: 'Выполнить 25 престижей', condition: () => this.lifetimeStats.prestigeCount >= 25, reward: { coins: 200000 } }
         ];
         
         // === СЕРИИ (ретеншен) ===
@@ -194,13 +186,39 @@ class Achievements {
         // Выдаём награды
         this.giveReward(achievement.reward);
         
-        // Показываем уведомление
-        this.showUnlockNotification(achievement);
+        // Добавляем в очередь уведомлений
+        this.notificationQueue.push(achievement);
+        this.processNotificationQueue();
         
         // Сохраняем
         this.game.saveManager.save();
         
         console.log('🏆 Достижение разблокировано:', achievement.name);
+    }
+    
+    /**
+     * Обработать очередь уведомлений
+     */
+    processNotificationQueue() {
+        // Если уже показываем уведомление или очередь пуста — выходим
+        if (this.isShowingNotification || this.notificationQueue.length === 0) {
+            return;
+        }
+        
+        // Берём первое достижение из очереди
+        const achievement = this.notificationQueue.shift();
+        this.isShowingNotification = true;
+        
+        // Показываем уведомление
+        this.showUnlockNotification(achievement, () => {
+            // После закрытия уведомления
+            this.isShowingNotification = false;
+            
+            // Небольшая пауза перед следующим уведомлением
+            setTimeout(() => {
+                this.processNotificationQueue();
+            }, 500);
+        });
     }
     
     /**
@@ -224,22 +242,16 @@ class Achievements {
     }
     
     /**
-     * Разблокировать скин
-     */
-    unlockSkin(skinId) {
-        if (!this.game.skins.ownedSkins.includes(skinId)) {
-            this.game.skins.ownedSkins.push(skinId);
-            const skin = this.game.skins.skins.find(s => s.id === skinId);
-            if (skin) {
-                this.game.showNotification(`🎉 Получен эксклюзивный скин: ${skin.name}!`, '#ffd700', 5000);
-            }
-        }
-    }
-    
-    /**
      * Показать уведомление о получении достижения
+     * @param {Object} achievement - достижение
+     * @param {Function} onComplete - callback после закрытия уведомления
      */
-    showUnlockNotification(achievement) {
+    showUnlockNotification(achievement, onComplete) {
+        // Звук достижения
+        if (this.game.audio) {
+            this.game.audio.playAchievement();
+        }
+        
         const notification = document.createElement('div');
         notification.className = 'achievement-notification';
         notification.innerHTML = `
@@ -261,8 +273,25 @@ class Achievements {
         // Удаляем через 4 секунды
         setTimeout(() => {
             notification.classList.add('hide');
-            setTimeout(() => notification.remove(), 500);
+            setTimeout(() => {
+                notification.remove();
+                // Вызываем callback после полного закрытия
+                if (onComplete) onComplete();
+            }, 500);
         }, 4000);
+    }
+    
+    /**
+     * Разблокировать скин
+     */
+    unlockSkin(skinId) {
+        if (!this.game.skins.ownedSkins.includes(skinId)) {
+            this.game.skins.ownedSkins.push(skinId);
+            const skin = this.game.skins.skins.find(s => s.id === skinId);
+            if (skin) {
+                this.game.showNotification(`🎉 Получен эксклюзивный скин: ${skin.name}!`, '#ffd700', 5000);
+            }
+        }
     }
     
     /**

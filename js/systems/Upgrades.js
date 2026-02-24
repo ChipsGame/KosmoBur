@@ -285,8 +285,13 @@ class Upgrades {
                     btn.addEventListener('click', (e) => {
                         e.preventDefault();
                         if (this.buy(upg.id)) {
+                            // Звук успешной покупки
+                            if (this.game.audio) this.game.audio.playBuy();
                             this.renderUI();
                             this.game.saveManager.save();
+                        } else {
+                            // Звук ошибки (недостаточно средств)
+                            if (this.game.audio) this.game.audio.playError();
                         }
                     });
                 }

@@ -52,8 +52,13 @@ class BossSystem {
             // Следующий босс только через 400м после предыдущего
             const nextBossDepth = this.lastBossDepth + this.bossInterval;
             
+            // Отладка: показываем статус каждые 5 секунд
+            if (Math.floor(Date.now() / 5000) % 2 === 0) {
+                console.log('Босс: текущая глубина=' + currentDepth + ', следующий босс на=' + nextBossDepth + ', lastBoss=' + this.lastBossDepth);
+            }
+            
             // Спавним только если достигли следующей отметки
-            if (currentDepth >= nextBossDepth) {
+            if (currentDepth >= nextBossDepth && currentDepth >= 400) {
                 console.log('Спавним босса на глубине:', nextBossDepth, 'текущая:', currentDepth);
                 this.spawnBoss(nextBossDepth);
             }
@@ -100,6 +105,11 @@ class BossSystem {
         this.bossHealth = this.tapsNeeded;
         this.bonusNotificationShown = false;
         
+        // Звук появления босса
+        if (this.game.audio) {
+            this.game.audio.playBossAppear();
+        }
+        
         // Скрываем плиты и останавливаем бур
         this.game.layersVisible = false;
         this.game.drill.isDrilling = false;
@@ -112,6 +122,7 @@ class BossSystem {
         const modal = document.createElement('div');
         modal.id = 'modal-boss';
         modal.className = 'modal';
+        modal.style.zIndex = '3000'; // Поверх всего
         
         modal.innerHTML = `
             <div class="modal-content boss-modal">
@@ -197,6 +208,11 @@ class BossSystem {
         
         this.currentTaps++;
         this.bossHealth--;
+        
+        // Звук удара по боссу
+        if (this.game.audio) {
+            this.game.audio.playBossHit();
+        }
         
         // Эффект тапа
         this.createTapEffect(e.clientX, e.clientY);
@@ -290,6 +306,11 @@ class BossSystem {
     
     onVictory() {
         this.active = false;
+        
+        // Звук победы над боссом
+        if (this.game.audio) {
+            this.game.audio.playBossWin();
+        }
         
         // Убираем обработчик
         document.getElementById('game-container').removeEventListener('click', this.bossClickHandler);
@@ -416,6 +437,7 @@ class BossSystem {
         const modal = document.createElement('div');
         modal.id = 'modal-boss-victory';
         modal.className = 'modal';
+        modal.style.zIndex = '3000'; // Поверх всего
         
         modal.innerHTML = `
             <div class="modal-content boss-victory-modal">
@@ -444,6 +466,7 @@ class BossSystem {
         const modal = document.createElement('div');
         modal.id = 'modal-boss-defeat';
         modal.className = 'modal';
+        modal.style.zIndex = '3000'; // Поверх всего
         
         const canShowAd = window.yandexSDK && window.yandexSDK.isReady;
         

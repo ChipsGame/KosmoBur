@@ -351,6 +351,7 @@ class Skins {
         const modal = document.createElement('div');
         modal.id = 'modal-skins';
         modal.className = 'modal';
+        modal.style.zIndex = '3000';
         
         // Фильтруем скины: показываем только НЕ эксклюзивные
         const shopSkins = this.skins.filter(s => !s.exclusive);
@@ -420,7 +421,6 @@ class Skins {
                 return `
                     <div class="skin-card skin-selected ${rarityClass} skin-unlocked-exclusive">
                         <div class="skin-rarity-badge">${this.getRarityName(skin.rarity)}</div>
-                        <div class="skin-exclusive-badge">🏆 Получен!</div>
                         <div class="skin-preview" style="${previewStyle}">
                             <span class="skin-icon">${skin.icon}</span>
                         </div>
@@ -487,6 +487,7 @@ class Skins {
                 
                 if (this.ownedSkins.includes(skinId)) {
                     // Выбираем скин
+                    if (this.game.audio) this.game.audio.playButtonClick();
                     if (this.select(skinId)) {
                         this.game.showNotification(`✓ Выбран скин: ${skin.name}`, '#68d391', 2000);
                         modal.remove();
@@ -496,10 +497,12 @@ class Skins {
                     // Покупаем скин
                     const result = this.buy(skinId);
                     if (result.success) {
+                        if (this.game.audio) this.game.audio.playSuccess();
                         this.game.showNotification(`🎉 Куплен скин: ${skin.name}!`, '#ffd700', 3000);
                         modal.remove();
                         this.showShop(); // Переоткрываем для обновления
                     } else {
+                        if (this.game.audio) this.game.audio.playError();
                         this.game.showNotification(`❌ ${result.error}`, '#ff6b6b', 3000);
                     }
                 }
@@ -507,6 +510,7 @@ class Skins {
         });
         
         modal.querySelector('#skins-close').addEventListener('click', () => {
+            if (this.game.audio) this.game.audio.playMenuClose();
             modal.remove();
         });
     }

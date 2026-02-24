@@ -159,6 +159,7 @@ class OfflineProgress {
         const modal = document.createElement('div');
         modal.id = 'modal-offline';
         modal.className = 'modal';
+        modal.style.zIndex = '3000';
         
         const minimalText = data.minimal 
             ? '<p style="color: #aaa; font-size: 12px;">💡 Купите Автобур чтобы зарабатывать больше оффлайн!</p>' 
